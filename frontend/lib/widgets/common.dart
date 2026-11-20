@@ -408,3 +408,29 @@ class TutorBubble extends StatelessWidget {
         ]),
       );
 }
+
+/// The four-colour Google "G", drawn so no image asset is needed.
+class GoogleG extends StatelessWidget {
+  final double size;
+  GoogleG({super.key, this.size = 20});
+  @override
+  Widget build(BuildContext context) => CustomPaint(size: Size(size, size), painter: _GooglePainter());
+}
+
+class _GooglePainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final s = size.width, sw = s * 0.2, c = Offset(s / 2, s / 2), r = s / 2 - sw / 2;
+    final box = Rect.fromCircle(center: c, radius: r);
+    double d(double deg) => deg * math.pi / 180;
+    Paint p(int color) => Paint()..color = Color(color)..style = PaintingStyle.stroke..strokeWidth = sw;
+    canvas.drawArc(box, d(-45), d(-135), false, p(0xFFEA4335)); // red: top, opening on the upper right
+    canvas.drawArc(box, d(180), d(-50), false, p(0xFFFBBC05)); // yellow: left
+    canvas.drawArc(box, d(130), d(-85), false, p(0xFF34A853)); // green: bottom
+    canvas.drawArc(box, d(45), d(-45), false, p(0xFF4285F4)); // blue: lower right
+    // Blue bar from the centre to the right edge.
+    canvas.drawRect(Rect.fromLTRB(s / 2, s / 2 - sw / 2, s - sw * 0.05, s / 2 + sw / 2), Paint()..color = Color(0xFF4285F4));
+  }
+  @override
+  bool shouldRepaint(covariant CustomPainter old) => false;
+}

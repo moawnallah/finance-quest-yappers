@@ -152,7 +152,7 @@ class _Welcome extends StatelessWidget {
             if (await googleSignInDemo(context)) onStart();
           },
           child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-            Text('G', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: Color(0xFF4285F4))),
+            GoogleG(size: 20),
             SizedBox(width: 10),
             Text('Continue with Google', style: TextStyle(color: kInk, fontWeight: FontWeight.w600)),
           ]),
