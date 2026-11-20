@@ -15,10 +15,10 @@ docs/              architecture, API notes, pitch material
 
 Two services run on Google Cloud Run: `frontend` and `backend`. The data and ML code live inside the backend as Python modules.
 
-## Branches
+## Branch
 
-- `dev`: push your changes here directly, with no reviews, but always add tests.
-- `main`: Mohamed merges `dev` into `main` periodically once it works. Merging to `main` triggers the deployment.
+- `main` is the only branch. Push small, working changes and always add tests.
+- Every push to `main` deploys, so pull before you push and keep `main` working.
 
 ## Rules
 
