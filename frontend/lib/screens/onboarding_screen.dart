@@ -1,3 +1,4 @@
+import 'dart:math' as math;
 // Onboarding: a step-by-step flow with a progress bar (idea borrowed from Finanz),
 // with sign-in (Google or email link) first, then a few questions. No surname,
 // phone, review prompt or countdown offers.
@@ -133,7 +134,10 @@ class _Welcome extends StatelessWidget {
           _point(Icons.schedule, 'Five minutes a day'),
           _point(Icons.account_tree_outlined, 'A clear path, from calm to wild'),
           _point(Icons.verified_outlined, 'Education only, never sales'),
-          Spacer(flex: 4),
+          SizedBox(height: 12),
+          // A quiet preview of the home wheel, peeking up from the bottom.
+          Expanded(flex: 4, child: ExcludeSemantics(child: CustomPaint(painter: _WheelPeekPainter(), size: Size.infinite))),
+          SizedBox(height: 12),
           OutlinedButton(
             style: OutlinedButton.styleFrom(
               minimumSize: Size.fromHeight(54),
@@ -237,4 +241,47 @@ class _Confidence extends StatelessWidget {
           Text('Fully ready', style: TextStyle(color: kMuted)),
         ]),
       ]);
+}
+
+/// Decorative half wheel for the landing page: the same green slices, rim and
+/// crocodile hub as the home screen, without labels.
+class _WheelPeekPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    if (size.height < 60) return;
+    canvas.clipRect(Offset.zero & size); // stay inside the space above the button
+    final r = math.min(size.width * 0.5, size.height * 0.95);
+    final c = Offset(size.width / 2, size.height + r * 0.05);
+    const n = 13;
+    final step = 2 * math.pi / n, rim = r * 0.12, hub = r * 0.38, face = r - rim;
+    for (var i = 0; i < n; i++) {
+      final a0 = -math.pi / 2 + i * step - step / 2;
+      final path = Path()
+        ..arcTo(Rect.fromCircle(center: c, radius: face), a0, step, true)
+        ..arcTo(Rect.fromCircle(center: c, radius: hub), a0 + step, -step, false)
+        ..close();
+      canvas.drawPath(path, Paint()..color = i == 0 ? kWheelFaceSel : kWheelFace);
+      final dir = Offset(math.cos(a0), math.sin(a0));
+      canvas.drawLine(c + dir * hub, c + dir * face, Paint()..color = kWheelLine..strokeWidth = 2);
+    }
+    canvas.drawCircle(c, r - rim / 2, Paint()..color = kWheelRim..style = PaintingStyle.stroke..strokeWidth = rim);
+    canvas.drawCircle(c, hub, Paint()..color = kHub);
+    canvas.drawCircle(c, hub - 3, Paint()..color = kHubRim..style = PaintingStyle.stroke..strokeWidth = 5);
+    paintCrocoEyes(canvas, Offset(c.dx, c.dy - hub + hub * 0.12), hub * 0.95, kHub);
+    // Pointer at the top.
+    final top = Offset(c.dx, c.dy - r - 3);
+    canvas.drawPath(
+        Path()
+          ..moveTo(top.dx - 9, top.dy - 10)
+          ..lineTo(top.dx + 9, top.dy - 10)
+          ..lineTo(top.dx, top.dy + 3)
+          ..close(),
+        Paint()..color = kPrimary);
+    // Soft fade into the page at the bottom edge.
+    final fade = Rect.fromLTWH(0, size.height * 0.7, size.width, size.height * 0.3);
+    canvas.drawRect(fade, Paint()..shader = LinearGradient(begin: Alignment.topCenter, end: Alignment.bottomCenter, colors: [kBg.withValues(alpha: 0), kBg]).createShader(fade));
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter old) => true;
 }
