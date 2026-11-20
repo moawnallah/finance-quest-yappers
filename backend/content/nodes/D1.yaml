@@ -1,0 +1,51 @@
+# D1 What moves a price. Only the medium task so far; cards, easy items and the hard task come later.
+# SAMPLE: fictional company and synthetic prices (single-company prices are not licensed).
+node: D1
+tasks:
+  - id: d1.m1
+    level: medium
+    variant: day_x
+    content_version: 1
+    author: Yurii
+    reviewer: null
+    sources: []
+    brief:
+      en: >
+        Company X, a large software firm, reports quarterly results today after the close.
+        The share price has risen strongly over the past three months. Profit beat analyst
+        estimates, but the company said growth will slow next quarter and spending on data
+        centres will rise sharply. Over the next week, did the share price go up or down?
+    stimulus:
+      - kind: chart
+        type: line
+        cutoff: 2024-04-25
+        hide: [name, dates]
+        series:
+          - {series_id: synth_company_d1, from: 2024-01-25, to: 2024-07-25, transform: index100, label: "Company X"}
+    response:
+      kind: direction
+      options: [up, down]
+      horizon: 1w
+      expected: down
+    truth: none
+    reasons:
+      pick: {min: 2, max: 3}
+      boxes:
+        - {id: guidance, weight: 1.0, text: "The outlook for next quarter was weaker than expected",
+           explain: "Prices look ahead. A weaker outlook can outweigh a good past quarter."}
+        - {id: capex, weight: 0.6, text: "Much higher spending could squeeze future profits",
+           explain: "Heavy spending lowers profit margins for a while, and investors price that in."}
+        - {id: priced_in, weight: 0.5, text: "After the run-up, good results were already expected",
+           explain: "Beating estimates was partly priced in, so it added little."}
+        - {id: beat, weight: 0.0, text: "Profit came in above estimates",
+           explain: "True, but known beats tend to be priced in. On its own it doesn't explain the move."}
+        - {id: chart_pattern, weight: -0.5, text: "The chart had risen too far, so it had to fall",
+           explain: "Past moves don't force a reversal. The news on the day drove the price."}
+        - {id: hindsight, weight: -1.0, text: "Other software shares fell later that month",
+           explain: "That wasn't known on day X. Using it is hindsight."}
+    weights: {estimate: 0.5, reasons: 0.5}
+    reveal:
+      text:
+        en: >
+          Good results can still mean a falling price. The market compares news with
+          expectations and cares most about what comes next.

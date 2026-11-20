@@ -1,0 +1,105 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "medium_tasks.schema.json",
+  "title": "Medium tasks: output/medium_tasks.json",
+  "description": "Send `question` before the answer and `reveal` only after it; `meta` is internal. Texts are strings or {en, pl} maps until localized by question_view/reveal_view. Stimulus and response objects are open (additionalProperties) so new kinds can be added.",
+  "type": "object",
+  "required": ["schema_version", "tasks"],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {"const": 1},
+    "tasks": {"type": "array", "items": {"$ref": "#/$defs/task"}}
+  },
+  "$defs": {
+    "text": {
+      "oneOf": [
+        {"type": "string", "minLength": 1},
+        {"type": "object", "required": ["en"], "additionalProperties": {"type": "string"}}
+      ]
+    },
+    "point": {
+      "type": "object",
+      "required": ["t", "v"],
+      "additionalProperties": false,
+      "properties": {
+        "t": {"type": "integer", "description": "observations from the cutoff (0 = day X)"},
+        "v": {"type": "number"},
+        "d": {"type": "string", "format": "date", "description": "only when dates are not hidden"}
+      }
+    },
+    "chart_series": {
+      "type": "object",
+      "required": ["label", "unit", "points"],
+      "properties": {
+        "label": {"$ref": "#/$defs/text"},
+        "name": {"type": "string"},
+        "unit": {"type": "string"},
+        "points": {"type": "array", "items": {"$ref": "#/$defs/point"}}
+      }
+    },
+    "stimulus": {
+      "type": "object",
+      "required": ["kind"],
+      "properties": {"kind": {"enum": ["chart"]}},
+      "allOf": [{
+        "if": {"properties": {"kind": {"const": "chart"}}},
+        "then": {"required": ["series"], "properties": {"series": {"type": "array", "items": {"$ref": "#/$defs/chart_series"}}}}
+      }]
+    },
+    "task": {
+      "type": "object",
+      "required": ["id", "node", "level", "variant", "content_version", "live", "weights", "question", "reveal", "meta"],
+      "additionalProperties": false,
+      "properties": {
+        "id": {"type": "string"},
+        "node": {"type": "string"},
+        "level": {"const": "medium"},
+        "variant": {"enum": ["day_x", "estimate", "label"]},
+        "content_version": {"type": "integer", "minimum": 1},
+        "live": {"type": "boolean", "description": "false until a reviewer has signed off"},
+        "weights": {
+          "type": "object", "required": ["estimate", "reasons"], "additionalProperties": false,
+          "properties": {"estimate": {"type": "number"}, "reasons": {"type": "number"}}
+        },
+        "question": {
+          "type": "object",
+          "required": ["brief", "stimulus", "response", "reasons", "confidence"],
+          "additionalProperties": false,
+          "properties": {
+            "brief": {"$ref": "#/$defs/text"},
+            "stimulus": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/stimulus"}},
+            "response": {"type": "object", "required": ["kind"], "properties": {"kind": {"enum": ["direction"]}}},
+            "reasons": {
+              "type": "object", "required": ["pick", "boxes"], "additionalProperties": false,
+              "properties": {
+                "pick": {"type": "object", "required": ["min", "max"],
+                         "properties": {"min": {"type": "integer"}, "max": {"type": "integer"}}},
+                "boxes": {"type": "array", "items": {
+                  "type": "object", "required": ["id", "text"], "additionalProperties": false,
+                  "properties": {"id": {"type": "string"}, "text": {"$ref": "#/$defs/text"}}}}
+              }
+            },
+            "confidence": {"type": "object", "properties": {"min": {"const": 1}, "max": {"const": 5}}}
+          }
+        },
+        "reveal": {
+          "type": "object",
+          "required": ["text", "outcome", "truth", "stimulus", "reasons", "sources"],
+          "additionalProperties": false,
+          "properties": {
+            "text": {"$ref": "#/$defs/text"},
+            "outcome": {"type": ["object", "null"]},
+            "truth": {"description": "null for day_x (not scored)"},
+            "stimulus": {"type": "array", "items": {"$ref": "#/$defs/stimulus"}},
+            "reasons": {"type": "array", "items": {
+              "type": "object", "required": ["id", "weight", "explain"], "additionalProperties": false,
+              "properties": {"id": {"type": "string"}, "weight": {"type": "number", "minimum": -1, "maximum": 1},
+                             "explain": {"$ref": "#/$defs/text"}}}},
+            "sources": {"type": "array", "items": {"type": "string"}}
+          }
+        },
+        "meta": {"type": "object"}
+      }
+    }
+  }
+}

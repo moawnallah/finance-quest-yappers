@@ -139,6 +139,8 @@ answer, why, feedback, sources`) map one to one:
 
 ## Medium engine: "estimate and explain"
 
+Implementation guide (chart + direction so far): [medium_engine.md](medium_engine.md).
+
 One renderer and one scorer. A task combines four parts:
 
 | Part | What it is | Kinds |
