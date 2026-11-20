@@ -1,0 +1,114 @@
+{
+  "key": "currencies",
+  "content_version": 1,
+  "label": "Currencies",
+  "risk": 4,
+  "start": false,
+  "nodes": [
+    {
+      "id": "currencies.c1",
+      "title": "Exchange rates",
+      "questions": [
+        {
+          "id": "currencies.c1.q1",
+          "q": "What is an exchange rate?",
+          "options": [
+            "The price of one currency in another",
+            "A bank's interest rate",
+            "The stock market's opening hour"
+          ],
+          "answer": 0,
+          "why": "The price of one currency in another, e.g. EUR/PLN."
+        },
+        {
+          "id": "currencies.c1.q2",
+          "q": "What was the NBP EUR/PLN mid rate on 19 Nov 2026?",
+          "options": [
+            "3.10 zl",
+            "4.4165 zl",
+            "5.90 zl"
+          ],
+          "answer": 1,
+          "why": "4.4165 zl per euro.",
+          "sources": [
+            "https://api.nbp.pl/api/exchangerates/rates/a/eur/?format=json"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "currencies.c2",
+      "title": "Currency risk",
+      "after": [
+        "currencies.c1"
+      ],
+      "questions": [
+        {
+          "id": "currencies.c2.q1",
+          "q": "You buy a US fund in zloty and the dollar weakens. What happens?",
+          "options": [
+            "Your zloty result rises",
+            "Your zloty result falls",
+            "Nothing changes"
+          ],
+          "answer": 1,
+          "why": "Your result in zloty falls, even if the fund's dollar price is unchanged."
+        },
+        {
+          "id": "currencies.c2.q2",
+          "q": "What is a PLN-hedged fund?",
+          "options": [
+            "It only holds Polish shares",
+            "It is guaranteed by NBP",
+            "It reduces currency effects on your zloty result"
+          ],
+          "answer": 2,
+          "why": "A fund that reduces the effect of currency moves on your zloty result.",
+          "sources": [
+            "https://betaetf.pl/nasze-fundusze"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "currencies.c3",
+      "title": "Conversion costs",
+      "after": [
+        "currencies.c1"
+      ],
+      "questions": [
+        {
+          "id": "currencies.c3.q1",
+          "q": "What is a currency conversion fee?",
+          "options": [
+            "A tax on dividends",
+            "A broker's monthly fee",
+            "A cost for changing zloty into another currency"
+          ],
+          "answer": 2,
+          "why": "A cost for changing zloty into another currency to buy foreign assets."
+        }
+      ]
+    },
+    {
+      "id": "currencies.c4",
+      "title": "Trading currencies",
+      "after": [
+        "currencies.c2"
+      ],
+      "questions": [
+        {
+          "id": "currencies.c4.q1",
+          "q": "Why is currency trading risky for beginners?",
+          "options": [
+            "Often leveraged and news-driven, so losses come fast",
+            "Currencies never move",
+            "It is only for banks by law"
+          ],
+          "answer": 0,
+          "why": "It is often leveraged and prices jump on news, so losses can be fast."
+        }
+      ]
+    }
+  ]
+}

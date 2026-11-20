@@ -1,0 +1,111 @@
+{
+  "key": "dpp_limited_partnerships",
+  "content_version": 1,
+  "label": "Direct participation programs / limited partnerships",
+  "risk": 5,
+  "start": false,
+  "nodes": [
+    {
+      "id": "dpp_limited_partnerships.d1",
+      "title": "What it is",
+      "questions": [
+        {
+          "id": "dpp_limited_partnerships.d1.q1",
+          "q": "What is a limited partnership?",
+          "options": [
+            "A government bond",
+            "Passive investors fund a business a general partner runs",
+            "A bank deposit"
+          ],
+          "answer": 1,
+          "why": "A business where passive investors put in money and a general partner runs it; investors usually can lose only what they put in."
+        },
+        {
+          "id": "dpp_limited_partnerships.d1.q2",
+          "q": "What is a direct participation program?",
+          "options": [
+            "A savings app",
+            "A pension account",
+            "A pooled investment passing a business's income to investors"
+          ],
+          "answer": 2,
+          "why": "A pooled investment that passes a business's income and tax effects to investors, often in property or energy."
+        }
+      ]
+    },
+    {
+      "id": "dpp_limited_partnerships.d2",
+      "title": "Locked-in money",
+      "after": [
+        "dpp_limited_partnerships.d1"
+      ],
+      "questions": [
+        {
+          "id": "dpp_limited_partnerships.d2.q1",
+          "q": "Why are these called illiquid?",
+          "options": [
+            "They trade every second",
+            "They are cash",
+            "Money is locked in for years, hard to sell"
+          ],
+          "answer": 2,
+          "why": "Money is often locked in for years with no easy way to sell."
+        }
+      ]
+    },
+    {
+      "id": "dpp_limited_partnerships.d3",
+      "title": "Risks and fees",
+      "after": [
+        "dpp_limited_partnerships.d2"
+      ],
+      "questions": [
+        {
+          "id": "dpp_limited_partnerships.d3.q1",
+          "q": "What are the main risks?",
+          "options": [
+            "Business failure, high fees, low transparency, lock-ups",
+            "None, they are guaranteed",
+            "Only currency risk"
+          ],
+          "answer": 0,
+          "why": "Business failure, high fees, little transparency and long lock-ups."
+        }
+      ]
+    },
+    {
+      "id": "dpp_limited_partnerships.d4",
+      "title": "Who they suit",
+      "after": [
+        "dpp_limited_partnerships.d3"
+      ],
+      "questions": [
+        {
+          "id": "dpp_limited_partnerships.d4.q1",
+          "q": "Who are these usually aimed at?",
+          "options": [
+            "Complete beginners",
+            "Experienced investors who can lock money away",
+            "Children's savings"
+          ],
+          "answer": 1,
+          "why": "Experienced investors who can lock money away for years."
+        },
+        {
+          "id": "dpp_limited_partnerships.d4.q2",
+          "q": "How do you check the seller is licensed?",
+          "options": [
+            "Trust online reviews",
+            "Ask a friend",
+            "Search the KNF register"
+          ],
+          "answer": 2,
+          "why": "Search the KNF register of supervised entities.",
+          "sources": [
+            "https://www.knf.gov.pl/podmioty/wyszukiwarka_podmiotow"
+          ]
+        }
+      ]
+    }
+  ]
+}

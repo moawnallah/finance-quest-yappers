@@ -1,0 +1,158 @@
+{
+  "key": "mutual_and_index_funds",
+  "content_version": 1,
+  "label": "Mutual funds & index funds",
+  "risk": 3,
+  "start": true,
+  "nodes": [
+    {
+      "id": "mutual_and_index_funds.f1",
+      "title": "What a fund is",
+      "questions": [
+        {
+          "id": "mutual_and_index_funds.f1.q1",
+          "q": "What is an investment fund?",
+          "options": [
+            "Money from many people invested together",
+            "A loan from a bank",
+            "A single company's shares"
+          ],
+          "answer": 0,
+          "why": "A pot of money from many people, invested together by a manager."
+        },
+        {
+          "id": "mutual_and_index_funds.f1.q2",
+          "q": "What is an index fund?",
+          "options": [
+            "A fund whose manager picks hot stocks",
+            "A fund that copies an index",
+            "A fund that only holds cash"
+          ],
+          "answer": 1,
+          "why": "A fund that copies an index instead of picking individual stocks."
+        }
+      ]
+    },
+    {
+      "id": "mutual_and_index_funds.f2",
+      "title": "Diversification in one purchase",
+      "after": [
+        "mutual_and_index_funds.f1"
+      ],
+      "questions": [
+        {
+          "id": "mutual_and_index_funds.f2.q1",
+          "q": "Why does an index fund give instant diversification?",
+          "options": [
+            "It buys only the best company",
+            "It holds all companies in its index",
+            "It is guaranteed by the state"
+          ],
+          "answer": 1,
+          "why": "It holds all the companies in its index, so one purchase spreads money across many."
+        },
+        {
+          "id": "mutual_and_index_funds.f2.q2",
+          "q": "What does the MSCI World index cover?",
+          "options": [
+            "Only Polish companies",
+            "Only technology start-ups",
+            "Large and mid-size firms in many developed countries"
+          ],
+          "answer": 2,
+          "why": "Large and mid-size companies across many developed countries.",
+          "sources": [
+            "https://www.msci.com/end-of-day-data-search"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "mutual_and_index_funds.f3",
+      "title": "Fees",
+      "after": [
+        "mutual_and_index_funds.f1"
+      ],
+      "questions": [
+        {
+          "id": "mutual_and_index_funds.f3.q1",
+          "q": "What is a fund's yearly fee (TER)?",
+          "options": [
+            "A one-time fee when you buy",
+            "A tax paid to the state",
+            "The yearly cost as a % of your money"
+          ],
+          "answer": 2,
+          "why": "The yearly cost of a fund as a % of your money, taken automatically.",
+          "sources": [
+            "https://www.justetf.com/en/etf-profile.html?isin=IE00B4L5Y983"
+          ]
+        },
+        {
+          "id": "mutual_and_index_funds.f3.q2",
+          "q": "With 7% a year before fees, what is the difference after 20 years on 10,000 zl between a 0.2% and a 2% fee?",
+          "options": [
+            "About 10,700 zl",
+            "About 360 zl",
+            "No difference"
+          ],
+          "answer": 0,
+          "why": "About 10,700 zl (about 37,300 zl vs 26,500 zl).",
+          "sources": [
+            "https://www.justetf.com/en/etf-profile.html?isin=IE00B4L5Y983",
+            "https://www.analizy.pl/tylko-u-nas/22858/jest-rozporzadzenie-w-sprawie-oplat-funduszy-limit-to-2"
+          ]
+        },
+        {
+          "id": "mutual_and_index_funds.f3.q3",
+          "q": "What is the legal cap on the management fee of Polish open-ended funds?",
+          "options": [
+            "5.0% a year",
+            "2.0% a year",
+            "There is no cap"
+          ],
+          "answer": 1,
+          "why": "2.0% a year.",
+          "sources": [
+            "https://www.analizy.pl/tylko-u-nas/22858/jest-rozporzadzenie-w-sprawie-oplat-funduszy-limit-to-2"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "mutual_and_index_funds.f4",
+      "title": "Active vs passive",
+      "after": [
+        "mutual_and_index_funds.f2",
+        "mutual_and_index_funds.f3"
+      ],
+      "questions": [
+        {
+          "id": "mutual_and_index_funds.f4.q1",
+          "q": "Why do low-cost index funds often beat expensive active funds over time?",
+          "options": [
+            "Fees are certain and compound; skill is not",
+            "Index funds are guaranteed",
+            "Active funds are illegal in Poland"
+          ],
+          "answer": 0,
+          "why": "Fees are certain and compound every year, while extra skill is uncertain."
+        },
+        {
+          "id": "mutual_and_index_funds.f4.q2",
+          "q": "What is the 'behaviour gap'?",
+          "options": [
+            "The gap between bond and share prices",
+            "Investors earn less due to badly timed trades",
+            "The time between buying and selling"
+          ],
+          "answer": 1,
+          "why": "Investors earn less than their funds because of badly timed buying and selling: 8.7% vs 9.9% a year (US, 10 years to 2025).",
+          "sources": [
+            "https://www.morningstar.com/business/insights/research/mind-the-gap-2025"
+          ]
+        }
+      ]
+    }
+  ]
+}

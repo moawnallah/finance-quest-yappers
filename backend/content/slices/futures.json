@@ -1,0 +1,122 @@
+{
+  "key": "futures",
+  "content_version": 1,
+  "label": "Futures",
+  "risk": 5,
+  "start": false,
+  "nodes": [
+    {
+      "id": "futures.u1",
+      "title": "What a future is",
+      "questions": [
+        {
+          "id": "futures.u1.q1",
+          "q": "What is a futures contract?",
+          "options": [
+            "An agreement to buy or sell at a set price on a future date",
+            "A right you can ignore",
+            "A type of savings bond"
+          ],
+          "answer": 0,
+          "why": "An agreement to buy or sell something at a set price on a future date; both sides must follow through."
+        },
+        {
+          "id": "futures.u1.q2",
+          "q": "Option vs future: what is the key difference?",
+          "options": [
+            "Future is a right; option is an obligation",
+            "Option is a right; future is an obligation",
+            "No difference"
+          ],
+          "answer": 1,
+          "why": "An option is a right; a future is an obligation."
+        }
+      ]
+    },
+    {
+      "id": "futures.u2",
+      "title": "Margin and leverage",
+      "after": [
+        "futures.u1"
+      ],
+      "questions": [
+        {
+          "id": "futures.u2.q1",
+          "q": "What is margin?",
+          "options": [
+            "A fee paid once a year",
+            "A deposit you must keep; you may need to add money",
+            "Your profit after tax"
+          ],
+          "answer": 1,
+          "why": "A deposit you must keep to hold the position; if prices move against you, you must add money."
+        },
+        {
+          "id": "futures.u2.q2",
+          "q": "Can you lose more than you put in with leveraged futures?",
+          "options": [
+            "No, never",
+            "Only on weekends",
+            "Yes"
+          ],
+          "answer": 2,
+          "why": "Yes, losses can exceed the initial deposit."
+        }
+      ]
+    },
+    {
+      "id": "futures.u3",
+      "title": "Real-world uses",
+      "after": [
+        "futures.u2"
+      ],
+      "questions": [
+        {
+          "id": "futures.u3.q1",
+          "q": "Why do farmers or airlines use futures?",
+          "options": [
+            "To avoid paying tax",
+            "To get a bank loan",
+            "To lock in prices and reduce uncertainty"
+          ],
+          "answer": 2,
+          "why": "To lock in prices and reduce uncertainty."
+        }
+      ]
+    },
+    {
+      "id": "futures.u4",
+      "title": "CFDs",
+      "after": [
+        "futures.u2"
+      ],
+      "questions": [
+        {
+          "id": "futures.u4.q1",
+          "q": "What is a CFD?",
+          "options": [
+            "A leveraged contract on an asset's price difference",
+            "Ownership of real shares",
+            "A government bond"
+          ],
+          "answer": 0,
+          "why": "A contract that pays the price difference of an asset without owning it, usually with leverage."
+        },
+        {
+          "id": "futures.u4.q2",
+          "q": "An ad promises 'easy profits trading CFDs'. What do you do?",
+          "options": [
+            "Sign up, it sounds easy",
+            "Check the firm in the KNF register first",
+            "Ignore it"
+          ],
+          "feedback": [
+            "CFDs are leveraged; most retail traders lose money. 'Easy profits' is a red flag.",
+            "Good habit: check the licence and the KNF warning list before anything.",
+            "Fine choice: there's no need to trade leveraged products to build savings."
+          ]
+        }
+      ]
+    }
+  ]
+}

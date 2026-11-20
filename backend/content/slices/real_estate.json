@@ -1,0 +1,108 @@
+{
+  "key": "real_estate",
+  "content_version": 1,
+  "label": "Real estate",
+  "risk": 3,
+  "start": false,
+  "nodes": [
+    {
+      "id": "real_estate.r1",
+      "title": "Ways to invest",
+      "questions": [
+        {
+          "id": "real_estate.r1.q1",
+          "q": "What are the main ways to invest in real estate?",
+          "options": [
+            "Buy property, or property funds/REITs",
+            "Only by building a house",
+            "Only through bank deposits"
+          ],
+          "answer": 0,
+          "why": "Buying property directly, or buying property funds or REITs."
+        },
+        {
+          "id": "real_estate.r1.q2",
+          "q": "What is a REIT?",
+          "options": [
+            "A mortgage",
+            "A company or fund owning rental property, traded like a share",
+            "A building permit"
+          ],
+          "answer": 1,
+          "why": "A company or fund that owns income-producing property and trades like a share."
+        }
+      ]
+    },
+    {
+      "id": "real_estate.r2",
+      "title": "Costs and selling",
+      "after": [
+        "real_estate.r1"
+      ],
+      "questions": [
+        {
+          "id": "real_estate.r2.q1",
+          "q": "Why is property called illiquid?",
+          "options": [
+            "Its price never changes",
+            "It is slow and costly to sell",
+            "It cannot be insured"
+          ],
+          "answer": 1,
+          "why": "It can take months to sell, and buying and selling have high costs."
+        },
+        {
+          "id": "real_estate.r2.q2",
+          "q": "What ongoing costs come with a rental flat?",
+          "options": [
+            "None after you buy it",
+            "Only the electricity bill",
+            "Maintenance, repairs, taxes, insurance, empty months"
+          ],
+          "answer": 2,
+          "why": "Maintenance, repairs, taxes, insurance and empty months."
+        }
+      ]
+    },
+    {
+      "id": "real_estate.r3",
+      "title": "Concentration risk",
+      "after": [
+        "real_estate.r2"
+      ],
+      "questions": [
+        {
+          "id": "real_estate.r3.q1",
+          "q": "Why is one flat a concentrated investment?",
+          "options": [
+            "Flats always lose value",
+            "It is spread across many cities",
+            "All money depends on one building and place"
+          ],
+          "answer": 2,
+          "why": "All the money depends on one building in one location."
+        }
+      ]
+    },
+    {
+      "id": "real_estate.r4",
+      "title": "Spreading property risk",
+      "after": [
+        "real_estate.r3"
+      ],
+      "questions": [
+        {
+          "id": "real_estate.r4.q1",
+          "q": "How can a small investor spread property risk?",
+          "options": [
+            "Property funds or REITs with many buildings",
+            "Buying one bigger flat",
+            "Keeping the deed at home"
+          ],
+          "answer": 0,
+          "why": "Through property funds or REITs that hold many buildings."
+        }
+      ]
+    }
+  ]
+}

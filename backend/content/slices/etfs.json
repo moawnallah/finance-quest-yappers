@@ -1,0 +1,135 @@
+{
+  "key": "etfs",
+  "content_version": 1,
+  "label": "Exchange traded funds (ETFs)",
+  "risk": 3,
+  "start": false,
+  "nodes": [
+    {
+      "id": "etfs.e1",
+      "title": "What an ETF is",
+      "questions": [
+        {
+          "id": "etfs.e1.q1",
+          "q": "What is an ETF?",
+          "options": [
+            "A type of bank deposit",
+            "A government bond",
+            "A fund traded on an exchange like a share"
+          ],
+          "answer": 2,
+          "why": "A fund traded on a stock exchange like a share, usually tracking an index at low cost."
+        },
+        {
+          "id": "etfs.e1.q2",
+          "q": "How do you buy an ETF?",
+          "options": [
+            "Through a brokerage account",
+            "Only at a post office",
+            "Only by phone from the fund manager"
+          ],
+          "answer": 0,
+          "why": "Through a brokerage account, on a stock exchange, like a share."
+        }
+      ]
+    },
+    {
+      "id": "etfs.e2",
+      "title": "ETF costs",
+      "after": [
+        "etfs.e1"
+      ],
+      "questions": [
+        {
+          "id": "etfs.e2.q1",
+          "q": "What do iShares Core MSCI World and Vanguard FTSE All-World cost a year?",
+          "options": [
+            "0.20% and 0.14%",
+            "2.0% and 1.5%",
+            "Nothing at all"
+          ],
+          "answer": 0,
+          "why": "0.20% and 0.14%.",
+          "sources": [
+            "https://www.justetf.com/en/etf-profile.html?isin=IE00B4L5Y983"
+          ]
+        },
+        {
+          "id": "etfs.e2.q2",
+          "q": "What does ETFBW20TR on GPW track, and what does it cost?",
+          "options": [
+            "Gold; 2% a year",
+            "WIG20TR; 0.47% a year",
+            "The S&P 500; free"
+          ],
+          "answer": 1,
+          "why": "The WIG20TR index; 0.47% a year.",
+          "sources": [
+            "https://betaetf.pl/nasze-fundusze"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "etfs.e3",
+      "title": "Choosing an ETF",
+      "after": [
+        "etfs.e2"
+      ],
+      "questions": [
+        {
+          "id": "etfs.e3.q1",
+          "q": "Accumulating vs distributing ETF: what is the difference?",
+          "options": [
+            "Accumulating is riskier by law",
+            "Accumulating reinvests dividends; distributing pays them out",
+            "There is no difference"
+          ],
+          "answer": 1,
+          "why": "Accumulating reinvests dividends; distributing pays them out."
+        },
+        {
+          "id": "etfs.e3.q2",
+          "q": "Why check an ETF's currency?",
+          "options": [
+            "Only euro ETFs can be bought in Poland",
+            "Currency never matters",
+            "Currency moves add to your result"
+          ],
+          "answer": 2,
+          "why": "A fund priced in another currency adds currency swings to your result."
+        }
+      ]
+    },
+    {
+      "id": "etfs.e4",
+      "title": "Your first ETF plan",
+      "after": [
+        "etfs.e3"
+      ],
+      "questions": [
+        {
+          "id": "etfs.e4.q1",
+          "q": "What should a first investing plan contain?",
+          "options": [
+            "A tip from social media",
+            "Only the fund's name",
+            "Amount, fund, day of month, review date"
+          ],
+          "answer": 2,
+          "why": "An amount, a fund, a day of the month, and when you will review it."
+        },
+        {
+          "id": "etfs.e4.q2",
+          "q": "How much could you invest each month without stress?",
+          "options": [
+            "Under 100 zl",
+            "100-300 zl",
+            "300-1,000 zl",
+            "Over 1,000 zl"
+          ]
+        }
+      ]
+    }
+  ]
+}

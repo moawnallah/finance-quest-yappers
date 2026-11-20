@@ -1,0 +1,18 @@
+{
+  "content_version": 1,
+  "order": [
+    "bonds",
+    "mutual_and_index_funds",
+    "etfs",
+    "real_estate",
+    "money_market",
+    "guaranteed_products",
+    "options",
+    "futures",
+    "currencies",
+    "precious_metals",
+    "variable_life_annuities",
+    "dpp_limited_partnerships",
+    "stocks"
+  ]
+}

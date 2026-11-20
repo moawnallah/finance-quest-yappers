@@ -1,0 +1,113 @@
+{
+  "source": "Flash Eurobarometer 525, Monitoring the level of financial literacy in the EU (fieldwork Mar-Apr 2023; Poland n=1,003)",
+  "url": "https://europa.eu/eurobarometer/surveys/detail/2953",
+  "quiz": [
+    {
+      "id": "eb_q2",
+      "topic": "compound interest",
+      "q": "Someone puts 100 zl into a savings account with a guaranteed 2% a year. No more payments, no withdrawals. How much is there after five years?",
+      "options": [
+        "More than 110 zl",
+        "Exactly 110 zl",
+        "Less than 110 zl"
+      ],
+      "answer": 0,
+      "why": "Each year's 2% is added on top of the last, so after five years it is a little over 110 zl.",
+      "correct_pl": 36,
+      "correct_eu": 45
+    },
+    {
+      "id": "eb_q3",
+      "topic": "inflation",
+      "q": "You will get 1,000 zl in one year, and inflation that year is 2%. With that 1,000 zl, will you be able to buy:",
+      "options": [
+        "More than today",
+        "The same amount",
+        "Less than today"
+      ],
+      "answer": 2,
+      "why": "Prices rise 2%, so the same 1,000 zl buys less.",
+      "correct_pl": 68,
+      "correct_eu": 65
+    },
+    {
+      "id": "eb_q4",
+      "topic": "bonds",
+      "q": "If interest rates rise, what typically happens to bond prices?",
+      "options": [
+        "They rise",
+        "They fall",
+        "They stay the same"
+      ],
+      "answer": 1,
+      "why": "New bonds then pay more, so existing bonds become less attractive and their price falls.",
+      "correct_pl": 22,
+      "correct_eu": 20
+    },
+    {
+      "id": "eb_q5",
+      "topic": "risk and return",
+      "q": "An investment with a higher return is likely to be:",
+      "options": [
+        "More risky than one with a lower return",
+        "Less risky",
+        "Equally risky"
+      ],
+      "answer": 0,
+      "why": "Higher possible returns come with bigger possible swings and losses.",
+      "correct_pl": 57,
+      "correct_eu": 66
+    },
+    {
+      "id": "eb_q6",
+      "topic": "diversification",
+      "q": "An investment in a wide range of company shares is likely to be:",
+      "options": [
+        "More risky than a single share",
+        "Less risky than a single share",
+        "Equally risky"
+      ],
+      "answer": 1,
+      "why": "Spreading money across many companies means one failure hurts less.",
+      "correct_pl": 54,
+      "correct_eu": 56
+    }
+  ],
+  "score_bands": {
+    "high_4_or_5_correct": {
+      "pl": 20,
+      "eu": 26
+    },
+    "medium_2_or_3_correct": {
+      "pl": 55,
+      "eu": 50
+    },
+    "low_0_or_1_correct": {
+      "pl": 25,
+      "eu": 24
+    }
+  },
+  "context": {
+    "rate_own_knowledge_high_pct": {
+      "pl": 40,
+      "eu": 30
+    },
+    "confident_about_retirement_pct": {
+      "pl": 20,
+      "eu": 42
+    },
+    "hold_investment_product_pct": {
+      "pl": 15,
+      "eu": 24
+    },
+    "no_emergency_savings_pct": {
+      "pl": 20,
+      "eu": 16
+    },
+    "overall_literacy_high_pct": {
+      "pl": 15,
+      "eu": 18
+    }
+  },
+  "note": "Based on Flash Eurobarometer 525 questions Q2-Q6. Amounts shown 1:1 in zl (100 zl, 1,000 zl), no exchange-rate conversion; correct answers are unaffected because they depend only on percentages. Wording slightly shortened for mobile; the exact Polish questionnaire wording was not checked. Present as 'based on the EU's Eurobarometer questions', not as the identical official test. Percentages = % giving the correct answer, from the report's data annex."
+}

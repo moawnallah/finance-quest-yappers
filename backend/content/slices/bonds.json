@@ -1,0 +1,133 @@
+{
+  "key": "bonds",
+  "content_version": 1,
+  "label": "Bonds",
+  "risk": 2,
+  "start": true,
+  "nodes": [
+    {
+      "id": "bonds.b1",
+      "title": "What a bond is",
+      "questions": [
+        {
+          "id": "bonds.b1.q1",
+          "q": "What is a bond?",
+          "options": [
+            "A share of ownership in a company",
+            "A savings account at a bank",
+            "A loan you give to a government or company"
+          ],
+          "answer": 2,
+          "why": "A loan to a government or company that is paid back with agreed payments."
+        },
+        {
+          "id": "bonds.b1.q2",
+          "q": "Who issues bonds?",
+          "options": [
+            "Governments and companies",
+            "Only private individuals",
+            "Only stock exchanges"
+          ],
+          "answer": 0,
+          "why": "Governments and companies that want to borrow money."
+        }
+      ]
+    },
+    {
+      "id": "bonds.b2",
+      "title": "Bond risks",
+      "after": [
+        "bonds.b1"
+      ],
+      "questions": [
+        {
+          "id": "bonds.b2.q1",
+          "q": "What happens if the issuer cannot pay?",
+          "options": [
+            "You can lose part or all of what you lent",
+            "The state always pays you back instead",
+            "The bond turns into a share"
+          ],
+          "answer": 0,
+          "why": "Investors can lose part or all of what they lent (default risk)."
+        },
+        {
+          "id": "bonds.b2.q2",
+          "q": "Why can a bond's price fall before it matures?",
+          "options": [
+            "Bonds lose value every day by law",
+            "Newer bonds offer better payments",
+            "The issuer prints more money"
+          ],
+          "answer": 1,
+          "why": "If newer bonds offer better payments, older ones become less attractive and their price drops."
+        }
+      ]
+    },
+    {
+      "id": "bonds.b3",
+      "title": "Polish retail savings bonds",
+      "after": [
+        "bonds.b1"
+      ],
+      "questions": [
+        {
+          "id": "bonds.b3.q1",
+          "q": "Who issues Polish retail savings bonds?",
+          "options": [
+            "Commercial banks",
+            "The State Treasury",
+            "The Warsaw Stock Exchange"
+          ],
+          "answer": 1,
+          "why": "The State Treasury.",
+          "sources": [
+            "https://www.obligacjeskarbowe.pl/tabela-odsetkowa/"
+          ]
+        },
+        {
+          "id": "bonds.b3.q2",
+          "q": "Which usually swings less: bonds or shares?",
+          "options": [
+            "Shares",
+            "They always swing the same",
+            "Bonds"
+          ],
+          "answer": 2,
+          "why": "Bonds."
+        }
+      ]
+    },
+    {
+      "id": "bonds.b4",
+      "title": "Bonds in a portfolio",
+      "after": [
+        "bonds.b2",
+        "bonds.b3"
+      ],
+      "questions": [
+        {
+          "id": "bonds.b4.q1",
+          "q": "Why hold bonds next to shares?",
+          "options": [
+            "They always earn more than shares",
+            "They remove all risk",
+            "They usually swing less and soften falls"
+          ],
+          "answer": 2,
+          "why": "They usually swing less, which can soften falls in a mixed portfolio."
+        },
+        {
+          "id": "bonds.b4.q2",
+          "q": "How much of your money would you want in calmer assets?",
+          "options": [
+            "Less than 25%",
+            "25-50%",
+            "50-75%",
+            "More than 75%"
+          ]
+        }
+      ]
+    }
+  ]
+}

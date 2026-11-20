@@ -1,0 +1,106 @@
+{
+  "key": "money_market",
+  "content_version": 1,
+  "label": "Money market securities & funds",
+  "risk": 1,
+  "start": true,
+  "nodes": [
+    {
+      "id": "money_market.m1",
+      "title": "What it is",
+      "questions": [
+        {
+          "id": "money_market.m1.q1",
+          "q": "What are money market securities?",
+          "options": [
+            "Shares of new companies",
+            "Very short-term loans, usually a year or less",
+            "30-year government bonds"
+          ],
+          "answer": 1,
+          "why": "Very short-term loans to governments, banks and companies, usually a year or less."
+        },
+        {
+          "id": "money_market.m1.q2",
+          "q": "What is a money market fund?",
+          "options": [
+            "A fund of crypto coins",
+            "A fund of single stocks",
+            "A fund of short-term securities aiming for stable value"
+          ],
+          "answer": 2,
+          "why": "A fund that holds short-term securities to keep its value stable."
+        }
+      ]
+    },
+    {
+      "id": "money_market.m2",
+      "title": "The inflation check",
+      "after": [
+        "money_market.m1"
+      ],
+      "questions": [
+        {
+          "id": "money_market.m2.q1",
+          "q": "What does 'real return' mean?",
+          "options": [
+            "Return before any fees",
+            "The highest return ever reached",
+            "Return after subtracting inflation"
+          ],
+          "answer": 2,
+          "why": "The return after subtracting inflation.",
+          "sources": [
+            "https://stat.gov.pl/obszary-tematyczne/ceny-handel/wskazniki-cen/wskazniki-cen-towarow-i-uslug-konsumpcyjnych-pot-inflacja-/miesieczne-wskazniki-cen-towarow-i-uslug-konsumpcyjnych-od-1982-roku"
+          ]
+        },
+        {
+          "id": "money_market.m2.q2",
+          "q": "If inflation is 3.5% (GUS, Oct 2026) and your cash earns 3.0%, what is your real return?",
+          "options": [
+            "About -0.5%",
+            "About +6.5%",
+            "Exactly 0%"
+          ],
+          "answer": 0,
+          "why": "About -0.5%: you lose buying power.",
+          "sources": [
+            "https://stat.gov.pl/obszary-tematyczne/ceny-handel/wskazniki-cen/wskazniki-cen-towarow-i-uslug-konsumpcyjnych-pot-inflacja-/miesieczne-wskazniki-cen-towarow-i-uslug-konsumpcyjnych-od-1982-roku",
+            "https://static.nbp.pl/dane/statystyka/inne/stopy_proc_pl_srdW.xlsx"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "money_market.m3",
+      "title": "Role in your plan",
+      "after": [
+        "money_market.m2"
+      ],
+      "questions": [
+        {
+          "id": "money_market.m3.q1",
+          "q": "What is short-term cash best used for?",
+          "options": [
+            "Emergency fund and money needed soon",
+            "Long-term retirement growth",
+            "Betting on currency moves"
+          ],
+          "answer": 0,
+          "why": "An emergency fund and money you need soon."
+        },
+        {
+          "id": "money_market.m3.q2",
+          "q": "What is a common guideline for the size of an emergency fund?",
+          "options": [
+            "One week of costs",
+            "About 3 to 6 months of essential costs",
+            "Ten years of salary"
+          ],
+          "answer": 1,
+          "why": "Around 3 to 6 months of essential expenses (a rule of thumb, not a law)."
+        }
+      ]
+    }
+  ]
+}

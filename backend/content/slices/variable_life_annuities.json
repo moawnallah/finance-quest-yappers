@@ -1,0 +1,109 @@
+{
+  "key": "variable_life_annuities",
+  "content_version": 1,
+  "label": "Variable life insurance & variable annuities",
+  "risk": 3,
+  "start": false,
+  "nodes": [
+    {
+      "id": "variable_life_annuities.v1",
+      "title": "What it is",
+      "questions": [
+        {
+          "id": "variable_life_annuities.v1.q1",
+          "q": "What is variable life insurance?",
+          "options": [
+            "A guaranteed bank deposit",
+            "Life cover plus fund investments whose value moves",
+            "Car insurance"
+          ],
+          "answer": 1,
+          "why": "Life cover combined with investments in funds; its value moves with those funds."
+        },
+        {
+          "id": "variable_life_annuities.v1.q2",
+          "q": "What is an annuity?",
+          "options": [
+            "A one-time lottery win",
+            "A type of share",
+            "A contract turning savings into regular payments"
+          ],
+          "answer": 2,
+          "why": "A contract that turns savings into regular payments, often for life."
+        }
+      ]
+    },
+    {
+      "id": "variable_life_annuities.v2",
+      "title": "Costs",
+      "after": [
+        "variable_life_annuities.v1"
+      ],
+      "questions": [
+        {
+          "id": "variable_life_annuities.v2.q1",
+          "q": "Why compare fees carefully on these products?",
+          "options": [
+            "They are always free",
+            "Fees are set by law to zero",
+            "Wrappers can add fee layers on top of fund costs"
+          ],
+          "answer": 2,
+          "why": "Insurance wrappers can add layers of fees on top of fund costs."
+        },
+        {
+          "id": "variable_life_annuities.v2.q2",
+          "q": "What is a surrender charge?",
+          "options": [
+            "A fee for leaving the contract early",
+            "A bonus for staying",
+            "A tax refund"
+          ],
+          "answer": 0,
+          "why": "A fee for leaving the contract early."
+        }
+      ]
+    },
+    {
+      "id": "variable_life_annuities.v3",
+      "title": "In Poland",
+      "after": [
+        "variable_life_annuities.v1"
+      ],
+      "questions": [
+        {
+          "id": "variable_life_annuities.v3.q1",
+          "q": "What are investment-linked life insurance funds called in Poland?",
+          "options": [
+            "UFK",
+            "IKE",
+            "PPK"
+          ],
+          "answer": 0,
+          "why": "UFK, ubezpieczeniowe fundusze kapitalowe (insurance capital funds)."
+        }
+      ]
+    },
+    {
+      "id": "variable_life_annuities.v4",
+      "title": "Before you buy",
+      "after": [
+        "variable_life_annuities.v2",
+        "variable_life_annuities.v3"
+      ],
+      "questions": [
+        {
+          "id": "variable_life_annuities.v4.q1",
+          "q": "What should you compare before buying one?",
+          "options": [
+            "Only the brochure design",
+            "Total fees, lock-up, whether you need the insurance",
+            "Only the agent's opinion"
+          ],
+          "answer": 1,
+          "why": "Total fees, the lock-up period, and whether you actually need the insurance part."
+        }
+      ]
+    }
+  ]
+}

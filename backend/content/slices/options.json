@@ -1,0 +1,108 @@
+{
+  "key": "options",
+  "content_version": 1,
+  "label": "Options",
+  "risk": 5,
+  "start": false,
+  "nodes": [
+    {
+      "id": "options.o1",
+      "title": "What an option is",
+      "questions": [
+        {
+          "id": "options.o1.q1",
+          "q": "What is an option?",
+          "options": [
+            "The right, not obligation, to buy or sell at a set price",
+            "An obligation to buy at any price",
+            "A share in a company"
+          ],
+          "answer": 0,
+          "why": "A contract giving the right, but not the obligation, to buy or sell something at a set price before a set date."
+        },
+        {
+          "id": "options.o1.q2",
+          "q": "Call vs put: what is the difference?",
+          "options": [
+            "Call = sell; put = buy",
+            "Call = right to buy; put = right to sell",
+            "They are the same"
+          ],
+          "answer": 1,
+          "why": "A call is the right to buy; a put is the right to sell."
+        }
+      ]
+    },
+    {
+      "id": "options.o2",
+      "title": "Leverage and loss",
+      "after": [
+        "options.o1"
+      ],
+      "questions": [
+        {
+          "id": "options.o2.q1",
+          "q": "What can happen to the money paid for an option?",
+          "options": [
+            "It is always returned",
+            "It can expire worthless (lose 100%)",
+            "It doubles at expiry"
+          ],
+          "answer": 1,
+          "why": "The option can expire worthless, losing 100% of it."
+        },
+        {
+          "id": "options.o2.q2",
+          "q": "Why are options called leveraged?",
+          "options": [
+            "They are backed by gold",
+            "They have no price",
+            "Small price moves cause large % gains or losses"
+          ],
+          "answer": 2,
+          "why": "Small price moves cause large percentage gains or losses."
+        }
+      ]
+    },
+    {
+      "id": "options.o3",
+      "title": "What they are used for",
+      "after": [
+        "options.o2"
+      ],
+      "questions": [
+        {
+          "id": "options.o3.q1",
+          "q": "What is hedging?",
+          "options": [
+            "Buying more of the same stock",
+            "Hiding money from tax",
+            "Reducing the risk of a position you hold"
+          ],
+          "answer": 2,
+          "why": "Using a contract to reduce the risk of a position you already hold."
+        }
+      ]
+    },
+    {
+      "id": "options.o4",
+      "title": "Who they suit",
+      "after": [
+        "options.o3"
+      ],
+      "questions": [
+        {
+          "id": "options.o4.q1",
+          "q": "Are options suited to beginners building long-term savings?",
+          "options": [
+            "Generally no",
+            "Yes, they are the safest start",
+            "Only for children"
+          ],
+          "answer": 0,
+          "why": "Generally no: they are complex and can lose value fast."
+        }
+      ]
+    }
+  ]
+}

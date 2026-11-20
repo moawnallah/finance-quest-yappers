@@ -1,0 +1,125 @@
+{
+  "key": "precious_metals",
+  "content_version": 1,
+  "label": "Precious metals",
+  "risk": 3,
+  "start": false,
+  "nodes": [
+    {
+      "id": "precious_metals.p1",
+      "title": "Gold basics",
+      "questions": [
+        {
+          "id": "precious_metals.p1.q1",
+          "q": "How is gold usually used in a portfolio?",
+          "options": [
+            "As a guaranteed income source",
+            "As a store of value not tied to any company",
+            "As a short-term loan"
+          ],
+          "answer": 1,
+          "why": "As a store of value that does not depend on any company; its price can still swing a lot.",
+          "sources": [
+            "https://api.nbp.pl/api/cenyzlota/last/3?format=json"
+          ]
+        },
+        {
+          "id": "precious_metals.p1.q2",
+          "q": "What was the NBP gold price on 20 Nov 2026?",
+          "options": [
+            "48.12 zl per gram",
+            "4,812 zl per gram",
+            "481.23 zl per gram"
+          ],
+          "answer": 2,
+          "why": "481.23 zl per gram.",
+          "sources": [
+            "https://api.nbp.pl/api/cenyzlota/last/3?format=json"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "precious_metals.p2",
+      "title": "Ways to own it",
+      "after": [
+        "precious_metals.p1"
+      ],
+      "questions": [
+        {
+          "id": "precious_metals.p2.q1",
+          "q": "What are common ways to own gold?",
+          "options": [
+            "Only through bank deposits",
+            "Only by mining it",
+            "Bars or coins, or funds tracking gold"
+          ],
+          "answer": 2,
+          "why": "Physical bars or coins, or funds that track the gold price."
+        },
+        {
+          "id": "precious_metals.p2.q2",
+          "q": "What extra costs come with physical gold?",
+          "options": [
+            "Dealer buy-sell gap and storage",
+            "Monthly dividends you must pay",
+            "No costs at all"
+          ],
+          "answer": 0,
+          "why": "The dealer's gap between buy and sell prices, plus safe storage."
+        }
+      ]
+    },
+    {
+      "id": "precious_metals.p3",
+      "title": "Price swings",
+      "after": [
+        "precious_metals.p1"
+      ],
+      "questions": [
+        {
+          "id": "precious_metals.p3.q1",
+          "q": "Does gold pay dividends?",
+          "options": [
+            "No",
+            "Yes, every month",
+            "Yes, set by NBP"
+          ],
+          "answer": 0,
+          "why": "No. Its return comes only from price changes."
+        },
+        {
+          "id": "precious_metals.p3.q2",
+          "q": "Does the gold price always rise?",
+          "options": [
+            "Yes, always",
+            "No, it can fall for years",
+            "It never changes"
+          ],
+          "answer": 1,
+          "why": "No. It can fall and stay low for years."
+        }
+      ]
+    },
+    {
+      "id": "precious_metals.p4",
+      "title": "Gold in your plan",
+      "after": [
+        "precious_metals.p2",
+        "precious_metals.p3"
+      ],
+      "questions": [
+        {
+          "id": "precious_metals.p4.q1",
+          "q": "Would you hold some gold, and why?",
+          "options": [
+            "No",
+            "A small part, as a store of value",
+            "A larger part",
+            "Not sure yet"
+          ]
+        }
+      ]
+    }
+  ]
+}

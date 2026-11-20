@@ -1,0 +1,183 @@
+{
+  "key": "stocks",
+  "content_version": 1,
+  "label": "Stocks",
+  "risk": 4,
+  "start": true,
+  "nodes": [
+    {
+      "id": "stocks.s1",
+      "title": "What a share is",
+      "questions": [
+        {
+          "id": "stocks.s1.q1",
+          "q": "What do you own when you buy a share?",
+          "options": [
+            "A loan to the company",
+            "A small piece of a company",
+            "A fixed monthly payment"
+          ],
+          "answer": 1,
+          "why": "A small piece of ownership in a company."
+        },
+        {
+          "id": "stocks.s1.q2",
+          "q": "How can a shareholder make money?",
+          "options": [
+            "Fixed interest set by law",
+            "Only when the company closes",
+            "Price rises and dividends"
+          ],
+          "answer": 2,
+          "why": "From the share price rising and from dividends the company pays."
+        }
+      ]
+    },
+    {
+      "id": "stocks.s2",
+      "title": "Price vs total return",
+      "after": [
+        "stocks.s1"
+      ],
+      "questions": [
+        {
+          "id": "stocks.s2.q1",
+          "q": "What is a dividend?",
+          "options": [
+            "A loan repayment",
+            "A broker fee",
+            "Part of profit paid to shareholders"
+          ],
+          "answer": 2,
+          "why": "Part of a company's profit paid out to shareholders."
+        },
+        {
+          "id": "stocks.s2.q2",
+          "q": "Why does WIG20TR grow faster than WIG20?",
+          "options": [
+            "It counts reinvested dividends",
+            "It holds more companies",
+            "It is priced in euro"
+          ],
+          "answer": 0,
+          "why": "WIG20TR also counts reinvested dividends: 9,689.62 vs 4,204.70 on 19 Nov 2026.",
+          "sources": [
+            "https://www.gpw.pl/archiwum-notowan"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "stocks.s3",
+      "title": "Single-company risk",
+      "after": [
+        "stocks.s1"
+      ],
+      "questions": [
+        {
+          "id": "stocks.s3.q1",
+          "q": "How far did CD Projekt shares fall from August 2020 to September 2022?",
+          "options": [
+            "About 83%",
+            "About 8%",
+            "It rose 83%"
+          ],
+          "answer": 0,
+          "why": "About 83%, from 460.80 zl to 77.89 zl.",
+          "sources": [
+            "https://www.gpw.pl/archiwum-notowan"
+          ]
+        },
+        {
+          "id": "stocks.s3.q2",
+          "q": "Why is 'a company I know well' still risky?",
+          "options": [
+            "Known companies can't fail",
+            "Knowing it doesn't stop it falling or failing",
+            "It is never risky"
+          ],
+          "answer": 1,
+          "why": "Knowing a company does not stop it from falling or failing."
+        }
+      ]
+    },
+    {
+      "id": "stocks.s4",
+      "title": "Crashes and recovery",
+      "after": [
+        "stocks.s2",
+        "stocks.s3"
+      ],
+      "questions": [
+        {
+          "id": "stocks.s4.q1",
+          "q": "How far did the S&P 500 fall in 2007-2009 and in 2020?",
+          "options": [
+            "About -5% and -3%",
+            "About -57% and -34%",
+            "It never fell"
+          ],
+          "answer": 1,
+          "why": "About -57% (Oct 2007 to Mar 2009) and about -34% (Feb to Mar 2020).",
+          "sources": [
+            "https://finance.yahoo.com/quote/%5EGSPC/history/"
+          ]
+        },
+        {
+          "id": "stocks.s4.q2",
+          "q": "When did the S&P 500 get back to its old high after each crash?",
+          "options": [
+            "Never",
+            "The next day both times",
+            "March 2013 and August 2020"
+          ],
+          "answer": 2,
+          "why": "March 2013 after the 2008 crash, and August 2020 after the 2020 crash.",
+          "sources": [
+            "https://finance.yahoo.com/quote/%5EGSPC/history/"
+          ]
+        },
+        {
+          "id": "stocks.s4.q3",
+          "q": "Markets fall 30% in a month. What do you do: sell, hold or buy more?",
+          "options": [
+            "Sell everything now",
+            "Hold and keep my plan",
+            "Buy a bit more"
+          ],
+          "feedback": [
+            "Selling locks in the loss. In 2008 and 2020 the S&P 500 later recovered its old high (Mar 2013, Aug 2020).",
+            "Holding is what recovered in past crashes, if you don't need the money soon.",
+            "Buying at lower prices can help long-term, but only with spare money and a long horizon."
+          ],
+          "sources": [
+            "https://finance.yahoo.com/quote/%5EGSPC/history/"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "stocks.s5",
+      "title": "Tax on gains",
+      "after": [
+        "stocks.s4"
+      ],
+      "questions": [
+        {
+          "id": "stocks.s5.q1",
+          "q": "What tax do you pay on profit from selling shares in Poland?",
+          "options": [
+            "0%, shares are tax-free",
+            "50%, paid monthly",
+            "19%, declared on PIT-38"
+          ],
+          "answer": 2,
+          "why": "19%, declared on PIT-38.",
+          "sources": [
+            "https://www.podatki.gov.pl/pit/rozliczenie-ze-sprzedazy-akcji"
+          ]
+        }
+      ]
+    }
+  ]
+}

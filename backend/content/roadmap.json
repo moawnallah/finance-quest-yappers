@@ -1,0 +1,1665 @@
+{
+  "content_version": 1,
+  "order": [
+    "bonds",
+    "mutual_and_index_funds",
+    "etfs",
+    "real_estate",
+    "money_market",
+    "guaranteed_products",
+    "options",
+    "futures",
+    "currencies",
+    "precious_metals",
+    "variable_life_annuities",
+    "dpp_limited_partnerships",
+    "stocks"
+  ],
+  "slices": {
+    "bonds": {
+      "key": "bonds",
+      "content_version": 1,
+      "label": "Bonds",
+      "risk": 2,
+      "start": true,
+      "nodes": [
+        {
+          "id": "bonds.b1",
+          "title": "What a bond is",
+          "questions": [
+            {
+              "id": "bonds.b1.q1",
+              "q": "What is a bond?",
+              "options": [
+                "A share of ownership in a company",
+                "A savings account at a bank",
+                "A loan you give to a government or company"
+              ],
+              "answer": 2,
+              "why": "A loan to a government or company that is paid back with agreed payments."
+            },
+            {
+              "id": "bonds.b1.q2",
+              "q": "Who issues bonds?",
+              "options": [
+                "Governments and companies",
+                "Only private individuals",
+                "Only stock exchanges"
+              ],
+              "answer": 0,
+              "why": "Governments and companies that want to borrow money."
+            }
+          ]
+        },
+        {
+          "id": "bonds.b2",
+          "title": "Bond risks",
+          "after": [
+            "bonds.b1"
+          ],
+          "questions": [
+            {
+              "id": "bonds.b2.q1",
+              "q": "What happens if the issuer cannot pay?",
+              "options": [
+                "You can lose part or all of what you lent",
+                "The state always pays you back instead",
+                "The bond turns into a share"
+              ],
+              "answer": 0,
+              "why": "Investors can lose part or all of what they lent (default risk)."
+            },
+            {
+              "id": "bonds.b2.q2",
+              "q": "Why can a bond's price fall before it matures?",
+              "options": [
+                "Bonds lose value every day by law",
+                "Newer bonds offer better payments",
+                "The issuer prints more money"
+              ],
+              "answer": 1,
+              "why": "If newer bonds offer better payments, older ones become less attractive and their price drops."
+            }
+          ]
+        },
+        {
+          "id": "bonds.b3",
+          "title": "Polish retail savings bonds",
+          "after": [
+            "bonds.b1"
+          ],
+          "questions": [
+            {
+              "id": "bonds.b3.q1",
+              "q": "Who issues Polish retail savings bonds?",
+              "options": [
+                "Commercial banks",
+                "The State Treasury",
+                "The Warsaw Stock Exchange"
+              ],
+              "answer": 1,
+              "why": "The State Treasury.",
+              "sources": [
+                "https://www.obligacjeskarbowe.pl/tabela-odsetkowa/"
+              ]
+            },
+            {
+              "id": "bonds.b3.q2",
+              "q": "Which usually swings less: bonds or shares?",
+              "options": [
+                "Shares",
+                "They always swing the same",
+                "Bonds"
+              ],
+              "answer": 2,
+              "why": "Bonds."
+            }
+          ]
+        },
+        {
+          "id": "bonds.b4",
+          "title": "Bonds in a portfolio",
+          "after": [
+            "bonds.b2",
+            "bonds.b3"
+          ],
+          "questions": [
+            {
+              "id": "bonds.b4.q1",
+              "q": "Why hold bonds next to shares?",
+              "options": [
+                "They always earn more than shares",
+                "They remove all risk",
+                "They usually swing less and soften falls"
+              ],
+              "answer": 2,
+              "why": "They usually swing less, which can soften falls in a mixed portfolio."
+            },
+            {
+              "id": "bonds.b4.q2",
+              "q": "How much of your money would you want in calmer assets?",
+              "options": [
+                "Less than 25%",
+                "25-50%",
+                "50-75%",
+                "More than 75%"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "mutual_and_index_funds": {
+      "key": "mutual_and_index_funds",
+      "content_version": 1,
+      "label": "Mutual funds & index funds",
+      "risk": 3,
+      "start": true,
+      "nodes": [
+        {
+          "id": "mutual_and_index_funds.f1",
+          "title": "What a fund is",
+          "questions": [
+            {
+              "id": "mutual_and_index_funds.f1.q1",
+              "q": "What is an investment fund?",
+              "options": [
+                "Money from many people invested together",
+                "A loan from a bank",
+                "A single company's shares"
+              ],
+              "answer": 0,
+              "why": "A pot of money from many people, invested together by a manager."
+            },
+            {
+              "id": "mutual_and_index_funds.f1.q2",
+              "q": "What is an index fund?",
+              "options": [
+                "A fund whose manager picks hot stocks",
+                "A fund that copies an index",
+                "A fund that only holds cash"
+              ],
+              "answer": 1,
+              "why": "A fund that copies an index instead of picking individual stocks."
+            }
+          ]
+        },
+        {
+          "id": "mutual_and_index_funds.f2",
+          "title": "Diversification in one purchase",
+          "after": [
+            "mutual_and_index_funds.f1"
+          ],
+          "questions": [
+            {
+              "id": "mutual_and_index_funds.f2.q1",
+              "q": "Why does an index fund give instant diversification?",
+              "options": [
+                "It buys only the best company",
+                "It holds all companies in its index",
+                "It is guaranteed by the state"
+              ],
+              "answer": 1,
+              "why": "It holds all the companies in its index, so one purchase spreads money across many."
+            },
+            {
+              "id": "mutual_and_index_funds.f2.q2",
+              "q": "What does the MSCI World index cover?",
+              "options": [
+                "Only Polish companies",
+                "Only technology start-ups",
+                "Large and mid-size firms in many developed countries"
+              ],
+              "answer": 2,
+              "why": "Large and mid-size companies across many developed countries.",
+              "sources": [
+                "https://www.msci.com/end-of-day-data-search"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "mutual_and_index_funds.f3",
+          "title": "Fees",
+          "after": [
+            "mutual_and_index_funds.f1"
+          ],
+          "questions": [
+            {
+              "id": "mutual_and_index_funds.f3.q1",
+              "q": "What is a fund's yearly fee (TER)?",
+              "options": [
+                "A one-time fee when you buy",
+                "A tax paid to the state",
+                "The yearly cost as a % of your money"
+              ],
+              "answer": 2,
+              "why": "The yearly cost of a fund as a % of your money, taken automatically.",
+              "sources": [
+                "https://www.justetf.com/en/etf-profile.html?isin=IE00B4L5Y983"
+              ]
+            },
+            {
+              "id": "mutual_and_index_funds.f3.q2",
+              "q": "With 7% a year before fees, what is the difference after 20 years on 10,000 zl between a 0.2% and a 2% fee?",
+              "options": [
+                "About 10,700 zl",
+                "About 360 zl",
+                "No difference"
+              ],
+              "answer": 0,
+              "why": "About 10,700 zl (about 37,300 zl vs 26,500 zl).",
+              "sources": [
+                "https://www.justetf.com/en/etf-profile.html?isin=IE00B4L5Y983",
+                "https://www.analizy.pl/tylko-u-nas/22858/jest-rozporzadzenie-w-sprawie-oplat-funduszy-limit-to-2"
+              ]
+            },
+            {
+              "id": "mutual_and_index_funds.f3.q3",
+              "q": "What is the legal cap on the management fee of Polish open-ended funds?",
+              "options": [
+                "5.0% a year",
+                "2.0% a year",
+                "There is no cap"
+              ],
+              "answer": 1,
+              "why": "2.0% a year.",
+              "sources": [
+                "https://www.analizy.pl/tylko-u-nas/22858/jest-rozporzadzenie-w-sprawie-oplat-funduszy-limit-to-2"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "mutual_and_index_funds.f4",
+          "title": "Active vs passive",
+          "after": [
+            "mutual_and_index_funds.f2",
+            "mutual_and_index_funds.f3"
+          ],
+          "questions": [
+            {
+              "id": "mutual_and_index_funds.f4.q1",
+              "q": "Why do low-cost index funds often beat expensive active funds over time?",
+              "options": [
+                "Fees are certain and compound; skill is not",
+                "Index funds are guaranteed",
+                "Active funds are illegal in Poland"
+              ],
+              "answer": 0,
+              "why": "Fees are certain and compound every year, while extra skill is uncertain."
+            },
+            {
+              "id": "mutual_and_index_funds.f4.q2",
+              "q": "What is the 'behaviour gap'?",
+              "options": [
+                "The gap between bond and share prices",
+                "Investors earn less due to badly timed trades",
+                "The time between buying and selling"
+              ],
+              "answer": 1,
+              "why": "Investors earn less than their funds because of badly timed buying and selling: 8.7% vs 9.9% a year (US, 10 years to 2025).",
+              "sources": [
+                "https://www.morningstar.com/business/insights/research/mind-the-gap-2025"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "etfs": {
+      "key": "etfs",
+      "content_version": 1,
+      "label": "Exchange traded funds (ETFs)",
+      "risk": 3,
+      "start": false,
+      "nodes": [
+        {
+          "id": "etfs.e1",
+          "title": "What an ETF is",
+          "questions": [
+            {
+              "id": "etfs.e1.q1",
+              "q": "What is an ETF?",
+              "options": [
+                "A type of bank deposit",
+                "A government bond",
+                "A fund traded on an exchange like a share"
+              ],
+              "answer": 2,
+              "why": "A fund traded on a stock exchange like a share, usually tracking an index at low cost."
+            },
+            {
+              "id": "etfs.e1.q2",
+              "q": "How do you buy an ETF?",
+              "options": [
+                "Through a brokerage account",
+                "Only at a post office",
+                "Only by phone from the fund manager"
+              ],
+              "answer": 0,
+              "why": "Through a brokerage account, on a stock exchange, like a share."
+            }
+          ]
+        },
+        {
+          "id": "etfs.e2",
+          "title": "ETF costs",
+          "after": [
+            "etfs.e1"
+          ],
+          "questions": [
+            {
+              "id": "etfs.e2.q1",
+              "q": "What do iShares Core MSCI World and Vanguard FTSE All-World cost a year?",
+              "options": [
+                "0.20% and 0.14%",
+                "2.0% and 1.5%",
+                "Nothing at all"
+              ],
+              "answer": 0,
+              "why": "0.20% and 0.14%.",
+              "sources": [
+                "https://www.justetf.com/en/etf-profile.html?isin=IE00B4L5Y983"
+              ]
+            },
+            {
+              "id": "etfs.e2.q2",
+              "q": "What does ETFBW20TR on GPW track, and what does it cost?",
+              "options": [
+                "Gold; 2% a year",
+                "WIG20TR; 0.47% a year",
+                "The S&P 500; free"
+              ],
+              "answer": 1,
+              "why": "The WIG20TR index; 0.47% a year.",
+              "sources": [
+                "https://betaetf.pl/nasze-fundusze"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "etfs.e3",
+          "title": "Choosing an ETF",
+          "after": [
+            "etfs.e2"
+          ],
+          "questions": [
+            {
+              "id": "etfs.e3.q1",
+              "q": "Accumulating vs distributing ETF: what is the difference?",
+              "options": [
+                "Accumulating is riskier by law",
+                "Accumulating reinvests dividends; distributing pays them out",
+                "There is no difference"
+              ],
+              "answer": 1,
+              "why": "Accumulating reinvests dividends; distributing pays them out."
+            },
+            {
+              "id": "etfs.e3.q2",
+              "q": "Why check an ETF's currency?",
+              "options": [
+                "Only euro ETFs can be bought in Poland",
+                "Currency never matters",
+                "Currency moves add to your result"
+              ],
+              "answer": 2,
+              "why": "A fund priced in another currency adds currency swings to your result."
+            }
+          ]
+        },
+        {
+          "id": "etfs.e4",
+          "title": "Your first ETF plan",
+          "after": [
+            "etfs.e3"
+          ],
+          "questions": [
+            {
+              "id": "etfs.e4.q1",
+              "q": "What should a first investing plan contain?",
+              "options": [
+                "A tip from social media",
+                "Only the fund's name",
+                "Amount, fund, day of month, review date"
+              ],
+              "answer": 2,
+              "why": "An amount, a fund, a day of the month, and when you will review it."
+            },
+            {
+              "id": "etfs.e4.q2",
+              "q": "How much could you invest each month without stress?",
+              "options": [
+                "Under 100 zl",
+                "100-300 zl",
+                "300-1,000 zl",
+                "Over 1,000 zl"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "real_estate": {
+      "key": "real_estate",
+      "content_version": 1,
+      "label": "Real estate",
+      "risk": 3,
+      "start": false,
+      "nodes": [
+        {
+          "id": "real_estate.r1",
+          "title": "Ways to invest",
+          "questions": [
+            {
+              "id": "real_estate.r1.q1",
+              "q": "What are the main ways to invest in real estate?",
+              "options": [
+                "Buy property, or property funds/REITs",
+                "Only by building a house",
+                "Only through bank deposits"
+              ],
+              "answer": 0,
+              "why": "Buying property directly, or buying property funds or REITs."
+            },
+            {
+              "id": "real_estate.r1.q2",
+              "q": "What is a REIT?",
+              "options": [
+                "A mortgage",
+                "A company or fund owning rental property, traded like a share",
+                "A building permit"
+              ],
+              "answer": 1,
+              "why": "A company or fund that owns income-producing property and trades like a share."
+            }
+          ]
+        },
+        {
+          "id": "real_estate.r2",
+          "title": "Costs and selling",
+          "after": [
+            "real_estate.r1"
+          ],
+          "questions": [
+            {
+              "id": "real_estate.r2.q1",
+              "q": "Why is property called illiquid?",
+              "options": [
+                "Its price never changes",
+                "It is slow and costly to sell",
+                "It cannot be insured"
+              ],
+              "answer": 1,
+              "why": "It can take months to sell, and buying and selling have high costs."
+            },
+            {
+              "id": "real_estate.r2.q2",
+              "q": "What ongoing costs come with a rental flat?",
+              "options": [
+                "None after you buy it",
+                "Only the electricity bill",
+                "Maintenance, repairs, taxes, insurance, empty months"
+              ],
+              "answer": 2,
+              "why": "Maintenance, repairs, taxes, insurance and empty months."
+            }
+          ]
+        },
+        {
+          "id": "real_estate.r3",
+          "title": "Concentration risk",
+          "after": [
+            "real_estate.r2"
+          ],
+          "questions": [
+            {
+              "id": "real_estate.r3.q1",
+              "q": "Why is one flat a concentrated investment?",
+              "options": [
+                "Flats always lose value",
+                "It is spread across many cities",
+                "All money depends on one building and place"
+              ],
+              "answer": 2,
+              "why": "All the money depends on one building in one location."
+            }
+          ]
+        },
+        {
+          "id": "real_estate.r4",
+          "title": "Spreading property risk",
+          "after": [
+            "real_estate.r3"
+          ],
+          "questions": [
+            {
+              "id": "real_estate.r4.q1",
+              "q": "How can a small investor spread property risk?",
+              "options": [
+                "Property funds or REITs with many buildings",
+                "Buying one bigger flat",
+                "Keeping the deed at home"
+              ],
+              "answer": 0,
+              "why": "Through property funds or REITs that hold many buildings."
+            }
+          ]
+        }
+      ]
+    },
+    "money_market": {
+      "key": "money_market",
+      "content_version": 1,
+      "label": "Money market securities & funds",
+      "risk": 1,
+      "start": true,
+      "nodes": [
+        {
+          "id": "money_market.m1",
+          "title": "What it is",
+          "questions": [
+            {
+              "id": "money_market.m1.q1",
+              "q": "What are money market securities?",
+              "options": [
+                "Shares of new companies",
+                "Very short-term loans, usually a year or less",
+                "30-year government bonds"
+              ],
+              "answer": 1,
+              "why": "Very short-term loans to governments, banks and companies, usually a year or less."
+            },
+            {
+              "id": "money_market.m1.q2",
+              "q": "What is a money market fund?",
+              "options": [
+                "A fund of crypto coins",
+                "A fund of single stocks",
+                "A fund of short-term securities aiming for stable value"
+              ],
+              "answer": 2,
+              "why": "A fund that holds short-term securities to keep its value stable."
+            }
+          ]
+        },
+        {
+          "id": "money_market.m2",
+          "title": "The inflation check",
+          "after": [
+            "money_market.m1"
+          ],
+          "questions": [
+            {
+              "id": "money_market.m2.q1",
+              "q": "What does 'real return' mean?",
+              "options": [
+                "Return before any fees",
+                "The highest return ever reached",
+                "Return after subtracting inflation"
+              ],
+              "answer": 2,
+              "why": "The return after subtracting inflation.",
+              "sources": [
+                "https://stat.gov.pl/obszary-tematyczne/ceny-handel/wskazniki-cen/wskazniki-cen-towarow-i-uslug-konsumpcyjnych-pot-inflacja-/miesieczne-wskazniki-cen-towarow-i-uslug-konsumpcyjnych-od-1982-roku"
+              ]
+            },
+            {
+              "id": "money_market.m2.q2",
+              "q": "If inflation is 3.5% (GUS, Oct 2026) and your cash earns 3.0%, what is your real return?",
+              "options": [
+                "About -0.5%",
+                "About +6.5%",
+                "Exactly 0%"
+              ],
+              "answer": 0,
+              "why": "About -0.5%: you lose buying power.",
+              "sources": [
+                "https://stat.gov.pl/obszary-tematyczne/ceny-handel/wskazniki-cen/wskazniki-cen-towarow-i-uslug-konsumpcyjnych-pot-inflacja-/miesieczne-wskazniki-cen-towarow-i-uslug-konsumpcyjnych-od-1982-roku",
+                "https://static.nbp.pl/dane/statystyka/inne/stopy_proc_pl_srdW.xlsx"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "money_market.m3",
+          "title": "Role in your plan",
+          "after": [
+            "money_market.m2"
+          ],
+          "questions": [
+            {
+              "id": "money_market.m3.q1",
+              "q": "What is short-term cash best used for?",
+              "options": [
+                "Emergency fund and money needed soon",
+                "Long-term retirement growth",
+                "Betting on currency moves"
+              ],
+              "answer": 0,
+              "why": "An emergency fund and money you need soon."
+            },
+            {
+              "id": "money_market.m3.q2",
+              "q": "What is a common guideline for the size of an emergency fund?",
+              "options": [
+                "One week of costs",
+                "About 3 to 6 months of essential costs",
+                "Ten years of salary"
+              ],
+              "answer": 1,
+              "why": "Around 3 to 6 months of essential expenses (a rule of thumb, not a law)."
+            }
+          ]
+        }
+      ]
+    },
+    "guaranteed_products": {
+      "key": "guaranteed_products",
+      "content_version": 1,
+      "label": "Guaranteed insurance or banking products",
+      "risk": 1,
+      "start": true,
+      "nodes": [
+        {
+          "id": "guaranteed_products.g1",
+          "title": "Bank deposits",
+          "questions": [
+            {
+              "id": "guaranteed_products.g1.q1",
+              "q": "What is a bank deposit?",
+              "options": [
+                "A share in the bank",
+                "Money placed with a bank for a set time at an agreed rate",
+                "A loan the bank gives you"
+              ],
+              "answer": 1,
+              "why": "Money placed with a bank for a set time at an agreed rate."
+            },
+            {
+              "id": "guaranteed_products.g1.q2",
+              "q": "How are bank deposits protected in Poland?",
+              "options": [
+                "They are not protected at all",
+                "The bank covers any amount",
+                "BFG covers up to EUR 100,000 per person per bank"
+              ],
+              "answer": 2,
+              "why": "The Bank Guarantee Fund (BFG) covers up to the PLN equivalent of EUR 100,000 per person per bank.",
+              "sources": [
+                "https://www.bfg.pl"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "guaranteed_products.g2",
+          "title": "Guaranteed insurance products",
+          "after": [
+            "guaranteed_products.g1"
+          ],
+          "questions": [
+            {
+              "id": "guaranteed_products.g2.q1",
+              "q": "What does 'guaranteed' usually mean in an insurance product?",
+              "options": [
+                "You can never lose any money anywhere",
+                "Returns are always the highest",
+                "A minimum value or payout under contract terms"
+              ],
+              "answer": 2,
+              "why": "The insurer promises a minimum value or payout under the contract terms."
+            },
+            {
+              "id": "guaranteed_products.g2.q2",
+              "q": "What is the usual trade-off for a guarantee?",
+              "options": [
+                "Lower growth, often higher fees or lock-up",
+                "Higher growth with no costs",
+                "No trade-off at all"
+              ],
+              "answer": 0,
+              "why": "Lower expected growth, and often higher fees or a lock-up period."
+            }
+          ]
+        },
+        {
+          "id": "guaranteed_products.g3",
+          "title": "Inflation risk",
+          "after": [
+            "guaranteed_products.g1"
+          ],
+          "questions": [
+            {
+              "id": "guaranteed_products.g3.q1",
+              "q": "What is the main risk of 'safe' products?",
+              "options": [
+                "Returns below inflation shrink buying power",
+                "They crash like single stocks",
+                "They are illegal"
+              ],
+              "answer": 0,
+              "why": "Their return can fall below inflation, so your buying power shrinks.",
+              "sources": [
+                "https://stat.gov.pl/obszary-tematyczne/ceny-handel/wskazniki-cen/wskazniki-cen-towarow-i-uslug-konsumpcyjnych-pot-inflacja-/miesieczne-wskazniki-cen-towarow-i-uslug-konsumpcyjnych-od-1982-roku",
+                "https://static.nbp.pl/dane/statystyka/inne/stopy_proc_pl_srdW.xlsx"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "guaranteed_products.g4",
+          "title": "Red flags",
+          "after": [
+            "guaranteed_products.g2"
+          ],
+          "questions": [
+            {
+              "id": "guaranteed_products.g4.q1",
+              "q": "What does 'guaranteed high return' usually signal?",
+              "options": [
+                "A government-backed offer",
+                "A red flag",
+                "A normal savings account"
+              ],
+              "answer": 1,
+              "why": "A red flag: real investments with high returns always carry risk.",
+              "sources": [
+                "https://www.knf.gov.pl/dla_konsumenta/ostrzezenia_publiczne"
+              ]
+            },
+            {
+              "id": "guaranteed_products.g4.q2",
+              "q": "How do you check a seller is licensed?",
+              "options": [
+                "Ask the seller",
+                "Check their social media followers",
+                "KNF register and KNF warning list"
+              ],
+              "answer": 2,
+              "why": "Search the KNF register of supervised entities and the KNF public warning list.",
+              "sources": [
+                "https://www.knf.gov.pl/podmioty/wyszukiwarka_podmiotow",
+                "https://www.knf.gov.pl/dla_konsumenta/ostrzezenia_publiczne"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "options": {
+      "key": "options",
+      "content_version": 1,
+      "label": "Options",
+      "risk": 5,
+      "start": false,
+      "nodes": [
+        {
+          "id": "options.o1",
+          "title": "What an option is",
+          "questions": [
+            {
+              "id": "options.o1.q1",
+              "q": "What is an option?",
+              "options": [
+                "The right, not obligation, to buy or sell at a set price",
+                "An obligation to buy at any price",
+                "A share in a company"
+              ],
+              "answer": 0,
+              "why": "A contract giving the right, but not the obligation, to buy or sell something at a set price before a set date."
+            },
+            {
+              "id": "options.o1.q2",
+              "q": "Call vs put: what is the difference?",
+              "options": [
+                "Call = sell; put = buy",
+                "Call = right to buy; put = right to sell",
+                "They are the same"
+              ],
+              "answer": 1,
+              "why": "A call is the right to buy; a put is the right to sell."
+            }
+          ]
+        },
+        {
+          "id": "options.o2",
+          "title": "Leverage and loss",
+          "after": [
+            "options.o1"
+          ],
+          "questions": [
+            {
+              "id": "options.o2.q1",
+              "q": "What can happen to the money paid for an option?",
+              "options": [
+                "It is always returned",
+                "It can expire worthless (lose 100%)",
+                "It doubles at expiry"
+              ],
+              "answer": 1,
+              "why": "The option can expire worthless, losing 100% of it."
+            },
+            {
+              "id": "options.o2.q2",
+              "q": "Why are options called leveraged?",
+              "options": [
+                "They are backed by gold",
+                "They have no price",
+                "Small price moves cause large % gains or losses"
+              ],
+              "answer": 2,
+              "why": "Small price moves cause large percentage gains or losses."
+            }
+          ]
+        },
+        {
+          "id": "options.o3",
+          "title": "What they are used for",
+          "after": [
+            "options.o2"
+          ],
+          "questions": [
+            {
+              "id": "options.o3.q1",
+              "q": "What is hedging?",
+              "options": [
+                "Buying more of the same stock",
+                "Hiding money from tax",
+                "Reducing the risk of a position you hold"
+              ],
+              "answer": 2,
+              "why": "Using a contract to reduce the risk of a position you already hold."
+            }
+          ]
+        },
+        {
+          "id": "options.o4",
+          "title": "Who they suit",
+          "after": [
+            "options.o3"
+          ],
+          "questions": [
+            {
+              "id": "options.o4.q1",
+              "q": "Are options suited to beginners building long-term savings?",
+              "options": [
+                "Generally no",
+                "Yes, they are the safest start",
+                "Only for children"
+              ],
+              "answer": 0,
+              "why": "Generally no: they are complex and can lose value fast."
+            }
+          ]
+        }
+      ]
+    },
+    "futures": {
+      "key": "futures",
+      "content_version": 1,
+      "label": "Futures",
+      "risk": 5,
+      "start": false,
+      "nodes": [
+        {
+          "id": "futures.u1",
+          "title": "What a future is",
+          "questions": [
+            {
+              "id": "futures.u1.q1",
+              "q": "What is a futures contract?",
+              "options": [
+                "An agreement to buy or sell at a set price on a future date",
+                "A right you can ignore",
+                "A type of savings bond"
+              ],
+              "answer": 0,
+              "why": "An agreement to buy or sell something at a set price on a future date; both sides must follow through."
+            },
+            {
+              "id": "futures.u1.q2",
+              "q": "Option vs future: what is the key difference?",
+              "options": [
+                "Future is a right; option is an obligation",
+                "Option is a right; future is an obligation",
+                "No difference"
+              ],
+              "answer": 1,
+              "why": "An option is a right; a future is an obligation."
+            }
+          ]
+        },
+        {
+          "id": "futures.u2",
+          "title": "Margin and leverage",
+          "after": [
+            "futures.u1"
+          ],
+          "questions": [
+            {
+              "id": "futures.u2.q1",
+              "q": "What is margin?",
+              "options": [
+                "A fee paid once a year",
+                "A deposit you must keep; you may need to add money",
+                "Your profit after tax"
+              ],
+              "answer": 1,
+              "why": "A deposit you must keep to hold the position; if prices move against you, you must add money."
+            },
+            {
+              "id": "futures.u2.q2",
+              "q": "Can you lose more than you put in with leveraged futures?",
+              "options": [
+                "No, never",
+                "Only on weekends",
+                "Yes"
+              ],
+              "answer": 2,
+              "why": "Yes, losses can exceed the initial deposit."
+            }
+          ]
+        },
+        {
+          "id": "futures.u3",
+          "title": "Real-world uses",
+          "after": [
+            "futures.u2"
+          ],
+          "questions": [
+            {
+              "id": "futures.u3.q1",
+              "q": "Why do farmers or airlines use futures?",
+              "options": [
+                "To avoid paying tax",
+                "To get a bank loan",
+                "To lock in prices and reduce uncertainty"
+              ],
+              "answer": 2,
+              "why": "To lock in prices and reduce uncertainty."
+            }
+          ]
+        },
+        {
+          "id": "futures.u4",
+          "title": "CFDs",
+          "after": [
+            "futures.u2"
+          ],
+          "questions": [
+            {
+              "id": "futures.u4.q1",
+              "q": "What is a CFD?",
+              "options": [
+                "A leveraged contract on an asset's price difference",
+                "Ownership of real shares",
+                "A government bond"
+              ],
+              "answer": 0,
+              "why": "A contract that pays the price difference of an asset without owning it, usually with leverage."
+            },
+            {
+              "id": "futures.u4.q2",
+              "q": "An ad promises 'easy profits trading CFDs'. What do you do?",
+              "options": [
+                "Sign up, it sounds easy",
+                "Check the firm in the KNF register first",
+                "Ignore it"
+              ],
+              "feedback": [
+                "CFDs are leveraged; most retail traders lose money. 'Easy profits' is a red flag.",
+                "Good habit: check the licence and the KNF warning list before anything.",
+                "Fine choice: there's no need to trade leveraged products to build savings."
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "currencies": {
+      "key": "currencies",
+      "content_version": 1,
+      "label": "Currencies",
+      "risk": 4,
+      "start": false,
+      "nodes": [
+        {
+          "id": "currencies.c1",
+          "title": "Exchange rates",
+          "questions": [
+            {
+              "id": "currencies.c1.q1",
+              "q": "What is an exchange rate?",
+              "options": [
+                "The price of one currency in another",
+                "A bank's interest rate",
+                "The stock market's opening hour"
+              ],
+              "answer": 0,
+              "why": "The price of one currency in another, e.g. EUR/PLN."
+            },
+            {
+              "id": "currencies.c1.q2",
+              "q": "What was the NBP EUR/PLN mid rate on 19 Nov 2026?",
+              "options": [
+                "3.10 zl",
+                "4.4165 zl",
+                "5.90 zl"
+              ],
+              "answer": 1,
+              "why": "4.4165 zl per euro.",
+              "sources": [
+                "https://api.nbp.pl/api/exchangerates/rates/a/eur/?format=json"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "currencies.c2",
+          "title": "Currency risk",
+          "after": [
+            "currencies.c1"
+          ],
+          "questions": [
+            {
+              "id": "currencies.c2.q1",
+              "q": "You buy a US fund in zloty and the dollar weakens. What happens?",
+              "options": [
+                "Your zloty result rises",
+                "Your zloty result falls",
+                "Nothing changes"
+              ],
+              "answer": 1,
+              "why": "Your result in zloty falls, even if the fund's dollar price is unchanged."
+            },
+            {
+              "id": "currencies.c2.q2",
+              "q": "What is a PLN-hedged fund?",
+              "options": [
+                "It only holds Polish shares",
+                "It is guaranteed by NBP",
+                "It reduces currency effects on your zloty result"
+              ],
+              "answer": 2,
+              "why": "A fund that reduces the effect of currency moves on your zloty result.",
+              "sources": [
+                "https://betaetf.pl/nasze-fundusze"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "currencies.c3",
+          "title": "Conversion costs",
+          "after": [
+            "currencies.c1"
+          ],
+          "questions": [
+            {
+              "id": "currencies.c3.q1",
+              "q": "What is a currency conversion fee?",
+              "options": [
+                "A tax on dividends",
+                "A broker's monthly fee",
+                "A cost for changing zloty into another currency"
+              ],
+              "answer": 2,
+              "why": "A cost for changing zloty into another currency to buy foreign assets."
+            }
+          ]
+        },
+        {
+          "id": "currencies.c4",
+          "title": "Trading currencies",
+          "after": [
+            "currencies.c2"
+          ],
+          "questions": [
+            {
+              "id": "currencies.c4.q1",
+              "q": "Why is currency trading risky for beginners?",
+              "options": [
+                "Often leveraged and news-driven, so losses come fast",
+                "Currencies never move",
+                "It is only for banks by law"
+              ],
+              "answer": 0,
+              "why": "It is often leveraged and prices jump on news, so losses can be fast."
+            }
+          ]
+        }
+      ]
+    },
+    "precious_metals": {
+      "key": "precious_metals",
+      "content_version": 1,
+      "label": "Precious metals",
+      "risk": 3,
+      "start": false,
+      "nodes": [
+        {
+          "id": "precious_metals.p1",
+          "title": "Gold basics",
+          "questions": [
+            {
+              "id": "precious_metals.p1.q1",
+              "q": "How is gold usually used in a portfolio?",
+              "options": [
+                "As a guaranteed income source",
+                "As a store of value not tied to any company",
+                "As a short-term loan"
+              ],
+              "answer": 1,
+              "why": "As a store of value that does not depend on any company; its price can still swing a lot.",
+              "sources": [
+                "https://api.nbp.pl/api/cenyzlota/last/3?format=json"
+              ]
+            },
+            {
+              "id": "precious_metals.p1.q2",
+              "q": "What was the NBP gold price on 20 Nov 2026?",
+              "options": [
+                "48.12 zl per gram",
+                "4,812 zl per gram",
+                "481.23 zl per gram"
+              ],
+              "answer": 2,
+              "why": "481.23 zl per gram.",
+              "sources": [
+                "https://api.nbp.pl/api/cenyzlota/last/3?format=json"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "precious_metals.p2",
+          "title": "Ways to own it",
+          "after": [
+            "precious_metals.p1"
+          ],
+          "questions": [
+            {
+              "id": "precious_metals.p2.q1",
+              "q": "What are common ways to own gold?",
+              "options": [
+                "Only through bank deposits",
+                "Only by mining it",
+                "Bars or coins, or funds tracking gold"
+              ],
+              "answer": 2,
+              "why": "Physical bars or coins, or funds that track the gold price."
+            },
+            {
+              "id": "precious_metals.p2.q2",
+              "q": "What extra costs come with physical gold?",
+              "options": [
+                "Dealer buy-sell gap and storage",
+                "Monthly dividends you must pay",
+                "No costs at all"
+              ],
+              "answer": 0,
+              "why": "The dealer's gap between buy and sell prices, plus safe storage."
+            }
+          ]
+        },
+        {
+          "id": "precious_metals.p3",
+          "title": "Price swings",
+          "after": [
+            "precious_metals.p1"
+          ],
+          "questions": [
+            {
+              "id": "precious_metals.p3.q1",
+              "q": "Does gold pay dividends?",
+              "options": [
+                "No",
+                "Yes, every month",
+                "Yes, set by NBP"
+              ],
+              "answer": 0,
+              "why": "No. Its return comes only from price changes."
+            },
+            {
+              "id": "precious_metals.p3.q2",
+              "q": "Does the gold price always rise?",
+              "options": [
+                "Yes, always",
+                "No, it can fall for years",
+                "It never changes"
+              ],
+              "answer": 1,
+              "why": "No. It can fall and stay low for years."
+            }
+          ]
+        },
+        {
+          "id": "precious_metals.p4",
+          "title": "Gold in your plan",
+          "after": [
+            "precious_metals.p2",
+            "precious_metals.p3"
+          ],
+          "questions": [
+            {
+              "id": "precious_metals.p4.q1",
+              "q": "Would you hold some gold, and why?",
+              "options": [
+                "No",
+                "A small part, as a store of value",
+                "A larger part",
+                "Not sure yet"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "variable_life_annuities": {
+      "key": "variable_life_annuities",
+      "content_version": 1,
+      "label": "Variable life insurance & variable annuities",
+      "risk": 3,
+      "start": false,
+      "nodes": [
+        {
+          "id": "variable_life_annuities.v1",
+          "title": "What it is",
+          "questions": [
+            {
+              "id": "variable_life_annuities.v1.q1",
+              "q": "What is variable life insurance?",
+              "options": [
+                "A guaranteed bank deposit",
+                "Life cover plus fund investments whose value moves",
+                "Car insurance"
+              ],
+              "answer": 1,
+              "why": "Life cover combined with investments in funds; its value moves with those funds."
+            },
+            {
+              "id": "variable_life_annuities.v1.q2",
+              "q": "What is an annuity?",
+              "options": [
+                "A one-time lottery win",
+                "A type of share",
+                "A contract turning savings into regular payments"
+              ],
+              "answer": 2,
+              "why": "A contract that turns savings into regular payments, often for life."
+            }
+          ]
+        },
+        {
+          "id": "variable_life_annuities.v2",
+          "title": "Costs",
+          "after": [
+            "variable_life_annuities.v1"
+          ],
+          "questions": [
+            {
+              "id": "variable_life_annuities.v2.q1",
+              "q": "Why compare fees carefully on these products?",
+              "options": [
+                "They are always free",
+                "Fees are set by law to zero",
+                "Wrappers can add fee layers on top of fund costs"
+              ],
+              "answer": 2,
+              "why": "Insurance wrappers can add layers of fees on top of fund costs."
+            },
+            {
+              "id": "variable_life_annuities.v2.q2",
+              "q": "What is a surrender charge?",
+              "options": [
+                "A fee for leaving the contract early",
+                "A bonus for staying",
+                "A tax refund"
+              ],
+              "answer": 0,
+              "why": "A fee for leaving the contract early."
+            }
+          ]
+        },
+        {
+          "id": "variable_life_annuities.v3",
+          "title": "In Poland",
+          "after": [
+            "variable_life_annuities.v1"
+          ],
+          "questions": [
+            {
+              "id": "variable_life_annuities.v3.q1",
+              "q": "What are investment-linked life insurance funds called in Poland?",
+              "options": [
+                "UFK",
+                "IKE",
+                "PPK"
+              ],
+              "answer": 0,
+              "why": "UFK, ubezpieczeniowe fundusze kapitalowe (insurance capital funds)."
+            }
+          ]
+        },
+        {
+          "id": "variable_life_annuities.v4",
+          "title": "Before you buy",
+          "after": [
+            "variable_life_annuities.v2",
+            "variable_life_annuities.v3"
+          ],
+          "questions": [
+            {
+              "id": "variable_life_annuities.v4.q1",
+              "q": "What should you compare before buying one?",
+              "options": [
+                "Only the brochure design",
+                "Total fees, lock-up, whether you need the insurance",
+                "Only the agent's opinion"
+              ],
+              "answer": 1,
+              "why": "Total fees, the lock-up period, and whether you actually need the insurance part."
+            }
+          ]
+        }
+      ]
+    },
+    "dpp_limited_partnerships": {
+      "key": "dpp_limited_partnerships",
+      "content_version": 1,
+      "label": "Direct participation programs / limited partnerships",
+      "risk": 5,
+      "start": false,
+      "nodes": [
+        {
+          "id": "dpp_limited_partnerships.d1",
+          "title": "What it is",
+          "questions": [
+            {
+              "id": "dpp_limited_partnerships.d1.q1",
+              "q": "What is a limited partnership?",
+              "options": [
+                "A government bond",
+                "Passive investors fund a business a general partner runs",
+                "A bank deposit"
+              ],
+              "answer": 1,
+              "why": "A business where passive investors put in money and a general partner runs it; investors usually can lose only what they put in."
+            },
+            {
+              "id": "dpp_limited_partnerships.d1.q2",
+              "q": "What is a direct participation program?",
+              "options": [
+                "A savings app",
+                "A pension account",
+                "A pooled investment passing a business's income to investors"
+              ],
+              "answer": 2,
+              "why": "A pooled investment that passes a business's income and tax effects to investors, often in property or energy."
+            }
+          ]
+        },
+        {
+          "id": "dpp_limited_partnerships.d2",
+          "title": "Locked-in money",
+          "after": [
+            "dpp_limited_partnerships.d1"
+          ],
+          "questions": [
+            {
+              "id": "dpp_limited_partnerships.d2.q1",
+              "q": "Why are these called illiquid?",
+              "options": [
+                "They trade every second",
+                "They are cash",
+                "Money is locked in for years, hard to sell"
+              ],
+              "answer": 2,
+              "why": "Money is often locked in for years with no easy way to sell."
+            }
+          ]
+        },
+        {
+          "id": "dpp_limited_partnerships.d3",
+          "title": "Risks and fees",
+          "after": [
+            "dpp_limited_partnerships.d2"
+          ],
+          "questions": [
+            {
+              "id": "dpp_limited_partnerships.d3.q1",
+              "q": "What are the main risks?",
+              "options": [
+                "Business failure, high fees, low transparency, lock-ups",
+                "None, they are guaranteed",
+                "Only currency risk"
+              ],
+              "answer": 0,
+              "why": "Business failure, high fees, little transparency and long lock-ups."
+            }
+          ]
+        },
+        {
+          "id": "dpp_limited_partnerships.d4",
+          "title": "Who they suit",
+          "after": [
+            "dpp_limited_partnerships.d3"
+          ],
+          "questions": [
+            {
+              "id": "dpp_limited_partnerships.d4.q1",
+              "q": "Who are these usually aimed at?",
+              "options": [
+                "Complete beginners",
+                "Experienced investors who can lock money away",
+                "Children's savings"
+              ],
+              "answer": 1,
+              "why": "Experienced investors who can lock money away for years."
+            },
+            {
+              "id": "dpp_limited_partnerships.d4.q2",
+              "q": "How do you check the seller is licensed?",
+              "options": [
+                "Trust online reviews",
+                "Ask a friend",
+                "Search the KNF register"
+              ],
+              "answer": 2,
+              "why": "Search the KNF register of supervised entities.",
+              "sources": [
+                "https://www.knf.gov.pl/podmioty/wyszukiwarka_podmiotow"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "stocks": {
+      "key": "stocks",
+      "content_version": 1,
+      "label": "Stocks",
+      "risk": 4,
+      "start": true,
+      "nodes": [
+        {
+          "id": "stocks.s1",
+          "title": "What a share is",
+          "questions": [
+            {
+              "id": "stocks.s1.q1",
+              "q": "What do you own when you buy a share?",
+              "options": [
+                "A loan to the company",
+                "A small piece of a company",
+                "A fixed monthly payment"
+              ],
+              "answer": 1,
+              "why": "A small piece of ownership in a company."
+            },
+            {
+              "id": "stocks.s1.q2",
+              "q": "How can a shareholder make money?",
+              "options": [
+                "Fixed interest set by law",
+                "Only when the company closes",
+                "Price rises and dividends"
+              ],
+              "answer": 2,
+              "why": "From the share price rising and from dividends the company pays."
+            }
+          ]
+        },
+        {
+          "id": "stocks.s2",
+          "title": "Price vs total return",
+          "after": [
+            "stocks.s1"
+          ],
+          "questions": [
+            {
+              "id": "stocks.s2.q1",
+              "q": "What is a dividend?",
+              "options": [
+                "A loan repayment",
+                "A broker fee",
+                "Part of profit paid to shareholders"
+              ],
+              "answer": 2,
+              "why": "Part of a company's profit paid out to shareholders."
+            },
+            {
+              "id": "stocks.s2.q2",
+              "q": "Why does WIG20TR grow faster than WIG20?",
+              "options": [
+                "It counts reinvested dividends",
+                "It holds more companies",
+                "It is priced in euro"
+              ],
+              "answer": 0,
+              "why": "WIG20TR also counts reinvested dividends: 9,689.62 vs 4,204.70 on 19 Nov 2026.",
+              "sources": [
+                "https://www.gpw.pl/archiwum-notowan"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "stocks.s3",
+          "title": "Single-company risk",
+          "after": [
+            "stocks.s1"
+          ],
+          "questions": [
+            {
+              "id": "stocks.s3.q1",
+              "q": "How far did CD Projekt shares fall from August 2020 to September 2022?",
+              "options": [
+                "About 83%",
+                "About 8%",
+                "It rose 83%"
+              ],
+              "answer": 0,
+              "why": "About 83%, from 460.80 zl to 77.89 zl.",
+              "sources": [
+                "https://www.gpw.pl/archiwum-notowan"
+              ]
+            },
+            {
+              "id": "stocks.s3.q2",
+              "q": "Why is 'a company I know well' still risky?",
+              "options": [
+                "Known companies can't fail",
+                "Knowing it doesn't stop it falling or failing",
+                "It is never risky"
+              ],
+              "answer": 1,
+              "why": "Knowing a company does not stop it from falling or failing."
+            }
+          ]
+        },
+        {
+          "id": "stocks.s4",
+          "title": "Crashes and recovery",
+          "after": [
+            "stocks.s2",
+            "stocks.s3"
+          ],
+          "questions": [
+            {
+              "id": "stocks.s4.q1",
+              "q": "How far did the S&P 500 fall in 2007-2009 and in 2020?",
+              "options": [
+                "About -5% and -3%",
+                "About -57% and -34%",
+                "It never fell"
+              ],
+              "answer": 1,
+              "why": "About -57% (Oct 2007 to Mar 2009) and about -34% (Feb to Mar 2020).",
+              "sources": [
+                "https://finance.yahoo.com/quote/%5EGSPC/history/"
+              ]
+            },
+            {
+              "id": "stocks.s4.q2",
+              "q": "When did the S&P 500 get back to its old high after each crash?",
+              "options": [
+                "Never",
+                "The next day both times",
+                "March 2013 and August 2020"
+              ],
+              "answer": 2,
+              "why": "March 2013 after the 2008 crash, and August 2020 after the 2020 crash.",
+              "sources": [
+                "https://finance.yahoo.com/quote/%5EGSPC/history/"
+              ]
+            },
+            {
+              "id": "stocks.s4.q3",
+              "q": "Markets fall 30% in a month. What do you do: sell, hold or buy more?",
+              "options": [
+                "Sell everything now",
+                "Hold and keep my plan",
+                "Buy a bit more"
+              ],
+              "feedback": [
+                "Selling locks in the loss. In 2008 and 2020 the S&P 500 later recovered its old high (Mar 2013, Aug 2020).",
+                "Holding is what recovered in past crashes, if you don't need the money soon.",
+                "Buying at lower prices can help long-term, but only with spare money and a long horizon."
+              ],
+              "sources": [
+                "https://finance.yahoo.com/quote/%5EGSPC/history/"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "stocks.s5",
+          "title": "Tax on gains",
+          "after": [
+            "stocks.s4"
+          ],
+          "questions": [
+            {
+              "id": "stocks.s5.q1",
+              "q": "What tax do you pay on profit from selling shares in Poland?",
+              "options": [
+                "0%, shares are tax-free",
+                "50%, paid monthly",
+                "19%, declared on PIT-38"
+              ],
+              "answer": 2,
+              "why": "19%, declared on PIT-38.",
+              "sources": [
+                "https://www.podatki.gov.pl/pit/rozliczenie-ze-sprzedazy-akcji"
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  }
+}
