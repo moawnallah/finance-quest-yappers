@@ -1,0 +1,1864 @@
+{
+ "POST /auth/session": {
+  "user_id": "dd884af8-cbf4-4a1a-813a-0847961c36cf",
+  "token": "rD6Iy010xW0-O70n0mR6cp6xF5eZz8VwvBSUCxK3jaw",
+  "variant": "B"
+ },
+ "GET /skills": [
+  {
+   "id": "D1",
+   "title": "What moves a price",
+   "panel": "DECISIONS",
+   "after": [
+    "I4"
+   ],
+   "live": false,
+   "cards": 0,
+   "items": 2,
+   "medium_tasks": 1,
+   "status": {
+    "node": "D1",
+    "easy_done": false,
+    "medium_passed": false,
+    "done": false,
+    "items_answered": 0,
+    "items_total": 2,
+    "item_average": 0.0,
+    "prerequisite": {
+     "items": [
+      "i4.e2",
+      "i4.e1"
+     ],
+     "passed": false
+    },
+    "test_out": {
+     "items": [
+      "d1.e2",
+      "d1.e1"
+     ],
+     "passed": false
+    },
+    "medium": {
+     "tasks": [
+      "d1.m1"
+     ],
+     "best_score": null
+    }
+   }
+  },
+  {
+   "id": "D3",
+   "title": "Macro news: CPI, rate decisions",
+   "panel": "DECISIONS",
+   "after": [
+    "F2"
+   ],
+   "live": false,
+   "cards": 0,
+   "items": 2,
+   "medium_tasks": 1,
+   "status": {
+    "node": "D3",
+    "easy_done": false,
+    "medium_passed": false,
+    "done": false,
+    "items_answered": 0,
+    "items_total": 2,
+    "item_average": 0.0,
+    "prerequisite": {
+     "items": [],
+     "passed": false
+    },
+    "test_out": {
+     "items": [
+      "d3.e2",
+      "d3.e1"
+     ],
+     "passed": false
+    },
+    "medium": {
+     "tasks": [
+      "d3.m1"
+     ],
+     "best_score": null
+    }
+   }
+  },
+  {
+   "id": "I1",
+   "title": "Risk as a spread of outcomes",
+   "panel": "INSTRUMENTS",
+   "after": [
+    "F3"
+   ],
+   "live": false,
+   "cards": 3,
+   "items": 3,
+   "medium_tasks": 0,
+   "status": {
+    "node": "I1",
+    "easy_done": false,
+    "medium_passed": false,
+    "done": false,
+    "items_answered": 0,
+    "items_total": 3,
+    "item_average": 0.0,
+    "prerequisite": {
+     "items": [],
+     "passed": false
+    },
+    "test_out": {
+     "items": [
+      "i1.e2",
+      "i1.e1"
+     ],
+     "passed": false
+    },
+    "medium": {
+     "tasks": [],
+     "best_score": null
+    }
+   }
+  },
+  {
+   "id": "I2",
+   "title": "Deposits and retail bonds",
+   "panel": "INSTRUMENTS",
+   "after": [
+    "I1",
+    "F2"
+   ],
+   "live": false,
+   "cards": 4,
+   "items": 3,
+   "medium_tasks": 0,
+   "status": {
+    "node": "I2",
+    "easy_done": false,
+    "medium_passed": false,
+    "done": false,
+    "items_answered": 0,
+    "items_total": 3,
+    "item_average": 0.0,
+    "prerequisite": {
+     "items": [
+      "i1.e1",
+      "i1.e2"
+     ],
+     "passed": false
+    },
+    "test_out": {
+     "items": [
+      "i2.e1",
+      "i2.e2"
+     ],
+     "passed": false
+    },
+    "medium": {
+     "tasks": [],
+     "best_score": null
+    }
+   }
+  },
+  {
+   "id": "I4",
+   "title": "One stock vs an index",
+   "panel": "INSTRUMENTS",
+   "after": [
+    "I1"
+   ],
+   "live": false,
+   "cards": 2,
+   "items": 3,
+   "medium_tasks": 0,
+   "status": {
+    "node": "I4",
+    "easy_done": false,
+    "medium_passed": false,
+    "done": false,
+    "items_answered": 0,
+    "items_total": 2,
+    "item_average": 0.0,
+    "prerequisite": {
+     "items": [
+      "i1.e1",
+      "i1.e2"
+     ],
+     "passed": false
+    },
+    "test_out": {
+     "items": [
+      "i4.e2",
+      "i4.e1"
+     ],
+     "passed": false
+    },
+    "medium": {
+     "tasks": [],
+     "best_score": null
+    }
+   }
+  },
+  {
+   "id": "I5",
+   "title": "Funds, ETFs, costs, the KID",
+   "panel": "INSTRUMENTS",
+   "after": [
+    "I4",
+    "F3"
+   ],
+   "live": false,
+   "cards": 4,
+   "items": 3,
+   "medium_tasks": 0,
+   "status": {
+    "node": "I5",
+    "easy_done": false,
+    "medium_passed": false,
+    "done": false,
+    "items_answered": 0,
+    "items_total": 3,
+    "item_average": 0.0,
+    "prerequisite": {
+     "items": [
+      "i4.e2",
+      "i4.e1"
+     ],
+     "passed": false
+    },
+    "test_out": {
+     "items": [
+      "i5.e1",
+      "i5.e2"
+     ],
+     "passed": false
+    },
+    "medium": {
+     "tasks": [],
+     "best_score": null
+    }
+   }
+  },
+  {
+   "id": "P1",
+   "title": "Diversification and correlation",
+   "panel": "PORTFOLIO",
+   "after": [
+    "I2",
+    "I4"
+   ],
+   "live": false,
+   "cards": 3,
+   "items": 3,
+   "medium_tasks": 0,
+   "status": {
+    "node": "P1",
+    "easy_done": false,
+    "medium_passed": false,
+    "done": false,
+    "items_answered": 0,
+    "items_total": 3,
+    "item_average": 0.0,
+    "prerequisite": {
+     "items": [
+      "i4.e2",
+      "i2.e1",
+      "i4.e1"
+     ],
+     "passed": false
+    },
+    "test_out": {
+     "items": [
+      "p1.e2",
+      "p1.e1"
+     ],
+     "passed": false
+    },
+    "medium": {
+     "tasks": [],
+     "best_score": null
+    }
+   }
+  },
+  {
+   "id": "P2",
+   "title": "Allocation by horizon",
+   "panel": "PORTFOLIO",
+   "after": [
+    "P1",
+    "S4"
+   ],
+   "live": false,
+   "cards": 3,
+   "items": 3,
+   "medium_tasks": 0,
+   "status": {
+    "node": "P2",
+    "easy_done": false,
+    "medium_passed": false,
+    "done": false,
+    "items_answered": 0,
+    "items_total": 3,
+    "item_average": 0.0,
+    "prerequisite": {
+     "items": [
+      "p1.e2",
+      "p1.e1"
+     ],
+     "passed": false
+    },
+    "test_out": {
+     "items": [
+      "p2.e2",
+      "p2.e1"
+     ],
+     "passed": false
+    },
+    "medium": {
+     "tasks": [],
+     "best_score": null
+    }
+   }
+  },
+  {
+   "id": "P4",
+   "title": "Rebalancing and discipline in a crash",
+   "panel": "PORTFOLIO",
+   "after": [
+    "P2"
+   ],
+   "live": false,
+   "cards": 3,
+   "items": 3,
+   "medium_tasks": 0,
+   "status": {
+    "node": "P4",
+    "easy_done": false,
+    "medium_passed": false,
+    "done": false,
+    "items_answered": 0,
+    "items_total": 2,
+    "item_average": 0.0,
+    "prerequisite": {
+     "items": [
+      "p2.e1",
+      "p2.e2"
+     ],
+     "passed": false
+    },
+    "test_out": {
+     "items": [
+      "p4.e2",
+      "p4.e1"
+     ],
+     "passed": false
+    },
+    "medium": {
+     "tasks": [],
+     "best_score": null
+    }
+   }
+  },
+  {
+   "id": "S1",
+   "title": "Emergency fund",
+   "panel": "SAFETY",
+   "after": [
+    "F1"
+   ],
+   "live": false,
+   "cards": 4,
+   "items": 3,
+   "medium_tasks": 0,
+   "status": {
+    "node": "S1",
+    "easy_done": false,
+    "medium_passed": false,
+    "done": false,
+    "items_answered": 0,
+    "items_total": 3,
+    "item_average": 0.0,
+    "prerequisite": {
+     "items": [],
+     "passed": false
+    },
+    "test_out": {
+     "items": [
+      "s1.e1",
+      "s1.e2"
+     ],
+     "passed": false
+    },
+    "medium": {
+     "tasks": [],
+     "best_score": null
+    }
+   }
+  }
+ ],
+ "GET /skills/D1": {
+  "node": {
+   "node": "D1",
+   "panel": "DECISIONS",
+   "title": "What moves a price",
+   "after": [
+    "I4"
+   ],
+   "status": "draft",
+   "cards": [],
+   "items": [
+    {
+     "id": "d1.e1",
+     "node": "D1",
+     "level": "easy",
+     "kind": "single",
+     "content_version": 1,
+     "scored": true,
+     "q": "A company reports a record profit, but its share price falls. What is the most likely reason?",
+     "options": [
+      "Investors expected even more, or the outlook got worse",
+      "The stock exchange made a mistake",
+      "Record profits are always bad news"
+     ],
+     "confidence": {
+      "min": 1,
+      "max": 5
+     }
+    },
+    {
+     "id": "d1.e2",
+     "node": "D1",
+     "level": "easy",
+     "kind": "multi",
+     "content_version": 1,
+     "scored": true,
+     "q": "Which of these can move a share price on results day? Pick all that apply.",
+     "options": [
+      "Results compared with what analysts expected",
+      "The company's outlook for the next quarter",
+      "The colour of the company's logo",
+      "A surprise change in interest rates on the same day"
+     ],
+     "confidence": {
+      "min": 1,
+      "max": 5
+     }
+    }
+   ]
+  },
+  "medium": [
+   {
+    "id": "d1.m1",
+    "node": "D1",
+    "level": "medium",
+    "variant": "day_x",
+    "content_version": 1,
+    "brief": "Company X, a large software firm, reports quarterly results today after the close. The share price has risen strongly over the past three months. Profit beat analyst estimates, but the company said growth will slow next quarter and spending on data centres will rise sharply. Over the next week, did the share price go up or down?",
+    "stimulus": [
+     {
+      "kind": "chart",
+      "type": "line",
+      "x_unit": "trading_day",
+      "series": [
+       {
+        "label": "Company X",
+        "unit": "index (cutoff = 100)",
+        "points": [
+         {
+          "t": -65,
+          "v": 104.8596
+         },
+         {
+          "t": -64,
+          "v": 105.9179
+         },
+         {
+          "t": -63,
+          "v": 107.6251
+         },
+         {
+          "t": -62,
+          "v": 107.9515
+         },
+         {
+          "t": -61,
+          "v": 107.0251
+         },
+         {
+          "t": -60,
+          "v": 107.136
+         },
+         {
+          "t": -59,
+          "v": 106.6562
+         },
+         {
+          "t": -58,
+          "v": 105.2431
+         },
+         {
+          "t": -57,
+          "v": 103.1272
+         },
+         {
+          "t": -56,
+          "v": 101.3084
+         },
+         {
+          "t": -55,
+          "v": 101.3017
+         },
+         {
+          "t": -54,
+          "v": 101.4851
+         },
+         {
+          "t": -53,
+          "v": 100.9088
+         },
+         {
+          "t": -52,
+          "v": 102.6541
+         },
+         {
+          "t": -51,
+          "v": 102.8748
+         },
+         {
+          "t": -50,
+          "v": 103.5968
+         },
+         {
+          "t": -49,
+          "v": 105.1229
+         },
+         {
+          "t": -48,
+          "v": 104.0934
+         },
+         {
+          "t": -47,
+          "v": 101.6617
+         },
+         {
+          "t": -46,
+          "v": 102.5837
+         },
+         {
+          "t": -45,
+          "v": 101.7397
+         },
+         {
+          "t": -44,
+          "v": 103.3529
+         },
+         {
+          "t": -43,
+          "v": 103.7725
+         },
+         {
+          "t": -42,
+          "v": 105.0337
+         },
+         {
+          "t": -41,
+          "v": 106.0006
+         },
+         {
+          "t": -40,
+          "v": 103.3869
+         },
+         {
+          "t": -39,
+          "v": 104.2831
+         },
+         {
+          "t": -38,
+          "v": 103.4441
+         },
+         {
+          "t": -37,
+          "v": 102.5098
+         },
+         {
+          "t": -36,
+          "v": 101.9759
+         },
+         {
+          "t": -35,
+          "v": 102.9203
+         },
+         {
+          "t": -34,
+          "v": 104.0184
+         },
+         {
+          "t": -33,
+          "v": 105.2884
+         },
+         {
+          "t": -32,
+          "v": 103.2121
+         },
+         {
+          "t": -31,
+          "v": 102.4833
+         },
+         {
+          "t": -30,
+          "v": 99.6032
+         },
+         {
+          "t": -29,
+          "v": 99.4814
+         },
+         {
+          "t": -28,
+          "v": 100.2004
+         },
+         {
+          "t": -27,
+          "v": 99.2859
+         },
+         {
+          "t": -26,
+          "v": 99.578
+         },
+         {
+          "t": -25,
+          "v": 99.8549
+         },
+         {
+          "t": -24,
+          "v": 101.0696
+         },
+         {
+          "t": -23,
+          "v": 100.0782
+         },
+         {
+          "t": -22,
+          "v": 99.0876
+         },
+         {
+          "t": -21,
+          "v": 98.1842
+         },
+         {
+          "t": -20,
+          "v": 100.2709
+         },
+         {
+          "t": -19,
+          "v": 101.5918
+         },
+         {
+          "t": -18,
+          "v": 101.4413
+         },
+         {
+          "t": -17,
+          "v": 101.7163
+         },
+         {
+          "t": -16,
+          "v": 101.856
+         },
+         {
+          "t": -15,
+          "v": 102.1044
+         },
+         {
+          "t": -14,
+          "v": 101.8491
+         },
+         {
+          "t": -13,
+          "v": 101.4415
+         },
+         {
+          "t": -12,
+          "v": 99.9233
+         },
+         {
+          "t": -11,
+          "v": 99.1567
+         },
+         {
+          "t": -10,
+          "v": 101.14
+         },
+         {
+          "t": -9,
+          "v": 101.7934
+         },
+         {
+          "t": -8,
+          "v": 101.8725
+         },
+         {
+          "t": -7,
+          "v": 101.6102
+         },
+         {
+          "t": -6,
+          "v": 101.6866
+         },
+         {
+          "t": -5,
+          "v": 102.1187
+         },
+         {
+          "t": -4,
+          "v": 101.3302
+         },
+         {
+          "t": -3,
+          "v": 101.5693
+         },
+         {
+          "t": -2,
+          "v": 101.8622
+         },
+         {
+          "t": -1,
+          "v": 100.9513
+         },
+         {
+          "t": 0,
+          "v": 100.0
+         }
+        ]
+       }
+      ],
+      "synthetic": true,
+      "attribution": []
+     }
+    ],
+    "response": {
+     "kind": "direction",
+     "options": [
+      "up",
+      "down"
+     ],
+     "horizon": {
+      "label": "1w",
+      "steps": 5,
+      "unit": "trading_day"
+     }
+    },
+    "reasons": {
+     "pick": {
+      "min": 2,
+      "max": 3
+     },
+     "boxes": [
+      {
+       "id": "guidance",
+       "text": "The outlook for next quarter was weaker than expected"
+      },
+      {
+       "id": "capex",
+       "text": "Much higher spending could squeeze future profits"
+      },
+      {
+       "id": "priced_in",
+       "text": "After the run-up, good results were already expected"
+      },
+      {
+       "id": "beat",
+       "text": "Profit came in above estimates"
+      },
+      {
+       "id": "chart_pattern",
+       "text": "The chart had risen too far, so it had to fall"
+      },
+      {
+       "id": "hindsight",
+       "text": "Other software shares fell later that month"
+      }
+     ]
+    },
+    "confidence": {
+     "min": 1,
+     "max": 5
+    }
+   }
+  ],
+  "status": {
+   "node": "D1",
+   "easy_done": false,
+   "medium_passed": false,
+   "done": false,
+   "items_answered": 0,
+   "items_total": 2,
+   "item_average": 0.0,
+   "prerequisite": {
+    "items": [
+     "i4.e2",
+     "i4.e1"
+    ],
+    "passed": false
+   },
+   "test_out": {
+    "items": [
+     "d1.e2",
+     "d1.e1"
+    ],
+    "passed": false
+   },
+   "medium": {
+    "tasks": [
+     "d1.m1"
+    ],
+    "best_score": null
+   }
+  }
+ },
+ "GET /tasks/d1.e1": {
+  "level": "easy",
+  "task": {
+   "id": "d1.e1",
+   "node": "D1",
+   "level": "easy",
+   "kind": "single",
+   "content_version": 1,
+   "scored": true,
+   "q": "A company reports a record profit, but its share price falls. What is the most likely reason?",
+   "options": [
+    "Investors expected even more, or the outlook got worse",
+    "The stock exchange made a mistake",
+    "Record profits are always bad news"
+   ],
+   "confidence": {
+    "min": 1,
+    "max": 5
+   }
+  }
+ },
+ "POST /tasks/d1.e1/attempts": {
+  "attempt_id": 1,
+  "task_id": "d1.e1",
+  "level": "easy",
+  "score": 1.0,
+  "score_estimate": null,
+  "score_reasons": null,
+  "confidence": 4,
+  "p": 0.75,
+  "reveal": {
+   "answer": 0,
+   "why": "Prices react to results compared with expectations, and to what the company says about the future.",
+   "sources": []
+  },
+  "status": {
+   "node": "D1",
+   "easy_done": false,
+   "medium_passed": false,
+   "done": false,
+   "items_answered": 1,
+   "items_total": 2,
+   "item_average": 0.5,
+   "prerequisite": {
+    "items": [
+     "i4.e2",
+     "i4.e1"
+    ],
+    "passed": false
+   },
+   "test_out": {
+    "items": [
+     "d1.e2",
+     "d1.e1"
+    ],
+    "passed": false
+   },
+   "medium": {
+    "tasks": [
+     "d1.m1"
+    ],
+    "best_score": null
+   }
+  },
+  "node_completed": false
+ },
+ "GET /tasks/d1.e2": {
+  "level": "easy",
+  "task": {
+   "id": "d1.e2",
+   "node": "D1",
+   "level": "easy",
+   "kind": "multi",
+   "content_version": 1,
+   "scored": true,
+   "q": "Which of these can move a share price on results day? Pick all that apply.",
+   "options": [
+    "Results compared with what analysts expected",
+    "The company's outlook for the next quarter",
+    "The colour of the company's logo",
+    "A surprise change in interest rates on the same day"
+   ],
+   "confidence": {
+    "min": 1,
+    "max": 5
+   }
+  }
+ },
+ "POST /tasks/d1.e2/attempts": {
+  "attempt_id": 2,
+  "task_id": "d1.e2",
+  "level": "easy",
+  "score": 1.0,
+  "score_estimate": null,
+  "score_reasons": null,
+  "confidence": 4,
+  "p": 0.75,
+  "reveal": {
+   "answer": [
+    0,
+    1,
+    3
+   ],
+   "why": "Surprises move prices: results vs expectations, the outlook, and market-wide news such as rates.",
+   "sources": []
+  },
+  "status": {
+   "node": "D1",
+   "easy_done": true,
+   "medium_passed": false,
+   "done": false,
+   "items_answered": 2,
+   "items_total": 2,
+   "item_average": 1.0,
+   "prerequisite": {
+    "items": [
+     "i4.e2",
+     "i4.e1"
+    ],
+    "passed": false
+   },
+   "test_out": {
+    "items": [
+     "d1.e2",
+     "d1.e1"
+    ],
+    "passed": false
+   },
+   "medium": {
+    "tasks": [
+     "d1.m1"
+    ],
+    "best_score": null
+   }
+  },
+  "node_completed": false
+ },
+ "GET /tasks/d3.e2": {
+  "level": "easy",
+  "task": {
+   "id": "d3.e2",
+   "node": "D3",
+   "level": "easy",
+   "kind": "true_false",
+   "content_version": 1,
+   "scored": true,
+   "q": "When bond yields rise, the prices of bonds people already hold fall.",
+   "confidence": {
+    "min": 1,
+    "max": 5
+   }
+  }
+ },
+ "POST /tasks/d3.e2/attempts": {
+  "attempt_id": 3,
+  "task_id": "d3.e2",
+  "level": "easy",
+  "score": 1.0,
+  "score_estimate": null,
+  "score_reasons": null,
+  "confidence": 4,
+  "p": 0.75,
+  "reveal": {
+   "answer": true,
+   "why": "Newer bonds pay more, so older ones with lower payments become less attractive and their price drops.",
+   "sources": []
+  },
+  "status": {
+   "node": "D3",
+   "easy_done": false,
+   "medium_passed": false,
+   "done": false,
+   "items_answered": 1,
+   "items_total": 2,
+   "item_average": 0.5,
+   "prerequisite": {
+    "items": [],
+    "passed": false
+   },
+   "test_out": {
+    "items": [
+     "d3.e2",
+     "d3.e1"
+    ],
+    "passed": false
+   },
+   "medium": {
+    "tasks": [
+     "d3.m1"
+    ],
+    "best_score": null
+   }
+  },
+  "node_completed": false
+ },
+ "GET /tasks/i2.e2": {
+  "level": "easy",
+  "task": {
+   "id": "i2.e2",
+   "node": "I2",
+   "level": "easy",
+   "kind": "numeric",
+   "content_version": 1,
+   "scored": true,
+   "q": "Your deposit earns 5% in a year while prices rise 3%. By about how many percent does your buying power grow?",
+   "unit": "%",
+   "input": {
+    "min": -5,
+    "max": 10,
+    "step": 0.1
+   },
+   "confidence": {
+    "min": 1,
+    "max": 5
+   }
+  }
+ },
+ "POST /tasks/i2.e2/attempts": {
+  "attempt_id": 4,
+  "task_id": "i2.e2",
+  "level": "easy",
+  "score": 1.0,
+  "score_estimate": null,
+  "score_reasons": null,
+  "confidence": 4,
+  "p": 0.75,
+  "reveal": {
+   "answer": 1.94,
+   "unit": "%",
+   "tolerance": {
+    "kind": "absolute",
+    "band": 0.3
+   },
+   "why": "10,500 PLN buys what about 10,194 PLN bought a year earlier (10,500 / 1.03), so about 2% more, not 5%.",
+   "sources": []
+  },
+  "status": {
+   "node": "I2",
+   "easy_done": false,
+   "medium_passed": false,
+   "done": false,
+   "items_answered": 1,
+   "items_total": 3,
+   "item_average": 0.3333,
+   "prerequisite": {
+    "items": [
+     "i1.e1",
+     "i1.e2"
+    ],
+    "passed": false
+   },
+   "test_out": {
+    "items": [
+     "i2.e1",
+     "i2.e2"
+    ],
+    "passed": false
+   },
+   "medium": {
+    "tasks": [],
+    "best_score": null
+   }
+  },
+  "node_completed": false
+ },
+ "GET /tasks/i4.e3": {
+  "level": "easy",
+  "task": {
+   "id": "i4.e3",
+   "node": "I4",
+   "level": "easy",
+   "kind": "reflection",
+   "content_version": 1,
+   "scored": false,
+   "q": "A friend has all their savings in one company they like. What would you ask them first?",
+   "options": [
+    "What happens to your savings if that company fails?",
+    "How much has it gone up this year?",
+    "Which company is it?"
+   ]
+  }
+ },
+ "POST /tasks/i4.e3/attempts": {
+  "attempt_id": 5,
+  "task_id": "i4.e3",
+  "level": "easy",
+  "score": null,
+  "score_estimate": null,
+  "score_reasons": null,
+  "confidence": null,
+  "p": null,
+  "reveal": {
+   "feedback": [
+    "A good first question: it points at the risk that spreading would remove.",
+    "Past gains say little about the risk of keeping everything in one place.",
+    "Natural to ask, but the bigger question is how much depends on one company."
+   ],
+   "why": null,
+   "sources": []
+  },
+  "status": {
+   "node": "I4",
+   "easy_done": false,
+   "medium_passed": false,
+   "done": false,
+   "items_answered": 0,
+   "items_total": 2,
+   "item_average": 0.0,
+   "prerequisite": {
+    "items": [
+     "i1.e1",
+     "i1.e2"
+    ],
+    "passed": false
+   },
+   "test_out": {
+    "items": [
+     "i4.e2",
+     "i4.e1"
+    ],
+    "passed": false
+   },
+   "medium": {
+    "tasks": [],
+    "best_score": null
+   }
+  },
+  "node_completed": false
+ },
+ "GET /tasks/d1.m1": {
+  "level": "medium",
+  "task": {
+   "id": "d1.m1",
+   "node": "D1",
+   "level": "medium",
+   "variant": "day_x",
+   "content_version": 1,
+   "brief": "Company X, a large software firm, reports quarterly results today after the close. The share price has risen strongly over the past three months. Profit beat analyst estimates, but the company said growth will slow next quarter and spending on data centres will rise sharply. Over the next week, did the share price go up or down?",
+   "stimulus": [
+    {
+     "kind": "chart",
+     "type": "line",
+     "x_unit": "trading_day",
+     "series": [
+      {
+       "label": "Company X",
+       "unit": "index (cutoff = 100)",
+       "points": [
+        {
+         "t": -65,
+         "v": 104.8596
+        },
+        {
+         "t": -64,
+         "v": 105.9179
+        },
+        {
+         "t": -63,
+         "v": 107.6251
+        },
+        {
+         "t": -62,
+         "v": 107.9515
+        },
+        {
+         "t": -61,
+         "v": 107.0251
+        },
+        {
+         "t": -60,
+         "v": 107.136
+        },
+        {
+         "t": -59,
+         "v": 106.6562
+        },
+        {
+         "t": -58,
+         "v": 105.2431
+        },
+        {
+         "t": -57,
+         "v": 103.1272
+        },
+        {
+         "t": -56,
+         "v": 101.3084
+        },
+        {
+         "t": -55,
+         "v": 101.3017
+        },
+        {
+         "t": -54,
+         "v": 101.4851
+        },
+        {
+         "t": -53,
+         "v": 100.9088
+        },
+        {
+         "t": -52,
+         "v": 102.6541
+        },
+        {
+         "t": -51,
+         "v": 102.8748
+        },
+        {
+         "t": -50,
+         "v": 103.5968
+        },
+        {
+         "t": -49,
+         "v": 105.1229
+        },
+        {
+         "t": -48,
+         "v": 104.0934
+        },
+        {
+         "t": -47,
+         "v": 101.6617
+        },
+        {
+         "t": -46,
+         "v": 102.5837
+        },
+        {
+         "t": -45,
+         "v": 101.7397
+        },
+        {
+         "t": -44,
+         "v": 103.3529
+        },
+        {
+         "t": -43,
+         "v": 103.7725
+        },
+        {
+         "t": -42,
+         "v": 105.0337
+        },
+        {
+         "t": -41,
+         "v": 106.0006
+        },
+        {
+         "t": -40,
+         "v": 103.3869
+        },
+        {
+         "t": -39,
+         "v": 104.2831
+        },
+        {
+         "t": -38,
+         "v": 103.4441
+        },
+        {
+         "t": -37,
+         "v": 102.5098
+        },
+        {
+         "t": -36,
+         "v": 101.9759
+        },
+        {
+         "t": -35,
+         "v": 102.9203
+        },
+        {
+         "t": -34,
+         "v": 104.0184
+        },
+        {
+         "t": -33,
+         "v": 105.2884
+        },
+        {
+         "t": -32,
+         "v": 103.2121
+        },
+        {
+         "t": -31,
+         "v": 102.4833
+        },
+        {
+         "t": -30,
+         "v": 99.6032
+        },
+        {
+         "t": -29,
+         "v": 99.4814
+        },
+        {
+         "t": -28,
+         "v": 100.2004
+        },
+        {
+         "t": -27,
+         "v": 99.2859
+        },
+        {
+         "t": -26,
+         "v": 99.578
+        },
+        {
+         "t": -25,
+         "v": 99.8549
+        },
+        {
+         "t": -24,
+         "v": 101.0696
+        },
+        {
+         "t": -23,
+         "v": 100.0782
+        },
+        {
+         "t": -22,
+         "v": 99.0876
+        },
+        {
+         "t": -21,
+         "v": 98.1842
+        },
+        {
+         "t": -20,
+         "v": 100.2709
+        },
+        {
+         "t": -19,
+         "v": 101.5918
+        },
+        {
+         "t": -18,
+         "v": 101.4413
+        },
+        {
+         "t": -17,
+         "v": 101.7163
+        },
+        {
+         "t": -16,
+         "v": 101.856
+        },
+        {
+         "t": -15,
+         "v": 102.1044
+        },
+        {
+         "t": -14,
+         "v": 101.8491
+        },
+        {
+         "t": -13,
+         "v": 101.4415
+        },
+        {
+         "t": -12,
+         "v": 99.9233
+        },
+        {
+         "t": -11,
+         "v": 99.1567
+        },
+        {
+         "t": -10,
+         "v": 101.14
+        },
+        {
+         "t": -9,
+         "v": 101.7934
+        },
+        {
+         "t": -8,
+         "v": 101.8725
+        },
+        {
+         "t": -7,
+         "v": 101.6102
+        },
+        {
+         "t": -6,
+         "v": 101.6866
+        },
+        {
+         "t": -5,
+         "v": 102.1187
+        },
+        {
+         "t": -4,
+         "v": 101.3302
+        },
+        {
+         "t": -3,
+         "v": 101.5693
+        },
+        {
+         "t": -2,
+         "v": 101.8622
+        },
+        {
+         "t": -1,
+         "v": 100.9513
+        },
+        {
+         "t": 0,
+         "v": 100.0
+        }
+       ]
+      }
+     ],
+     "synthetic": true,
+     "attribution": []
+    }
+   ],
+   "response": {
+    "kind": "direction",
+    "options": [
+     "up",
+     "down"
+    ],
+    "horizon": {
+     "label": "1w",
+     "steps": 5,
+     "unit": "trading_day"
+    }
+   },
+   "reasons": {
+    "pick": {
+     "min": 2,
+     "max": 3
+    },
+    "boxes": [
+     {
+      "id": "guidance",
+      "text": "The outlook for next quarter was weaker than expected"
+     },
+     {
+      "id": "capex",
+      "text": "Much higher spending could squeeze future profits"
+     },
+     {
+      "id": "priced_in",
+      "text": "After the run-up, good results were already expected"
+     },
+     {
+      "id": "beat",
+      "text": "Profit came in above estimates"
+     },
+     {
+      "id": "chart_pattern",
+      "text": "The chart had risen too far, so it had to fall"
+     },
+     {
+      "id": "hindsight",
+      "text": "Other software shares fell later that month"
+     }
+    ]
+   },
+   "confidence": {
+    "min": 1,
+    "max": 5
+   }
+  }
+ },
+ "POST /tasks/d1.m1/attempts": {
+  "attempt_id": 6,
+  "task_id": "d1.m1",
+  "level": "medium",
+  "score": 0.9375,
+  "score_estimate": null,
+  "score_reasons": 0.9375,
+  "confidence": 3,
+  "p": 0.5,
+  "reveal": {
+   "text": "Good results can still mean a falling price. The market compares news with expectations and cares most about what comes next.",
+   "outcome": {
+    "direction": "down",
+    "change": -8.0,
+    "unit": "%",
+    "flat_band": null,
+    "steps": 5
+   },
+   "truth": null,
+   "stimulus": [
+    {
+     "kind": "chart",
+     "series": [
+      {
+       "label": "Company X",
+       "name": "Synthetic listed company (fictional)",
+       "unit": "index (cutoff = 100)",
+       "points": [
+        {
+         "t": 0,
+         "v": 100.0
+        },
+        {
+         "t": 1,
+         "v": 98.0644
+        },
+        {
+         "t": 2,
+         "v": 96.0921
+        },
+        {
+         "t": 3,
+         "v": 96.3924
+        },
+        {
+         "t": 4,
+         "v": 92.9952
+        },
+        {
+         "t": 5,
+         "v": 92.0
+        },
+        {
+         "t": 6,
+         "v": 91.3278
+        },
+        {
+         "t": 7,
+         "v": 90.651
+        },
+        {
+         "t": 8,
+         "v": 90.7573
+        },
+        {
+         "t": 9,
+         "v": 91.994
+        },
+        {
+         "t": 10,
+         "v": 92.0784
+        },
+        {
+         "t": 11,
+         "v": 91.9236
+        },
+        {
+         "t": 12,
+         "v": 91.2505
+        },
+        {
+         "t": 13,
+         "v": 91.1094
+        },
+        {
+         "t": 14,
+         "v": 92.1121
+        },
+        {
+         "t": 15,
+         "v": 91.6776
+        },
+        {
+         "t": 16,
+         "v": 90.4249
+        },
+        {
+         "t": 17,
+         "v": 89.0636
+        },
+        {
+         "t": 18,
+         "v": 87.8886
+        },
+        {
+         "t": 19,
+         "v": 86.4348
+        },
+        {
+         "t": 20,
+         "v": 87.5823
+        },
+        {
+         "t": 21,
+         "v": 87.9564
+        },
+        {
+         "t": 22,
+         "v": 87.7062
+        },
+        {
+         "t": 23,
+         "v": 89.2559
+        },
+        {
+         "t": 24,
+         "v": 88.554
+        },
+        {
+         "t": 25,
+         "v": 89.3578
+        },
+        {
+         "t": 26,
+         "v": 90.2209
+        },
+        {
+         "t": 27,
+         "v": 88.5622
+        },
+        {
+         "t": 28,
+         "v": 86.9229
+        },
+        {
+         "t": 29,
+         "v": 85.9608
+        },
+        {
+         "t": 30,
+         "v": 86.9012
+        },
+        {
+         "t": 31,
+         "v": 88.2634
+        },
+        {
+         "t": 32,
+         "v": 86.9727
+        },
+        {
+         "t": 33,
+         "v": 88.074
+        },
+        {
+         "t": 34,
+         "v": 87.6701
+        },
+        {
+         "t": 35,
+         "v": 87.2571
+        },
+        {
+         "t": 36,
+         "v": 86.682
+        },
+        {
+         "t": 37,
+         "v": 86.3456
+        },
+        {
+         "t": 38,
+         "v": 84.4819
+        },
+        {
+         "t": 39,
+         "v": 83.473
+        },
+        {
+         "t": 40,
+         "v": 82.2444
+        },
+        {
+         "t": 41,
+         "v": 82.7299
+        },
+        {
+         "t": 42,
+         "v": 84.8301
+        },
+        {
+         "t": 43,
+         "v": 87.657
+        },
+        {
+         "t": 44,
+         "v": 87.3038
+        },
+        {
+         "t": 45,
+         "v": 85.5189
+        },
+        {
+         "t": 46,
+         "v": 85.1022
+        },
+        {
+         "t": 47,
+         "v": 84.1483
+        },
+        {
+         "t": 48,
+         "v": 86.175
+        },
+        {
+         "t": 49,
+         "v": 86.7675
+        },
+        {
+         "t": 50,
+         "v": 86.0121
+        },
+        {
+         "t": 51,
+         "v": 86.9834
+        },
+        {
+         "t": 52,
+         "v": 87.5446
+        },
+        {
+         "t": 53,
+         "v": 85.8537
+        },
+        {
+         "t": 54,
+         "v": 85.3079
+        },
+        {
+         "t": 55,
+         "v": 85.0632
+        },
+        {
+         "t": 56,
+         "v": 85.0825
+        },
+        {
+         "t": 57,
+         "v": 85.2175
+        },
+        {
+         "t": 58,
+         "v": 84.8715
+        },
+        {
+         "t": 59,
+         "v": 85.0651
+        },
+        {
+         "t": 60,
+         "v": 84.4689
+        },
+        {
+         "t": 61,
+         "v": 83.565
+        },
+        {
+         "t": 62,
+         "v": 85.099
+        },
+        {
+         "t": 63,
+         "v": 85.4677
+        },
+        {
+         "t": 64,
+         "v": 85.9184
+        },
+        {
+         "t": 65,
+         "v": 84.2896
+        }
+       ]
+      }
+     ],
+     "cutoff": "2024-04-25"
+    }
+   ],
+   "reasons": [
+    {
+     "id": "guidance",
+     "weight": 1.0,
+     "explain": "Prices look ahead. A weaker outlook can outweigh a good past quarter."
+    },
+    {
+     "id": "capex",
+     "weight": 0.6,
+     "explain": "Heavy spending lowers profit margins for a while, and investors price that in."
+    },
+    {
+     "id": "priced_in",
+     "weight": 0.5,
+     "explain": "Beating estimates was partly priced in, so it added little."
+    },
+    {
+     "id": "beat",
+     "weight": 0.0,
+     "explain": "True, but known beats tend to be priced in. On its own it doesn't explain the move."
+    },
+    {
+     "id": "chart_pattern",
+     "weight": -0.5,
+     "explain": "Past moves don't force a reversal. The news on the day drove the price."
+    },
+    {
+     "id": "hindsight",
+     "weight": -1.0,
+     "explain": "That wasn't known on day X. Using it is hindsight."
+    }
+   ],
+   "sources": [],
+   "show": [
+    "outcome",
+    "per_box_explain",
+    "sources",
+    "truth"
+   ]
+  },
+  "status": {
+   "node": "D1",
+   "easy_done": true,
+   "medium_passed": true,
+   "done": true,
+   "items_answered": 2,
+   "items_total": 2,
+   "item_average": 1.0,
+   "prerequisite": {
+    "items": [
+     "i4.e2",
+     "i4.e1"
+    ],
+    "passed": false
+   },
+   "test_out": {
+    "items": [
+     "d1.e2",
+     "d1.e1"
+    ],
+    "passed": false
+   },
+   "medium": {
+    "tasks": [
+     "d1.m1"
+    ],
+    "best_score": 0.9375
+   }
+  },
+  "node_completed": true
+ },
+ "_order": [
+  "d1.e1",
+  "d1.e2",
+  "d3.e2",
+  "i2.e2",
+  "i4.e3",
+  "d1.m1"
+ ]
+}

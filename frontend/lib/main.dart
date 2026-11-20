@@ -18,6 +18,9 @@ import 'screens/shell.dart';
 import 'screens/tutor_screen.dart';
 import 'screens/league_screen.dart';
 import 'screens/signin_screen.dart';
+import 'screens/skills_screen.dart';
+import 'screens/skill_screen.dart';
+import 'screens/task_screen.dart';
 import 'widgets/common.dart' show appDark;
 
 void main() {
@@ -34,6 +37,7 @@ final _router = GoRouter(
       builder: (context, state, child) => AppShell(location: state.uri.path, child: child),
       routes: [
         GoRoute(path: '/wheel', builder: (_, __) => WheelScreen()),
+        GoRoute(path: '/skills', builder: (_, __) => SkillsScreen()),
         GoRoute(path: '/tutor', builder: (_, __) => TutorScreen()),
         GoRoute(path: '/progress', builder: (_, __) => ProgressScreen()),
         GoRoute(path: '/league', builder: (_, __) => LeagueScreen()),
@@ -44,6 +48,8 @@ final _router = GoRouter(
       path: '/mission/:key/:node',
       builder: (_, s) => MissionScreen(sliceKey: s.pathParameters['key']!, nodeId: s.pathParameters['node']!),
     ),
+    GoRoute(path: '/skill/:id', builder: (_, s) => SkillScreen(nodeId: s.pathParameters['id']!)),
+    GoRoute(path: '/skill-run', builder: (_, s) => TaskRunScreen(run: s.extra as TaskRun)),
     GoRoute(path: '/time-machine', builder: (_, __) => TimeMachineScreen()),
     GoRoute(path: '/result', builder: (_, __) => ResultScreen()),
   ],
