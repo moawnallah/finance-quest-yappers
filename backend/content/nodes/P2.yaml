@@ -1,0 +1,44 @@
+node: P2
+panel: PORTFOLIO
+title: "Allocation by horizon"
+after: [P1, S4]
+author: "draft by Claude (AI), 2026-11-20"
+reviewer: null
+status: draft
+
+cards:
+  - id: p2.c1
+    title: "Time changes how much risk you can carry"
+    body: >-
+      Shares can lose a lot in one bad year, but over longer periods the bad
+      years have been offset more often. In US history since 1928, shares
+      with dividends lost money in about a quarter of single years, in about
+      one in eight 5-year periods, and in none of the 20-year periods. Money
+      you need soon cannot wait for a recovery.
+    example: "US shares, 1928-2025: losses in 26 of 98 single years, 11 of 94 five-year periods, 5 of 89 ten-year periods, 0 of 79 twenty-year periods. The worst 3-year period lost 62%."
+    links: [damodaran_histret]
+    checked: "Rolling windows of S&P 500 incl. dividends, nominal, computed from the Damodaran table (scratch script placement_check/damodaran_facts.py, 2026-11-20)."
+
+  - id: p2.c2
+    title: "One goal, one horizon, one mix"
+    body: >-
+      Give each goal its own mix. Money for a goal two years away belongs
+      mostly in deposits or bonds, because a bad year in shares could leave
+      you short. A goal 30 years away can hold more shares, because there is
+      time to recover. As the goal comes closer, move part of the money into
+      safer assets step by step.
+    example: "In US history, a 50/50 mix of shares and 10-year bonds lost money in 4 of 94 five-year periods; the worst lost 17%. Shares alone: 11 of 94, worst 49%."
+    links: [damodaran_histret]
+    checked: "50/50 and shares-only 5-year windows from the Damodaran table (nominal)."
+
+  - id: p2.c3
+    title: "History is a guide, not a promise"
+    body: >-
+      These figures come from one country, the US, in one century, and they
+      ignore inflation. Other markets have had longer bad stretches, and the
+      Polish stock market has a much shorter history. "No 20-year loss so
+      far" does not mean it cannot happen. Use history to understand the
+      spread of outcomes, not to predict your result.
+    example: "0 of 79 twenty-year periods lost money in US shares; that is a record, not a guarantee."
+    links: [damodaran_histret]
+    checked: "Count from the Damodaran table; the caveats are general and need no external source."

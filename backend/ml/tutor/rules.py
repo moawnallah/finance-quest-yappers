@@ -21,17 +21,29 @@ def mask(text: str) -> str:
     return text
 
 
-ADVICE = re.compile(
-    r"\b(which|what) (fund|stock|share|etf|bond|bank|broker|crypto|coin)s?\b.*\b(buy|choose|pick|invest|best)\b"
-    r"|\bshould i (buy|sell|invest)\b|\bwhat (should|to) i (buy|invest)\b|\brecommend (me )?(a|an|some)\b"
-    r"|\bjaki (fundusz|etf|bank)\b|\bco (kupić|kupic)\b|\bczy (kupić|kupic|sprzedać|sprzedac)\b|\bpolec(isz|asz)\b",
-    re.I,
-)
-INJECTION = re.compile(
-    r"\bignore (all |the )?(previous|above|prior|your) (instructions|rules)\b|\bsystem prompt\b"
-    r"|\byou are now\b|\bdeveloper mode\b|\bjailbreak\b|\bzignoruj (poprzednie|wcześniejsze)\b",
-    re.I,
-)
+PRODUCT = r"(?:fund|stock|share|etf|bond|bank|broker|crypto|coin|deposit|investment)s?"
+ADVICE = re.compile("|".join([
+    rf"\b(?:which|what) {PRODUCT}\b.{{0,40}}\b(?:buy|choose|pick|invest|best|sell)\b",
+    rf"\b(?:which|what) is the best {PRODUCT}\b",
+    rf"\bis .{{1,40}} a good (?:stock|share|fund|etf|investment|buy)\b",
+    r"\bshould i (?:buy|sell|invest)\b",
+    r"\bwhat should i (?:buy|invest|put)\b",
+    r"\bwhere (?:should|do) i (?:put|invest)\b",
+    r"\brecommend (?:me )?(?:a|an|some|any)\b",
+    r"\bjak(?:i|ą|ie|a) (?:fundusz\w*|etf\w*|bank\w*|kryptowalut\w*|akcj\w*|obligacj\w*|lokat\w*)",
+    r"\bktór(?:y|ą|e|a) (?:bank|fundusz|etf|broker|lokat\w*|akcj\w*)",
+    r"\bw co (?:za)?inwestowa[ćc]\b",
+    r"\bczy warto (?:kupi[ćc]|inwestowa[ćc]|sprzeda[ćc])\b",
+    r"\bco kupi[ćc]\b|\bczy (?:kupi[ćc]|sprzeda[ćc])\b|\bpolec(?:isz|asz)\b",
+]), re.I)
+INJECTION = re.compile("|".join([
+    r"\b(?:ignore|forget) (?:all |the )?(?:your |previous |above |prior )?(?:instructions|rules)\b",
+    r"\bsystem prompt\b|\byou are now\b|\bdeveloper mode\b|\bjailbreak\b",
+    r"\bpretend (?:you are|to be)\b|\brole-?play\b",
+    r"\brepeat the (?:text|words|instructions) above\b",
+    r"\bzignoruj (?:poprzednie|wcześniejsze)\b|\bzapomnij (?:o )?(?:zasadach|regułach|instrukcjach)\b",
+    r"\budawaj\b|\bprompt\w* systemow\w*",
+]), re.I)
 
 
 def rule_intent(message: str) -> str | None:
