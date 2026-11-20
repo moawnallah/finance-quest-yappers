@@ -92,7 +92,9 @@ instead.
    recommendations.
 3. Before submission: no truth value and no box weight leaks.
 4. Every cited source ID exists in the context.
-5. At most about 200 words, plain Polish, ending with one check question.
+5. At most about 200 words, plain English, ending with one check question.
+   The tutor answers in English even if the user writes in Polish (a
+   Polish version comes later).
 
 ## Knowledge base
 
@@ -132,11 +134,11 @@ instead.
   cloud role. Cloud is allowed only for general concept questions with no
   profile data.
 - **Candidates, to measure, none chosen yet:**
-  - Bielik 4.5B or 1.5B v3 (Polish);
+  - Bielik 4.5B or 1.5B v3 (Polish; for the later Polish version);
   - Qwen3.5 4B / 9B;
   - Gemma 4 12B.
 - **Choice rule:**
-  - 20 Polish tutor prompts from our demo tasks;
+  - 20 English tutor prompts from our demo tasks;
   - pick the smallest model that passes the output checks on at least
     18/20 and answers within about 10 s on the demo laptop;
   - otherwise, use stored answers for the demo script.
@@ -192,7 +194,7 @@ review.
 `POST /tutor`
 
 ```json
-{"screen_id": "task", "task_id": "f4.m1", "attempt_id": null, "mode": "hint", "message": "Nie rozumiem, skąd prowizja"}
+{"screen_id": "task", "task_id": "f4.m1", "attempt_id": null, "mode": "hint", "message": "I do not get where the fee comes from"}
 ```
 
 ```json

@@ -22,6 +22,12 @@ whole tree.
 - Market data comes only from public sources, with the source and licence
   recorded per series.
 - Confidence is asked on every scored item.
+- The UI language is English. Polish instrument names (IKE, IKZE, PPK, KNF)
+  stay, each with an English explanation. Amounts are in PLN.
+- The demo shows two personas: a young adult and a self-directed investor.
+  Paths are in [onboarding_router.md](onboarding_router.md).
+- Medium tasks use real public data. Licences are checked by a person before
+  use (checklist in [task_engines.md](task_engines.md)).
 - Yurii builds the block ("Scratch-like") engine for hard tasks. Free play
   (sandbox) is postponed.
 
@@ -79,7 +85,7 @@ Every node has, in this order:
 ## Entry assumptions for every user
 
 The app assumes only:
-- reading a short text in Polish;
+- reading a short text in English;
 - adding and subtracting amounts in PLN;
 - "10% of 1,000 PLN".
 
@@ -101,7 +107,8 @@ self-directed investor needs. Macro news (old O4) moved into it as D3.
 | 6 | LONG HORIZON | How do retirement and a mortgage change the plan? | Planning and managing finances | L1-L3 |
 | 7 | PROTECTION | Who is on my side, and who is not? | Financial landscape | O1-O4 |
 
-Entry nodes by life stage. Placement can move a user further.
+Typical entry nodes by life stage. The actual first path is computed by the
+router from the survey ([onboarding_router.md](onboarding_router.md)).
 
 | Life stage | Entry nodes |
 |---|---|
@@ -544,7 +551,7 @@ flowchart LR
 1. **The wheel is never locked.** Anyone can read any product profile.
 2. **Readiness ring.** A slice shows the share of its required nodes that
    are done. A slice with risk 4-5 and readiness below 100% shows a warning
-   ("Zanim zaczniesz: I7 Dźwignia"). It never blocks reading.
+   ("Before you start: I7 Leverage"). It never blocks reading.
 3. **"What you need"** opens the first required node that is not done. If
    that node is locked, it opens the nearest unlocked prerequisite on the
    path to it.

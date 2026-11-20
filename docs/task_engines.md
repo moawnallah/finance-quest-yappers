@@ -43,6 +43,12 @@ sources: [uokik_portal, rf_credit_costs]   # IDs from the source register
 valid_until: 2026-12-31   # required when the task uses a limit, rate or tax rule
 ```
 
+**Language.** The demo UI is English. Every user-facing text field may be a
+plain string (English) or a map `{en: "...", pl: "..."}` for a later Polish
+version. Polish names of instruments and institutions stay as they are, each
+with an English explanation on first use (IKE, IKZE, PPK, KNF, BFG, RRSO =
+APR). Amounts are in PLN.
+
 **Confidence on every scored item.**
 - The user answers "How sure are you?" from 1 to 5, mapped to
   p = (c − 1) / 4.
@@ -99,7 +105,7 @@ The tutor never sees truth values before submission or other users' data.
 cards:
   - id: f4.c1
     title: "RRSO: the full price of a loan"
-    body: "..."            # at most 80 words, plain Polish
+    body: "..."            # at most 80 words, plain English
     example: "..."         # one example in PLN
     links: [uokik_portal]  # 1-2 source IDs, shown as links
     figure: null           # optional image or chart spec
@@ -149,7 +155,7 @@ id: f4.m1
 node: F4
 level: medium
 variant: estimate          # estimate | day_x | label
-brief: "Pani Ewa bierze 20 000 zł na 36 miesięcy. Ile odda w sumie?"
+brief: "Ewa borrows 20,000 PLN for 36 months. How much will she pay back in total?"
 stimulus:
   - kind: offer
     fields: {kwota: 20000, okres_mies: 36, oprocentowanie: 0.099, prowizja: 0.08, ubezpieczenie: 0.03}
@@ -168,11 +174,11 @@ tolerance: {kind: relative, band: 0.10}
 reasons:
   pick: {min: 2, max: 3}
   boxes:
-    - {id: fee, text: "Prowizja też jest kredytowana i oprocentowana", weight: 1.0, explain: "..."}
-    - {id: insurance, text: "Ubezpieczenie podnosi całkowity koszt", weight: 0.8, explain: "..."}
-    - {id: term, text: "Dłuższy okres to więcej odsetek", weight: 0.5, explain: "..."}
-    - {id: nominal_only, text: "Liczy się tylko oprocentowanie nominalne", weight: -1.0, explain: "..."}
-    - {id: irrelevant, text: "Bank ma ładną aplikację", weight: 0.0, explain: "..."}
+    - {id: fee, text: "The fee is borrowed too, and interest is charged on it", weight: 1.0, explain: "..."}
+    - {id: insurance, text: "Loan insurance adds to the total cost", weight: 0.8, explain: "..."}
+    - {id: term, text: "A longer term means more interest", weight: 0.5, explain: "..."}
+    - {id: nominal_only, text: "Only the nominal rate matters", weight: -1.0, explain: "..."}
+    - {id: irrelevant, text: "The bank has a nice app", weight: 0.0, explain: "..."}
 weights: {estimate: 0.5, reasons: 0.5}
 reveal:
   text: "..."
@@ -298,13 +304,13 @@ world:
   futures: 1000
   seed: 2026112001                       # fixed per content_version
 obligatory:                              # each must pass; together worth 51
-  - {name: "Utrata pracy w 4. miesiącu na 3 miesiące", override: {job_loss: {month: 4, length: 3}}, check: "min_balance >= 0"}
+  - {name: "Job loss in month 4, lasting 3 months", override: {job_loss: {month: 4, length: 3}}, check: "min_balance >= 0"}
 optional:                                # events weighted by probability, worth up to 49
-  - {name: "Naprawa auta 3 000 zł", probability: 0.25, override: {expense_shock: {amount: 3000}}, metric: "min_balance >= 0"}
-  - {name: "Dwa szoki w jednym roku", probability: 0.08, override: {...}, metric: "min_balance >= 0"}
+  - {name: "Car repair, 3,000 PLN", probability: 0.25, override: {expense_shock: {amount: 3000}}, metric: "min_balance >= 0"}
+  - {name: "Two shocks in one year", probability: 0.08, override: {...}, metric: "min_balance >= 0"}
 reference_program: refs/s1_h1.json
 known_bad_programs: [bad/s1_h1_all_in.json]
-baseline_bots: [{name: "Nic nie odkładam", program: bots/none.json}, {name: "Wszystko na lokatę", program: bots/all_deposit.json}]
+baseline_bots: [{name: "Saves nothing", program: bots/none.json}, {name: "Everything in a deposit", program: bots/all_deposit.json}]
 editorial: editorials/s1_h1.md
 ```
 
@@ -314,7 +320,7 @@ editorial: editorials/s1_h1.md
   - conditions return a boolean;
   - actions change the ledger;
   - control blocks are if / else and "every month".
-- Each block shows a Polish sentence template with amounts in PLN.
+- Each block shows an English sentence template with amounts in PLN.
 - The engine interprets the AST. User code is never executed.
 
 **Engine API.**
@@ -360,6 +366,67 @@ editorial: editorials/s1_h1.md
 - `submit` finishes within 2 s for 1,000 futures.
 
 ---
+
+## Data series and licences
+
+Only series whose terms allow display in our app. Each row in the series
+table carries `source` and `licence`.
+
+| Source | Series | Use | Licence status (2026-11-20) |
+|---|---|---|---|
+| GUS, Knowledge Databases (DBW) | CPI, household budgets | F1, F2, I2, D3 | CC BY 4.0 for DBW data, according to the DBW terms page (from search). Site-wide terms at stat.gov.pl/copyright: to read |
+| Eurostat | HICP for Poland and the EU | F2 backup, EU comparison | European Commission reuse policy, attribution (to confirm) |
+| NBP | Reference rate history, FX (API, from 2002), gold | F2, I2, I6, L2, D3 | The API page points to the "Regulaminy NBP": to read before showing it |
+| Ministry of Finance | Retail bond series: rates, redemption fees | I2 | Public offer terms; reuse terms to read |
+| ECB Data Portal | Euro-area rates, HICP | D3, P5 | ECB reuse with source citation (to confirm) |
+| OECD Main Economic Indicators | Share price index for Poland (monthly, 2015 = 100); long-term government bond yield | I1, P1, P4 | OECD open access since 1 July 2024; CC BY 4.0 stated for content, data terms to confirm. Also on FRED as SPASTT01PLM661N. **Price index, not total return** |
+| Damodaran (NYU) | Annual US stocks, bonds, bills since 1928 | I1, P1, P2, P5 | Free download, no stated licence: attribution; ask before commercial use |
+| Shiller (Yale) | Monthly S&P composite, dividends, CPI | P3, P4 | Same as Damodaran |
+
+**Not used:**
+- GPW quotes and WIG20TR;
+- MSCI indices;
+- stooq;
+- Yahoo Finance;
+- justETF;
+- Morningstar.
+
+These are licensed or have restrictive terms. backend/data/README.md still
+lists GPW and MSCI: to discuss with Yurii.
+
+**Licence checklist, for a person to verify before a series goes into a
+task.** For each source, answer:
+1. Is commercial use allowed?
+2. What attribution does it require, and in what form?
+3. May we store a copy (a CSV in the repo or in the database)?
+4. May we show charts derived from it?
+5. Is there a non-commercial (NC), no-derivatives (ND) or share-alike (SA)
+   clause?
+6. Do the terms of the download channel (API, FRED) add anything?
+
+| Source | Where the terms are | Needed for |
+|---|---|---|
+| GUS | [DBW terms](https://dbw.stat.gov.pl/en/warunki-wykorzystania); [stat.gov.pl/copyright](https://stat.gov.pl/copyright) | CPI (I2, F2), household budgets (S1) |
+| NBP | "Regulaminy NBP", linked from [the FX download guide](https://nbp.pl/statystyka-i-sprawozdawczosc/kursy/instrukcja-pobierania-kursow-walut) | reference rate (I2), FX (I6) |
+| Ministry of Finance | [obligacjeskarbowe.pl](https://www.obligacjeskarbowe.pl/), footer terms; the archive of series rates | retail bond rates (I2) |
+| OECD | Terms and conditions, linked from [the open-access announcement](https://www.oecd.org/en/about/news/press-releases/2024/07/oecd-data-publications-and-analysis-become-freely-accessible.html) | share price index Poland (I1, I5, P1, P4); long-term yield (P1) |
+| Eurostat | Copyright notice on the Eurostat site | HICP (backup for CPI) |
+| Damodaran | [data page](https://pages.stern.nyu.edu/~adamodar/New_Home_Page/datafile/histretSP.html): no licence stated | stocks, bonds, bills (I1, P1) |
+| Shiller | [data page](http://www.econ.yale.edu/~shiller/data.htm): no licence stated | monthly S&P (P4 backup) |
+
+**Repo rule (organisers).** Third-party data under a permissive licence (CC
+BY 4.0 or similar) needs attribution, not a licence file in our repo. Keep
+one attribution list:
+- in `backend/data/SOURCES.md`, with source, URL, licence, date retrieved
+  and changes made;
+- in the app's "Sources" screen.
+
+Ask the organisers whether data files may be committed, or must be
+downloaded by a script at build time.
+
+**Single companies** (I4, D1, D2) are not on the young-adult path. Until a
+licensed source is found, I4 uses a synthetic company path, labelled as such
+on screen. Company reports are public, but price series are not.
 
 ## Node completion (proposal)
 
