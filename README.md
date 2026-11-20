@@ -5,7 +5,7 @@ Collabothon 2026, Commerzbank challenge: a gamified learning app that helps self
 ## Structure
 
 ```
-frontend/          Next.js app (Michał), built from Paulina's designs
+frontend/          Flutter app (Michał), built from Paulina's designs
 backend/           FastAPI app (Mohamed)
   data/            real market data: GPW, MSCI, NBP, GUS (Yurii)
   ml/              question generation and the tutor (Mateusz)
