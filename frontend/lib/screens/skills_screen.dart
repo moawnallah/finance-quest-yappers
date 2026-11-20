@@ -44,7 +44,7 @@ class _SkillsScreenState extends State<SkillsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: StatsBar(title: 'Skills', subtitle: 'Scored by the server'),
+      appBar: StatsBar(title: 'Skills'),
       body: FutureBuilder<List<Map<String, dynamic>>>(
         future: future,
         builder: (context, snap) {
