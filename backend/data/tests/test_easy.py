@@ -142,7 +142,8 @@ def test_prerequisite_test_is_deterministic_and_uses_check_items(nodes):
 
 
 def test_prerequisite_test_with_missing_prerequisite_is_empty(nodes):
-    assert prerequisite_test(nodes, "D3", seed=1) == []  # F2 has no node file yet
+    without_f2 = {k: v for k, v in nodes.items() if k != "F2"}  # as if F2 had no node file
+    assert prerequisite_test(without_f2, "D3", seed=1) == []
 
 
 def test_completion_rule():
@@ -151,6 +152,14 @@ def test_completion_rule():
     assert easy_done([1, 0], [1, 0.5, 0.5]) is False   # failed test, items average 0.67
     assert easy_done([1, 0], [1, 1, 0.5]) is True    # items average 0.83
     assert easy_done([], [1, 0.8, 0.7]) is True
+
+
+def test_passed_challenge_completes_the_node():
+    # Decided 2026-11-21: a passed test-out ("challenge") completes the whole node, so a known
+    # node does not demand a medium task; a failed one leaves the normal rule in place.
+    assert node_done(False, [], test_out_scores=[1, 1]) is True
+    assert node_done(False, [], test_out_scores=[1, 0]) is False
+    assert node_done(True, [0.7], test_out_scores=[1, 0]) is True
 
 
 # ---------------------------------------------------------------- validation

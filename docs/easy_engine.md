@@ -212,10 +212,13 @@ test in `backend/data/tests/test_easy.py`.
    warnings, so drafts build; more than 80 words is an error.
 6. **`numeric.input`** (min, max, step) is optional and only drives the
    slider. It must contain the answer.
-7. **Test-out.** It uses 2 of the node's own check items, and is passed
-   like the prerequisite test: every item scores 1. The router spec doesn't
-   say what happens after a passed test-out, so the backend decides,
-   presumably marking the easy part done.
+7. **Test-out ("challenge").** It uses 2 of the node's own check items, and
+   is passed like the prerequisite test: every item scores 1.
+   - Decided 2026-11-21: a passed challenge completes the **whole node**.
+     `node_done(..., test_out_scores=[...])` returns true.
+   - One attempt per node; a failed challenge means doing the node
+     normally.
+   - The UI rules are in onboarding_router.md, "Challenge".
 8. **Item IDs are `<node>.e<n>`** (the spec's `f4.e1`). skills_tree.md says
    reused `roadmap.json` questions keep their IDs (e.g. `bonds.b1.q1`),
    which would fail this rule. We decided not to reuse them, because that

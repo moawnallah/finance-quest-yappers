@@ -42,7 +42,7 @@ cards:
       credit unions is guaranteed by the Bank Guarantee Fund (BFG) up to the
       PLN equivalent of EUR 100,000 per person in each bank.
     example: "A 14,400 PLN buffer in one Polish bank is fully within the guarantee."
-    links: [bfg_limit, bfg_guarantee, cfpb_emergency_fund]
+    links: [bfg_limit, bfg_guarantee]
     checked: "EUR 100,000 per depositor per bank, joint accounts counted by share: bfg_limit. Domestic banks and credit unions covered: bfg_guarantee. 'Safe, accessible': CFPB."
 
   - id: s1.c4

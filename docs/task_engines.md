@@ -290,6 +290,8 @@ Tasks without a calculator:
 ## Hard engine: blocks compile to a strategy
 
 Yurii owns the internals. This section fixes what goes in and what comes out.
+The engine runs on the shared simulation core `sim/`, which the sandbox and
+historical replays will also use ([architecture.md](architecture.md)).
 
 **Task file.**
 
@@ -432,11 +434,13 @@ downloaded by a script at build time.
 licensed source is found, I4 uses a synthetic company path, labelled as such
 on screen. Company reports are public, but price series are not.
 
-## Node completion (proposal)
+## Node completion
 
-A node is **done** when:
-- the prerequisite test was passed, or the easy items average at least 0.8;
-- **and** one medium task scores at least 0.6.
+A node is **done** when either:
+- the user passed its **challenge** (test-out): 2 of the node's check items,
+  both right, one attempt (decided 2026-11-21); or
+- the prerequisite test was passed or the easy items average at least 0.8,
+  **and** one medium task scores at least 0.6.
 
 Hard tasks are optional for completion. They add score, the histogram and
 the "mastered" badge.

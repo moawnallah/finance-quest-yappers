@@ -605,10 +605,11 @@ hard: [...]
 - `GET /wheel/{slice}`: profile cards, requires, the "What you need" target.
 - `GET /nodes/{id}`: cards and items without answers.
 
-**Reusing today's content.** The 52 nodes and 92 questions in
-`roadmap.json` move as follows:
-- the questions become easy items in skill nodes, keeping their IDs;
-- the node titles become the slice's profile cards.
+**Today's content.** The 52 nodes and 92 questions in `roadmap.json`
+were written for testing, so their questions are not reused as items
+(decided 2026-11-20, docs/easy_engine.md). The table below still says which
+skill node covers each product topic. Use it for the `requires` field and
+for the slice's profile cards.
 
 | Existing node | Skill node for its questions |
 |---|---|
