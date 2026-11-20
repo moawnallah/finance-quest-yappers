@@ -48,3 +48,12 @@ reveal_view(tasks[tid])                                    # return with the sco
 ```
 
 The samples (D1, D3) use synthetic series, because no real series has passed the licence checklist yet.
+
+## Hard engine and simulation core
+
+Guide: [docs/hard_engine.md](../../docs/hard_engine.md). `sim/` is the simulation core (household half done; market half: synthetic returns only). `hard/` checks and runs block programs; tasks live under `hard:` in the node files.
+
+```bash
+python build.py --strict      # easy + medium + hard -> output/*.json and QA reports
+python -m pytest tests
+```

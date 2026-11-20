@@ -291,7 +291,9 @@ Tasks without a calculator:
 
 Yurii owns the internals. This section fixes what goes in and what comes out.
 The engine runs on the shared simulation core `sim/`, which the sandbox and
-historical replays will also use ([architecture.md](architecture.md)).
+historical replays will also use ([architecture.md](architecture.md)). The
+implementation and the exact task file are in [hard_engine.md](hard_engine.md),
+which supersedes the illustrative YAML below where they differ.
 
 **Task file.**
 

@@ -147,9 +147,9 @@ schema needs a review from the owners of the packages that use it.
 
 | Today | Step | When |
 |---|---|---|
-| `easy/` and `medium/` each have their own build and their own helpers in `common.py` | Add the `Engine` protocol to `common.py`; make both engines implement it; one `build.py` that runs every registered engine | Before the hard engine |
-| No simulator | Create `sim/` with `State`, 4 modules (income and job loss, expense shocks, inflation, asset returns), the scenario sources, and `run`. Golden test: one hand-computed 3-month ledger | First step of the hard engine |
-| Hard engine only specified | `hard/` on top of `sim/`: block AST → `Policy`; tests → scenarios; scoring; histogram with baseline bots | M4 |
+| `easy/`, `medium/` and `hard/` each have their own build | **Done 2026-11-21:** one `build.py` runs all three. **Open:** the `Engine` protocol in `common.py` and an API registry | Before the API |
+| Simulator | **Done 2026-11-21:** `sim/household` (income, job loss, shocks, price rise, buffer and card rates; hand-computed ledger test) and `sim/market` with a synthetic return model. **Open:** `replay`, `bootstrap`, `fictional` | Replay before P4 and the time machine |
+| Hard engine | **Done 2026-11-21 for S1** ([hard_engine.md](hard_engine.md)): block language, golden checks in the build, scoring 51-100, futures share, bots. **Open:** P4, the JSON schema | M4 |
 | Router only specified | `backend/ml/router` with the persona tests and `reco_events` | M2 |
 | No API code | `backend/api` with the engine registry and the endpoints in skills_tree.md and tutor_agent.md | M6 |
 | Time machine, sandbox, free play: not started | Build in this order, one at a time: (1) **time machine** on `sim/market` replay, with real, licensed data and the existing screen; (2) **sandbox** = the same market player with a fictional path source; (3) free play, only if 1 and 2 work | After the demo |

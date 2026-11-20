@@ -1,0 +1,372 @@
+{
+  "schema_version": 1,
+  "tasks": [
+    {
+      "id": "s1.h1",
+      "node": "S1",
+      "level": "hard",
+      "content_version": 1,
+      "live": false,
+      "question": {
+        "brief": "Ania, 27, earns 6,500 PLN a month after tax and needs 4,800 PLN for essentials. She has 8,000 PLN saved and no debt. Write her monthly rule for the next 24 months: how much goes to her safety buffer and how much is invested. Money she does not assign is spent. Two tests must pass: she never uses her credit card during a 2-month job loss, and she invests at least 15,000 PLN over the two years. Then we test your rule against other surprises.",
+        "palette": [
+          {
+            "block": "if_else",
+            "type": "statement",
+            "text": "If {if} then {then} otherwise {else}"
+          },
+          {
+            "block": "compare",
+            "type": "condition",
+            "text": "{left} {op} {right}",
+            "ops": {
+              "<": "is less than",
+              ">": "is more than"
+            }
+          },
+          {
+            "block": "and",
+            "type": "condition",
+            "text": "{a} and {b}"
+          },
+          {
+            "block": "not",
+            "type": "condition",
+            "text": "not {a}"
+          },
+          {
+            "block": "math",
+            "type": "number",
+            "text": "{left} {op} {right}",
+            "ops": {
+              "*": "times",
+              "+": "plus",
+              "-": "minus",
+              "min": "or, if smaller,"
+            }
+          },
+          {
+            "block": "number",
+            "type": "number",
+            "text": "{value}"
+          },
+          {
+            "block": "save_to_buffer",
+            "type": "statement",
+            "text": "Put {amount} PLN into my buffer"
+          },
+          {
+            "block": "invest",
+            "type": "statement",
+            "text": "Invest {amount} PLN in a broad share fund"
+          },
+          {
+            "block": "pay_debt",
+            "type": "statement",
+            "text": "Pay {amount} PLN off my card"
+          },
+          {
+            "block": "sell_investments",
+            "type": "statement",
+            "text": "Sell {amount} PLN of my investments"
+          }
+        ],
+        "vars": [
+          {
+            "name": "cash",
+            "label": "money left this month"
+          },
+          {
+            "name": "shortfall",
+            "label": "money missing this month"
+          },
+          {
+            "name": "buffer_months",
+            "label": "months my buffer covers"
+          },
+          {
+            "name": "costs",
+            "label": "my essential costs"
+          },
+          {
+            "name": "card_debt",
+            "label": "my card debt"
+          },
+          {
+            "name": "invested",
+            "label": "my investments"
+          },
+          {
+            "name": "employed",
+            "label": "I have a job (1 = yes, 0 = no)"
+          },
+          {
+            "name": "month",
+            "label": "the month number"
+          }
+        ],
+        "limits": {
+          "max_blocks": 25,
+          "max_depth": 4
+        },
+        "starter_program": {
+          "every_month": []
+        },
+        "household": {
+          "income": 6500,
+          "costs": 4800,
+          "buffer": 8000,
+          "buffer_rate": 0.04,
+          "card_rate": 0.2
+        },
+        "months": 24,
+        "assumptions": [
+          "The buffer account pays 4% a year; card debt costs 20% a year (both illustrative).",
+          "Share fund returns are synthetic: about 0.5% a month on average, with ups and downs. Not a forecast.",
+          "Money you do not assign in a month is spent.",
+          "If a month's money runs out, the buffer pays first, then the credit card.",
+          "The surprises and their likelihoods are illustrative, chosen for teaching."
+        ],
+        "obligatory": [
+          "Job loss in month 6, lasting 2 months: never use the card",
+          "A normal 24 months: at least 15,000 PLN invested"
+        ],
+        "optional_count": 6,
+        "bots": [
+          {
+            "name": "Invests everything",
+            "accepted": false,
+            "score": null
+          },
+          {
+            "name": "Buffer of 2 months, then invests",
+            "accepted": true,
+            "score": 91
+          },
+          {
+            "name": "Buffer of 6 months, then invests",
+            "accepted": true,
+            "score": 100
+          }
+        ]
+      },
+      "reveal": {
+        "reference_program": {
+          "every_month": [
+            {
+              "block": "if_else",
+              "if": {
+                "block": "compare",
+                "op": ">",
+                "left": {
+                  "block": "var",
+                  "name": "card_debt"
+                },
+                "right": {
+                  "block": "number",
+                  "value": 0
+                }
+              },
+              "then": [
+                {
+                  "block": "pay_debt",
+                  "amount": {
+                    "block": "var",
+                    "name": "cash"
+                  }
+                }
+              ],
+              "else": [
+                {
+                  "block": "if_else",
+                  "if": {
+                    "block": "compare",
+                    "op": "<",
+                    "left": {
+                      "block": "var",
+                      "name": "buffer_months"
+                    },
+                    "right": {
+                      "block": "number",
+                      "value": 3
+                    }
+                  },
+                  "then": [
+                    {
+                      "block": "save_to_buffer",
+                      "amount": {
+                        "block": "var",
+                        "name": "cash"
+                      }
+                    }
+                  ],
+                  "else": [
+                    {
+                      "block": "invest",
+                      "amount": {
+                        "block": "var",
+                        "name": "cash"
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "editorial": "The reference rule does three things in order. If there is card debt, it pays it off first, because 20% a year beats any expected return. Until the buffer covers 3 months of essential costs, it saves. After that, it invests. A 2-month buffer passes the required tests but fails more of the surprises; a 6-month buffer survives almost everything but invests less. There is no single right size: it depends on how secure the income is.",
+        "optional": [
+          {
+            "name": "Car repair, 3,000 PLN in month 3",
+            "probability": 0.25
+          },
+          {
+            "name": "Prices up 10% from month 6",
+            "probability": 0.2
+          },
+          {
+            "name": "Medical bill, 1,500 PLN in month 15",
+            "probability": 0.15
+          },
+          {
+            "name": "Job loss in month 10, lasting 4 months",
+            "probability": 0.1
+          },
+          {
+            "name": "Two shocks in one year: 3,000 PLN in month 3 and 2,500 PLN in month 8",
+            "probability": 0.08
+          },
+          {
+            "name": "Job loss in month 6, lasting 3 months",
+            "probability": 0.05
+          }
+        ],
+        "sources": [
+          "cfpb_emergency_fund"
+        ]
+      },
+      "meta": {
+        "household": {
+          "income": 6500,
+          "costs": 4800,
+          "buffer": 8000,
+          "buffer_rate": 0.04,
+          "card_rate": 0.2
+        },
+        "world": {
+          "months": 24,
+          "market": {
+            "kind": "synthetic",
+            "seed": 2026112101,
+            "mean": 0.005,
+            "sd": 0.04
+          }
+        },
+        "obligatory": [
+          {
+            "name": "Job loss in month 6, lasting 2 months: never use the card",
+            "override": {
+              "job_loss": [
+                [
+                  6,
+                  2
+                ]
+              ]
+            },
+            "check": {
+              "no_card_debt": true
+            }
+          },
+          {
+            "name": "A normal 24 months: at least 15,000 PLN invested",
+            "override": {},
+            "check": {
+              "contributed_at_least": 15000
+            }
+          }
+        ],
+        "optional": [
+          {
+            "name": "Car repair, 3,000 PLN in month 3",
+            "probability": 0.25,
+            "override": {
+              "shocks": {
+                "3": 3000
+              }
+            }
+          },
+          {
+            "name": "Prices up 10% from month 6",
+            "probability": 0.2,
+            "override": {
+              "price_rise": [
+                6,
+                0.1
+              ]
+            }
+          },
+          {
+            "name": "Medical bill, 1,500 PLN in month 15",
+            "probability": 0.15,
+            "override": {
+              "shocks": {
+                "15": 1500
+              }
+            }
+          },
+          {
+            "name": "Job loss in month 10, lasting 4 months",
+            "probability": 0.1,
+            "override": {
+              "job_loss": [
+                [
+                  10,
+                  4
+                ]
+              ]
+            }
+          },
+          {
+            "name": "Two shocks in one year: 3,000 PLN in month 3 and 2,500 PLN in month 8",
+            "probability": 0.08,
+            "override": {
+              "shocks": {
+                "3": 3000,
+                "8": 2500
+              }
+            }
+          },
+          {
+            "name": "Job loss in month 6, lasting 3 months",
+            "probability": 0.05,
+            "override": {
+              "job_loss": [
+                [
+                  6,
+                  3
+                ]
+              ]
+            }
+          }
+        ],
+        "futures": {
+          "n": 200,
+          "seed": 11,
+          "job_loss_per_month": 0.01,
+          "job_loss_months": [
+            2,
+            5
+          ],
+          "shock_per_month": 0.04,
+          "shock_amount": [
+            1000,
+            4000
+          ]
+        },
+        "author": "draft by Claude (AI), 2026-11-21",
+        "reviewer": null,
+        "content_file": "S1.yaml"
+      }
+    }
+  ]
+}
