@@ -126,7 +126,9 @@ class _Welcome extends StatelessWidget {
           Text('Invest with\nconfidence.',
               style: GoogleFonts.lora(fontSize: compact ? 36 : 44, fontWeight: FontWeight.w700, color: kInk, height: 1.08)),
           SizedBox(height: 14),
-          Text('Short, practical lessons on 13 investment types, for every stage of life.',
+          Text('Short, practical lessons on 13 investment types, for every stage of life. '
+              'Learn how stocks, bonds and funds work, what they cost and how bumpy they can be, '
+              'so your first step is an informed one.',
               style: TextStyle(fontSize: 17, color: kMuted, height: 1.45)),
           SizedBox(height: compact ? 20 : 32),
           Align(alignment: Alignment.centerLeft, child: Container(width: 40, height: 3, decoration: BoxDecoration(color: kPrimary, borderRadius: BorderRadius.circular(2)))),
