@@ -7,7 +7,7 @@ import 'package:flutter/services.dart' show rootBundle;
 import '../models/content.dart';
 
 class Profile {
-  String name = 'Guest';
+  String name = 'You';
   String ageGroup = '30-49';
   String goal = 'Kids\' education';
   int horizonYears = 12;
@@ -26,7 +26,21 @@ class Level {
   Level(this.name, this.minXp);
 }
 
-final levels = [Level('Explorer', 0), Level('Saver', 150), Level('Planner', 500), Level('Investor', 1200), Level('Mentor', 2500)];
+final levels = [Level('Beginner', 0), Level('Intermediate', 300), Level('Expert', 1000)];
+
+/// Plain names for the 1-5 risk scale (how bumpy the ride is).
+const riskNames = ['Calm', 'Steady', 'Balanced', 'Bumpy', 'Wild'];
+String riskName(int r) => riskNames[(r - 1).clamp(0, 4)];
+
+/// How Scales (the CrocoCash points) are earned. One points type, given only
+/// for a clear action or result.
+class Rewards {
+  static const correctAnswer = 10;
+  static const missionDone = 20;
+  static const dailyRight = 15;
+  static const dailyTried = 5;
+  static const quickCheck = 25;
+}
 
 /// Badges (idea from Basis and Finanz), each with a simple rule.
 class BadgeDef {
@@ -35,11 +49,9 @@ class BadgeDef {
 }
 
 final badgeDefs = [
-  BadgeDef('first_steps', 'First steps', 'Finish your first mission'),
-  BadgeDef('placement', 'Know where you stand', 'Finish the quick check'),
-  BadgeDef('daily', 'Daily thinker', 'Answer a daily scenario'),
-  BadgeDef('calm', 'Stayed calm', 'Hold through a crash in the time machine'),
-  BadgeDef('goal', 'Goal reached', 'Hit your daily XP goal'),
+  BadgeDef('first_steps', 'First mission', 'Finish your first mission'),
+  BadgeDef('placement', 'Quick check', 'Finish the quick check'),
+  BadgeDef('goal', 'Daily goal', 'Reach your daily Scales goal'),
 ];
 
 class AppState extends ChangeNotifier {
@@ -59,10 +71,14 @@ class AppState extends ChangeNotifier {
   };
   final Profile profile = Profile();
   final Set<String> doneNodes = {};
+  final Map<String, int> nodeAnswered = {}; // node id -> questions answered so far
+  String selectedSlice = 'bonds'; // the topic at the top of the home wheel
+  bool wheelSpun = false; // hides the "spin me" hint after the first spin
   final Set<String> badges = {};
   int xp = 0;
   int xpToday = 0;
-  int dailyGoal = 30;
+  int dailyGoal = 50;
+  (int correct, int total, int earned)? lastMission; // for the result screen
   int streak = 0;
   bool dailyAnswered = false;
   bool largeText = false;
@@ -95,8 +111,31 @@ class AppState extends ChangeNotifier {
     return isUnlocked(n) ? 'open' : 'locked';
   }
 
+  /// 0..1 for one mission: done = 1, otherwise answered questions / all questions.
+  double nodeProgress(Node n) {
+    if (doneNodes.contains(n.id)) return 1;
+    if (n.questions.isEmpty) return 0;
+    return ((nodeAnswered[n.id] ?? 0) / n.questions.length).clamp(0, 1).toDouble();
+  }
+
+  /// 0..1 for a whole slice: the average of its missions' progress.
   double sliceProgress(Slice s) =>
-      s.nodes.isEmpty ? 0 : s.nodes.where((n) => doneNodes.contains(n.id)).length / s.nodes.length;
+      s.nodes.isEmpty ? 0 : s.nodes.map(nodeProgress).reduce((a, b) => a + b) / s.nodes.length;
+
+  void recordAnswer(Node n, int questionIndex) {
+    final now = questionIndex + 1;
+    if (now > (nodeAnswered[n.id] ?? 0)) {
+      nodeAnswered[n.id] = now;
+      notifyListeners();
+    }
+  }
+
+  void selectSlice(String key, {bool bySpin = false}) {
+    if (key == selectedSlice && (!bySpin || wheelSpun)) return;
+    selectedSlice = key;
+    if (bySpin) wheelSpun = true;
+    notifyListeners();
+  }
 
   void addXp(int amount) {
     xp += amount;
@@ -107,9 +146,15 @@ class AppState extends ChangeNotifier {
   }
 
   void completeNode(Node n, int correct) {
+    final scored = n.questions.where((q) => q.isScored).length;
     if (doneNodes.add(n.id)) {
       badges.add('first_steps');
-      addXp(10 * correct);
+      final earned = Rewards.correctAnswer * correct + Rewards.missionDone;
+      lastMission = (correct, scored, earned);
+      addXp(earned);
+    } else {
+      lastMission = (correct, scored, 0); // replays earn nothing extra
+      notifyListeners();
     }
   }
 
@@ -123,15 +168,14 @@ class AppState extends ChangeNotifier {
       ..clear()
       ..addAll(missedIds.map((id) => topicSlice[placementTopic[id]]).whereType<String>());
     profile.placementScore = score;
-    badges.add('placement');
+    if (badges.add('placement')) addXp(Rewards.quickCheck);
     notifyListeners();
   }
 
   void answerDaily(bool correct) {
     if (dailyAnswered) return;
     dailyAnswered = true;
-    badges.add('daily');
-    addXp(correct ? 30 : 10);
+    addXp(correct ? Rewards.dailyRight : Rewards.dailyTried);
   }
 
   void earnBadge(String id) { badges.add(id); notifyListeners(); }
@@ -141,7 +185,7 @@ class AppState extends ChangeNotifier {
   void setThemeMode(String m) { themeMode = m; notifyListeners(); }
   bool signedIn = false;
   void signIn(String name) { signedIn = true; profile.name = name; notifyListeners(); }
-  void signOut() { signedIn = false; profile.name = 'Guest'; notifyListeners(); }
+  void signOut() { signedIn = false; profile.name = 'You'; notifyListeners(); }
   void markCoachSeen() { coachSeen = true; notifyListeners(); }
   void notify() => notifyListeners();
 }
