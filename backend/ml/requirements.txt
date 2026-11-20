@@ -1,3 +1,6 @@
 pyyaml>=6
-litellm      # runtime model adapter (tutor/llm.py); the tests do not import it
+# litellm is pinned on purpose: its PyPI releases 1.82.7, 1.82.8 (March 2026) and 1.107.0 (October 2026)
+# shipped credential-stealing malware (https://github.com/BerriAI/litellm/issues/24518).
+# 1.106.4 is a clean release from after the October incident. Upgrade only to a reviewed version.
+litellm==1.106.4  # runtime model adapter (tutor/llm.py); the tests do not import it
 pytest>=8    # tests only
