@@ -55,3 +55,34 @@ cards:
     example: "Of 10 young adults in Poland, about 4 could not last a month without income."
     links: [eb525_pl]
     checked: "EB525 vol. C Poland, Q8, weighted: no savings 19.8% + under 1 month 10.5% = 30.3%; age 18-24: 20.4% + 21.5% = 41.9% (unweighted n = 98, margin about 10 points)."
+
+items:  # draft by Yurii (with Claude), 2026-11-20, based on the cards above
+  - id: s1.e1
+    kind: single
+    q: "What is an emergency fund for?"
+    options:
+      - "Unexpected costs, such as a car repair or a month without pay"
+      - "Buying shares when prices fall"
+      - "A holiday next summer"
+    answer: 0
+    why: "It is money kept only for surprises, so they don't end up on a credit card or a quick loan."
+    check: true
+  - id: s1.e2
+    kind: numeric
+    q: "Ania's essential costs are 4,800 PLN a month. She wants a buffer for 3 months. How much is that?"
+    answer: 14400
+    unit: PLN
+    tolerance: {kind: absolute, band: 100}
+    input: {min: 0, max: 30000, step: 100}
+    why: "4,800 PLN x 3 months = 14,400 PLN. Start from essential costs, not total spending."
+    check: true
+  - id: s1.e3
+    kind: single
+    q: "Where should an emergency fund be kept?"
+    options:
+      - "In shares, because they grow fastest"
+      - "In a savings account or a short bank deposit"
+      - "In crypto, because it can be sold at any time"
+    answer: 1
+    why: "It must be safe and quick to reach. Shares and crypto can fall exactly when you need the money."
+    sources: [cfpb_emergency_fund]

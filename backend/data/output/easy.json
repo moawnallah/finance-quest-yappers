@@ -1,0 +1,1681 @@
+{
+  "schema_version": 1,
+  "nodes": [
+    {
+      "node": "D1",
+      "panel": "DECISIONS",
+      "title": "What moves a price",
+      "after": [
+        "I4"
+      ],
+      "status": "draft",
+      "live": false,
+      "cards": [],
+      "items": [
+        {
+          "id": "d1.e1",
+          "node": "D1",
+          "level": "easy",
+          "kind": "single",
+          "content_version": 1,
+          "check": true,
+          "scored": true,
+          "difficulty": 0.0,
+          "question": {
+            "kind": "single",
+            "q": "A company reports a record profit, but its share price falls. What is the most likely reason?",
+            "options": [
+              "Investors expected even more, or the outlook got worse",
+              "The stock exchange made a mistake",
+              "Record profits are always bad news"
+            ],
+            "confidence": {
+              "min": 1,
+              "max": 5
+            }
+          },
+          "reveal": {
+            "answer": 0,
+            "why": "Prices react to results compared with expectations, and to what the company says about the future.",
+            "sources": []
+          },
+          "meta": {
+            "secrets": {
+              "strings": [
+                "Investors expected even more, or the outlook got worse"
+              ],
+              "numbers": []
+            }
+          }
+        },
+        {
+          "id": "d1.e2",
+          "node": "D1",
+          "level": "easy",
+          "kind": "multi",
+          "content_version": 1,
+          "check": true,
+          "scored": true,
+          "difficulty": 0.0,
+          "question": {
+            "kind": "multi",
+            "q": "Which of these can move a share price on results day? Pick all that apply.",
+            "options": [
+              "Results compared with what analysts expected",
+              "The company's outlook for the next quarter",
+              "The colour of the company's logo",
+              "A surprise change in interest rates on the same day"
+            ],
+            "confidence": {
+              "min": 1,
+              "max": 5
+            }
+          },
+          "reveal": {
+            "answer": [
+              0,
+              1,
+              3
+            ],
+            "why": "Surprises move prices: results vs expectations, the outlook, and market-wide news such as rates.",
+            "sources": []
+          },
+          "meta": {
+            "secrets": {
+              "strings": [
+                "Results compared with what analysts expected",
+                "The company's outlook for the next quarter",
+                "A surprise change in interest rates on the same day"
+              ],
+              "numbers": []
+            }
+          }
+        }
+      ],
+      "meta": {
+        "content_file": "D1.yaml",
+        "author": "Yurii",
+        "reviewer": null,
+        "checked": {}
+      }
+    },
+    {
+      "node": "D3",
+      "panel": "DECISIONS",
+      "title": "Macro news: CPI, rate decisions",
+      "after": [
+        "F2"
+      ],
+      "status": "draft",
+      "live": false,
+      "cards": [],
+      "items": [
+        {
+          "id": "d3.e1",
+          "node": "D3",
+          "level": "easy",
+          "kind": "single",
+          "content_version": 1,
+          "check": true,
+          "scored": true,
+          "difficulty": 0.0,
+          "question": {
+            "kind": "single",
+            "q": "Inflation comes in higher than expected. What usually happens to expected interest rates?",
+            "options": [
+              "They rise: rate cuts look less likely",
+              "They fall",
+              "Nothing: inflation and interest rates are unrelated"
+            ],
+            "confidence": {
+              "min": 1,
+              "max": 5
+            }
+          },
+          "reveal": {
+            "answer": 0,
+            "why": "Central banks raise or hold rates to fight inflation, so a hot reading pushes expected rates up.",
+            "sources": []
+          },
+          "meta": {
+            "secrets": {
+              "strings": [
+                "They rise: rate cuts look less likely"
+              ],
+              "numbers": []
+            }
+          }
+        },
+        {
+          "id": "d3.e2",
+          "node": "D3",
+          "level": "easy",
+          "kind": "true_false",
+          "content_version": 1,
+          "check": true,
+          "scored": true,
+          "difficulty": 0.0,
+          "question": {
+            "kind": "true_false",
+            "q": "When bond yields rise, the prices of bonds people already hold fall.",
+            "confidence": {
+              "min": 1,
+              "max": 5
+            }
+          },
+          "reveal": {
+            "answer": true,
+            "why": "Newer bonds pay more, so older ones with lower payments become less attractive and their price drops.",
+            "sources": []
+          },
+          "meta": {
+            "secrets": {
+              "strings": [],
+              "numbers": []
+            }
+          }
+        }
+      ],
+      "meta": {
+        "content_file": "D3.yaml",
+        "author": "Yurii",
+        "reviewer": null,
+        "checked": {}
+      }
+    },
+    {
+      "node": "I1",
+      "panel": "INSTRUMENTS",
+      "title": "Risk as a spread of outcomes",
+      "after": [
+        "F3"
+      ],
+      "status": "draft",
+      "live": false,
+      "cards": [
+        {
+          "id": "i1.c1",
+          "title": "Risk is a spread of outcomes",
+          "body": "Risk is not only \"losing money\". It is how wide the range of possible results is. A deposit gives almost the same result every year. Shares give a much wider range: some years far above average, some far below. Before you invest, look at the bad years, not only the average.",
+          "example": "US shares with dividends, 1976-2025: best year +37.2%, worst year -36.6% (2008). In a year like 2008, 10,000 PLN would have become about 6,345 PLN (ignoring the currency).",
+          "links": [
+            {
+              "id": "damodaran_histret",
+              "title": "Historical returns on stocks, bonds and bills: 1928-2025",
+              "publisher": "Aswath Damodaran, NYU Stern",
+              "url": "https://pages.stern.nyu.edu/~adamodar/New_Home_Page/datafile/histretSP.html"
+            }
+          ]
+        },
+        {
+          "id": "i1.c2",
+          "title": "Higher expected return, wider spread",
+          "body": "Investments expected to earn more usually come with a wider spread of results; that is the price of the higher average. In an EU survey in 2023, 57% of adults in Poland answered the risk-and-return question correctly. Knowing this protects you from offers that promise high returns with no risk.",
+          "example": "1976-2025, worst year: US shares -36.6%, 10-year US Treasury bonds -17.8%, a 50/50 mix of the two -17.9%.",
+          "links": [
+            {
+              "id": "damodaran_histret",
+              "title": "Historical returns on stocks, bonds and bills: 1928-2025",
+              "publisher": "Aswath Damodaran, NYU Stern",
+              "url": "https://pages.stern.nyu.edu/~adamodar/New_Home_Page/datafile/histretSP.html"
+            },
+            {
+              "id": "eb525_pl",
+              "title": "Flash Eurobarometer 525: Monitoring the level of financial literacy in the EU, volume C (Poland, weighted)",
+              "publisher": "European Commission",
+              "url": "https://data.europa.eu/data/datasets/s2953_fl525_eng"
+            }
+          ]
+        },
+        {
+          "id": "i1.c3",
+          "title": "A bad outcome is not always a bad decision",
+          "body": "Because results are spread, a sensible choice can still have a bad year, and a reckless one can get lucky. Judge a decision by what you knew and by the range of outcomes it faced, not only by how it turned out. This app grades your reasons and shows the outcome separately.",
+          "example": "Shares bought at the start of 2008 lost 36.6% that year (US shares), and were back above the starting value by the end of 2012.",
+          "links": [
+            {
+              "id": "damodaran_histret",
+              "title": "Historical returns on stocks, bonds and bills: 1928-2025",
+              "publisher": "Aswath Damodaran, NYU Stern",
+              "url": "https://pages.stern.nyu.edu/~adamodar/New_Home_Page/datafile/histretSP.html"
+            }
+          ]
+        }
+      ],
+      "items": [
+        {
+          "id": "i1.e1",
+          "node": "I1",
+          "level": "easy",
+          "kind": "single",
+          "content_version": 1,
+          "check": true,
+          "scored": true,
+          "difficulty": 0.0,
+          "question": {
+            "kind": "single",
+            "q": "In investing, what does risk mean?",
+            "options": [
+              "Only the chance of losing everything",
+              "How wide the range of possible results is",
+              "How much the investment costs"
+            ],
+            "confidence": {
+              "min": 1,
+              "max": 5
+            }
+          },
+          "reveal": {
+            "answer": 1,
+            "why": "Risk is the spread of outcomes: a deposit gives almost the same result each year, shares a much wider range.",
+            "sources": []
+          },
+          "meta": {
+            "secrets": {
+              "strings": [
+                "How wide the range of possible results is"
+              ],
+              "numbers": []
+            }
+          }
+        },
+        {
+          "id": "i1.e2",
+          "node": "I1",
+          "level": "easy",
+          "kind": "true_false",
+          "content_version": 1,
+          "check": true,
+          "scored": true,
+          "difficulty": 0.0,
+          "question": {
+            "kind": "true_false",
+            "q": "A sensible decision can still have a bad outcome.",
+            "confidence": {
+              "min": 1,
+              "max": 5
+            }
+          },
+          "reveal": {
+            "answer": true,
+            "why": "Because results are spread, a good choice can have a bad year. Judge a decision by what you knew and the range of outcomes.",
+            "sources": []
+          },
+          "meta": {
+            "secrets": {
+              "strings": [],
+              "numbers": []
+            }
+          }
+        },
+        {
+          "id": "i1.e3",
+          "node": "I1",
+          "level": "easy",
+          "kind": "multi",
+          "content_version": 1,
+          "check": false,
+          "scored": true,
+          "difficulty": 0.0,
+          "question": {
+            "kind": "multi",
+            "q": "Which of these are warning signs in an investment offer? Pick all that apply.",
+            "options": [
+              "It promises high returns with no risk",
+              "It shows the worst years as well as the average",
+              "It shows only the average result",
+              "It says returns are guaranteed and much higher than a deposit"
+            ],
+            "confidence": {
+              "min": 1,
+              "max": 5
+            }
+          },
+          "reveal": {
+            "answer": [
+              0,
+              2,
+              3
+            ],
+            "why": "Higher expected returns come with a wider spread. An offer that hides the bad years, or promises high returns with no risk, is a warning sign.",
+            "sources": []
+          },
+          "meta": {
+            "secrets": {
+              "strings": [
+                "It promises high returns with no risk",
+                "It shows only the average result",
+                "It says returns are guaranteed and much higher than a deposit"
+              ],
+              "numbers": []
+            }
+          }
+        }
+      ],
+      "meta": {
+        "content_file": "I1.yaml",
+        "author": "draft by Claude (AI), 2026-11-20",
+        "reviewer": null,
+        "checked": {
+          "i1.c1": "S&P 500 incl. dividends, 1976-2025: max 37.20%, min -36.55% (2008); computed from the Damodaran table, 2026-11-20.",
+          "i1.c2": "EB525 vol. C Poland Q5: 56.7% correct. Worst years from the Damodaran table: stocks -36.55% (2008), T-bond -17.83% (2022), 50/50 -17.94% (2022).",
+          "i1.c3": "Cumulative value of 1 invested at the start of 2008 in S&P 500 incl. dividends: 0.635 (2008), 0.918 (2010), 1.086 (2012); Damodaran table."
+        }
+      }
+    },
+    {
+      "node": "I2",
+      "panel": "INSTRUMENTS",
+      "title": "Deposits and retail bonds",
+      "after": [
+        "I1",
+        "F2"
+      ],
+      "status": "draft",
+      "live": false,
+      "cards": [
+        {
+          "id": "i2.c1",
+          "title": "Bank deposits",
+          "body": "A bank deposit pays a rate that is fixed for its term, for example 3, 6 or 12 months. If you break it early, you usually lose some or all of the interest. Money in Polish banks and credit unions is guaranteed by the Bank Guarantee Fund (BFG) up to the PLN equivalent of EUR 100,000 per person in each bank.",
+          "example": "10,000 PLN on a 12-month deposit at an illustrative 5% earns 500 PLN before tax.",
+          "links": [
+            {
+              "id": "bfg_limit",
+              "title": "Wysokość gwarancji",
+              "publisher": "Bankowy Fundusz Gwarancyjny (BFG)",
+              "url": "https://www.bfg.pl/gwarantowanie-depozytow/wysokosc-gwarancji/"
+            },
+            {
+              "id": "bfg_guarantee",
+              "title": "Gwarantowanie depozytów",
+              "publisher": "Bankowy Fundusz Gwarancyjny (BFG)",
+              "url": "https://www.bfg.pl/gwarantowanie-depozytow/"
+            }
+          ]
+        },
+        {
+          "id": "i2.c2",
+          "title": "Polish retail Treasury bonds",
+          "body": "The State Treasury sells savings bonds at 100 PLN each, with no buying fee. Some pay a rate fixed for the whole term (TOS, 3 years). Some have a floating rate (ROR, DOR). Others follow inflation after the first year (COI 4 years, EDO 10 years, and the family bonds ROS and ROD). You can sell them back early for a small fee per bond, taken from the interest.",
+          "example": "Early redemption fee per 100 PLN bond (bought from September 2024): ROR 0.50, DOR 0.70, TOS 1.00, COI 2.00, EDO 3.00 PLN. Current rates: see obligacjeskarbowe.pl.",
+          "links": [
+            {
+              "id": "mf_bonds_offer",
+              "title": "Obligacje skarbowe: current offer",
+              "publisher": "Ministerstwo Finansów",
+              "url": "https://www.obligacjeskarbowe.pl/"
+            },
+            {
+              "id": "mf_bonds_faq",
+              "title": "Obligacje skarbowe: FAQ",
+              "publisher": "Ministerstwo Finansów",
+              "url": "https://www.obligacjeskarbowe.pl/faq/"
+            }
+          ],
+          "valid_until": "2026-12-31"
+        },
+        {
+          "id": "i2.c4",
+          "title": "Bonds vs funds: who pays the tax",
+          "body": "Interest on Polish retail Treasury bonds is taxed at 19%, and the tax is taken automatically, so you do not report it in your annual return. Gains on fund units are also taxed at 19%, but since 2024 you settle them yourself in PIT-38. The bonds are backed by the State Treasury and are kept in a register, so they cannot be lost or stolen.",
+          "example": "100 PLN of interest on bonds: 19 PLN tax withheld, 81 PLN paid out.",
+          "links": [
+            {
+              "id": "mf_bonds_faq",
+              "title": "Obligacje skarbowe: FAQ",
+              "publisher": "Ministerstwo Finansów",
+              "url": "https://www.obligacjeskarbowe.pl/faq/"
+            },
+            {
+              "id": "podatki_fund_units",
+              "title": "Zbycie jednostek uczestnictwa w funduszu kapitałowym",
+              "publisher": "Ministerstwo Finansów (podatki.gov.pl)",
+              "url": "https://podatki.gov.pl/podatki-osobiste/pit/informacje-podstawowe/co-jest-opodatkowane/zbycie-jednostek-uczestnictwa-w-funduszu-kapitalowym"
+            }
+          ],
+          "valid_until": "2026-12-31"
+        },
+        {
+          "id": "i2.c3",
+          "title": "Real return: what your money buys",
+          "body": "What counts is what your money can buy. If it earns 5% while prices rise 3%, it buys only about 2% more. If prices rise faster than your rate, you lose buying power even though the balance grows. Inflation-indexed bonds are built to follow prices; fixed-rate ones are not. In a 2023 EU survey, 68% of adults in Poland answered the inflation question correctly.",
+          "example": "5% interest, 3% inflation: 10,000 PLN becomes 10,500 PLN, which buys what about 10,194 PLN bought a year earlier.",
+          "links": [
+            {
+              "id": "mf_bonds_edo",
+              "title": "10-year inflation-indexed retail bond EDO (series EDO1136)",
+              "publisher": "Ministerstwo Finansów",
+              "url": "https://www.obligacjeskarbowe.pl/oferta-obligacji/obligacje-10-letnie-edo/"
+            },
+            {
+              "id": "eb525_pl",
+              "title": "Flash Eurobarometer 525: Monitoring the level of financial literacy in the EU, volume C (Poland, weighted)",
+              "publisher": "European Commission",
+              "url": "https://data.europa.eu/data/datasets/s2953_fl525_eng"
+            }
+          ]
+        }
+      ],
+      "items": [
+        {
+          "id": "i2.e1",
+          "node": "I2",
+          "level": "easy",
+          "kind": "single",
+          "content_version": 1,
+          "check": true,
+          "scored": true,
+          "difficulty": 0.0,
+          "question": {
+            "kind": "single",
+            "q": "Up to what amount does the Bank Guarantee Fund (BFG) protect money in one Polish bank, per person?",
+            "options": [
+              "The PLN equivalent of EUR 100,000",
+              "100,000 PLN",
+              "There is no limit"
+            ],
+            "confidence": {
+              "min": 1,
+              "max": 5
+            }
+          },
+          "reveal": {
+            "answer": 0,
+            "why": "The BFG guarantees up to the PLN equivalent of EUR 100,000 per person in each bank.",
+            "sources": [
+              "bfg_limit"
+            ]
+          },
+          "meta": {
+            "secrets": {
+              "strings": [
+                "The PLN equivalent of EUR 100,000"
+              ],
+              "numbers": []
+            }
+          }
+        },
+        {
+          "id": "i2.e2",
+          "node": "I2",
+          "level": "easy",
+          "kind": "numeric",
+          "content_version": 1,
+          "check": true,
+          "scored": true,
+          "difficulty": 0.0,
+          "question": {
+            "kind": "numeric",
+            "q": "Your deposit earns 5% in a year while prices rise 3%. By about how many percent does your buying power grow?",
+            "unit": "%",
+            "input": {
+              "min": -5,
+              "max": 10,
+              "step": 0.1
+            },
+            "confidence": {
+              "min": 1,
+              "max": 5
+            }
+          },
+          "reveal": {
+            "answer": 1.94,
+            "unit": "%",
+            "tolerance": {
+              "kind": "absolute",
+              "band": 0.3
+            },
+            "why": "10,500 PLN buys what about 10,194 PLN bought a year earlier (10,500 / 1.03), so about 2% more, not 5%.",
+            "sources": []
+          },
+          "meta": {
+            "secrets": {
+              "strings": [],
+              "numbers": [
+                1.94
+              ]
+            }
+          }
+        },
+        {
+          "id": "i2.e3",
+          "node": "I2",
+          "level": "easy",
+          "kind": "single",
+          "content_version": 1,
+          "check": false,
+          "scored": true,
+          "difficulty": 0.0,
+          "question": {
+            "kind": "single",
+            "q": "Which Polish retail Treasury bond follows inflation after its first year?",
+            "options": [
+              "TOS (3 years, fixed rate)",
+              "EDO (10 years)",
+              "ROR (floating rate)"
+            ],
+            "confidence": {
+              "min": 1,
+              "max": 5
+            }
+          },
+          "reveal": {
+            "answer": 1,
+            "why": "COI, EDO and the family bonds ROS and ROD follow inflation after the first year. TOS is fixed; ROR floats with the rate.",
+            "sources": [
+              "mf_bonds_offer"
+            ]
+          },
+          "meta": {
+            "secrets": {
+              "strings": [
+                "EDO (10 years)"
+              ],
+              "numbers": []
+            }
+          }
+        }
+      ],
+      "meta": {
+        "content_file": "I2.yaml",
+        "author": "draft by Claude (AI), 2026-11-20",
+        "reviewer": null,
+        "checked": {
+          "i2.c1": "Guarantee: bfg_limit. 'Lose interest when broken early' is a general deposit feature; reviewer to confirm a source.",
+          "i2.c2": "Codes, maturities and rate types: mf_bonds_offer. No buying fee, fee schedule from Sept 2024, fee deducted from interest: mf_bonds_faq (answers 4 and 29). Current rates are not copied: their data is not for commercial reuse.",
+          "i2.c4": "19% flat tax withheld by the agent, no PIT entry: mf_bonds_faq answers 16-17. State Treasury guarantee and register: answers 10 and 13. Fund units on PIT-38: podatki_fund_units.",
+          "i2.c3": "10,500 / 1.03 = 10,194 (our calculation). EB525 vol. C Poland Q3: 68.1% correct. EDO indexation: mf_bonds_edo."
+        }
+      }
+    },
+    {
+      "node": "I4",
+      "panel": "INSTRUMENTS",
+      "title": "One stock vs an index",
+      "after": [
+        "I1"
+      ],
+      "status": "draft",
+      "live": false,
+      "cards": [
+        {
+          "id": "i4.c1",
+          "title": "One company or a basket",
+          "body": "An index is a basket of many companies, for example the largest companies on one stock exchange. One company can fail, and its shares can fall to zero. For a whole index to do that, all its companies would have to fail at once. An index fund lets you own the whole basket in one purchase. In a 2023 EU survey, 54% of adults in Poland answered the diversification question correctly.",
+          "example": "10,000 PLN in one company can become 0 PLN. In a broad index, 2008 turned 10,000 into about 6,345 (US shares), and the index was back above its start by the end of 2012.",
+          "links": [
+            {
+              "id": "eb525_pl",
+              "title": "Flash Eurobarometer 525: Monitoring the level of financial literacy in the EU, volume C (Poland, weighted)",
+              "publisher": "European Commission",
+              "url": "https://data.europa.eu/data/datasets/s2953_fl525_eng"
+            },
+            {
+              "id": "damodaran_histret",
+              "title": "Historical returns on stocks, bonds and bills: 1928-2025",
+              "publisher": "Aswath Damodaran, NYU Stern",
+              "url": "https://pages.stern.nyu.edu/~adamodar/New_Home_Page/datafile/histretSP.html"
+            }
+          ]
+        },
+        {
+          "id": "i4.c2",
+          "title": "What spreading cannot remove",
+          "body": "Owning many companies removes the risk of one company failing. It does not remove the risk of the whole market falling. In 2008 the US market (S&P 500 with dividends) fell 36.6%, and owning 500 companies did not prevent that. That is why portfolios also mix in other kinds of investments (node P1).",
+          "example": "One company: 10,000 PLN can become 0. Whole market in 2008: about 6,345.",
+          "links": [
+            {
+              "id": "damodaran_histret",
+              "title": "Historical returns on stocks, bonds and bills: 1928-2025",
+              "publisher": "Aswath Damodaran, NYU Stern",
+              "url": "https://pages.stern.nyu.edu/~adamodar/New_Home_Page/datafile/histretSP.html"
+            }
+          ]
+        }
+      ],
+      "items": [
+        {
+          "id": "i4.e1",
+          "node": "I4",
+          "level": "easy",
+          "kind": "single",
+          "content_version": 1,
+          "check": true,
+          "scored": true,
+          "difficulty": 0.0,
+          "question": {
+            "kind": "single",
+            "q": "Why can one company's shares fall to zero while a broad index rarely does?",
+            "options": [
+              "Indexes are protected by the state",
+              "For an index to reach zero, all its companies would have to fail at once",
+              "The stock exchange fixes index prices"
+            ],
+            "confidence": {
+              "min": 1,
+              "max": 5
+            }
+          },
+          "reveal": {
+            "answer": 1,
+            "why": "An index is a basket of many companies. One can fail; all failing at once is very unlikely.",
+            "sources": []
+          },
+          "meta": {
+            "secrets": {
+              "strings": [
+                "For an index to reach zero, all its companies would have to fail at once"
+              ],
+              "numbers": []
+            }
+          }
+        },
+        {
+          "id": "i4.e2",
+          "node": "I4",
+          "level": "easy",
+          "kind": "true_false",
+          "content_version": 1,
+          "check": true,
+          "scored": true,
+          "difficulty": 0.0,
+          "question": {
+            "kind": "true_false",
+            "q": "Owning many companies protects you from the whole market falling.",
+            "confidence": {
+              "min": 1,
+              "max": 5
+            }
+          },
+          "reveal": {
+            "answer": false,
+            "why": "Spreading removes the risk of one company failing, not of the whole market falling: in 2008 the S&P 500 fell 36.6%.",
+            "sources": [
+              "damodaran_histret"
+            ]
+          },
+          "meta": {
+            "secrets": {
+              "strings": [],
+              "numbers": []
+            }
+          }
+        },
+        {
+          "id": "i4.e3",
+          "node": "I4",
+          "level": "easy",
+          "kind": "reflection",
+          "content_version": 1,
+          "check": false,
+          "scored": false,
+          "difficulty": 0.0,
+          "question": {
+            "kind": "reflection",
+            "q": "A friend has all their savings in one company they like. What would you ask them first?",
+            "options": [
+              "What happens to your savings if that company fails?",
+              "How much has it gone up this year?",
+              "Which company is it?"
+            ]
+          },
+          "reveal": {
+            "feedback": [
+              "A good first question: it points at the risk that spreading would remove.",
+              "Past gains say little about the risk of keeping everything in one place.",
+              "Natural to ask, but the bigger question is how much depends on one company."
+            ],
+            "why": null,
+            "sources": []
+          },
+          "meta": {
+            "secrets": {
+              "strings": [],
+              "numbers": []
+            }
+          }
+        }
+      ],
+      "meta": {
+        "content_file": "I4.yaml",
+        "author": "draft by Claude (AI), 2026-11-20",
+        "reviewer": null,
+        "checked": {
+          "i4.c1": "EB525 vol. C Poland Q6: 53.5% correct. 2008 and recovery: Damodaran table (cumulative 1.086 at end of 2012). Definition of an index: reviewer to add a source.",
+          "i4.c2": "2008: -36.55%, Damodaran table."
+        }
+      }
+    },
+    {
+      "node": "I5",
+      "panel": "INSTRUMENTS",
+      "title": "Funds, ETFs, costs, the KID",
+      "after": [
+        "I4",
+        "F3"
+      ],
+      "status": "draft",
+      "live": false,
+      "cards": [
+        {
+          "id": "i5.c1",
+          "title": "What a fund is",
+          "body": "A fund pools money from many people and invests it according to a stated policy. You own units, and their value follows what the fund holds. An ETF is a fund whose units are traded on a stock exchange, like shares. In the EU, many investment products come with a Key Information Document (KID) of at most three A4 pages.",
+          "example": "Buy 1,000 PLN of units; if the fund's holdings rise 5%, your units are worth about 1,050 PLN before costs.",
+          "links": [
+            {
+              "id": "priips_reg",
+              "title": "Regulation (EU) No 1286/2014 on key information documents for PRIIPs",
+              "publisher": "EUR-Lex",
+              "url": "https://eur-lex.europa.eu/eli/reg/2014/1286/oj"
+            }
+          ]
+        },
+        {
+          "id": "i5.c2",
+          "title": "Costs grow over time",
+          "body": "Fund costs are taken from your money every year, so they compound like returns do, only against you. A difference that looks small per year becomes large over decades. Compare the \"What are the costs?\" section of two KIDs before you compare their past results.",
+          "example": "50,000 PLN for 20 years at 6% a year before costs: with 2% yearly costs it grows to about 109,556 PLN; with 0.3% to about 151,520 PLN. The difference is 41,964 PLN.",
+          "links": [
+            {
+              "id": "priips_reg",
+              "title": "Regulation (EU) No 1286/2014 on key information documents for PRIIPs",
+              "publisher": "EUR-Lex",
+              "url": "https://eur-lex.europa.eu/eli/reg/2014/1286/oj"
+            }
+          ]
+        },
+        {
+          "id": "i5.c3",
+          "title": "How to read a KID",
+          "body": "Every KID has the same sections in the same order. What is this product? What are the risks and what could I get in return? What happens if the manufacturer is unable to pay out? What are the costs? How long should I hold it and can I take money out early? How can I complain? The fixed order lets you compare two products side by side.",
+          "example": "Put two KIDs next to each other and read only 'What are the costs?' first.",
+          "links": [
+            {
+              "id": "priips_reg",
+              "title": "Regulation (EU) No 1286/2014 on key information documents for PRIIPs",
+              "publisher": "EUR-Lex",
+              "url": "https://eur-lex.europa.eu/eli/reg/2014/1286/oj"
+            }
+          ]
+        },
+        {
+          "id": "i5.c4",
+          "title": "Tax on fund gains in Poland",
+          "body": "A gain from selling or redeeming fund units is taxed at 19%. Since 2024 you settle it yourself in the PIT-38 tax return. A loss can reduce gains from the same source in the following years. IKE and IKZE accounts have their own rules (node L1).",
+          "example": "Units bought for 10,000 PLN and sold for 12,000 PLN: gain 2,000 PLN, tax 380 PLN.",
+          "links": [
+            {
+              "id": "podatki_fund_units",
+              "title": "Zbycie jednostek uczestnictwa w funduszu kapitałowym",
+              "publisher": "Ministerstwo Finansów (podatki.gov.pl)",
+              "url": "https://podatki.gov.pl/podatki-osobiste/pit/informacje-podstawowe/co-jest-opodatkowane/zbycie-jednostek-uczestnictwa-w-funduszu-kapitalowym"
+            }
+          ],
+          "valid_until": "2026-12-31"
+        }
+      ],
+      "items": [
+        {
+          "id": "i5.e1",
+          "node": "I5",
+          "level": "easy",
+          "kind": "single",
+          "content_version": 1,
+          "check": true,
+          "scored": true,
+          "difficulty": 0.0,
+          "question": {
+            "kind": "single",
+            "q": "What is an ETF?",
+            "options": [
+              "A fund whose units are traded on a stock exchange, like shares",
+              "A type of bank deposit",
+              "A government savings bond"
+            ],
+            "confidence": {
+              "min": 1,
+              "max": 5
+            }
+          },
+          "reveal": {
+            "answer": 0,
+            "why": "An ETF is a fund; its units trade on an exchange, so you can buy a whole basket in one purchase.",
+            "sources": []
+          },
+          "meta": {
+            "secrets": {
+              "strings": [
+                "A fund whose units are traded on a stock exchange, like shares"
+              ],
+              "numbers": []
+            }
+          }
+        },
+        {
+          "id": "i5.e2",
+          "node": "I5",
+          "level": "easy",
+          "kind": "single",
+          "content_version": 1,
+          "check": true,
+          "scored": true,
+          "difficulty": 0.0,
+          "question": {
+            "kind": "single",
+            "q": "Two funds hold similar investments. Which section of their KIDs should you compare first?",
+            "options": [
+              "What are the costs?",
+              "How can I complain?",
+              "What happens if the manufacturer is unable to pay out?"
+            ],
+            "confidence": {
+              "min": 1,
+              "max": 5
+            }
+          },
+          "reveal": {
+            "answer": 0,
+            "why": "Costs are taken every year and compound against you, so compare them before past results.",
+            "sources": [
+              "priips_reg"
+            ]
+          },
+          "meta": {
+            "secrets": {
+              "strings": [
+                "What are the costs?"
+              ],
+              "numbers": []
+            }
+          }
+        },
+        {
+          "id": "i5.e3",
+          "node": "I5",
+          "level": "easy",
+          "kind": "numeric",
+          "content_version": 1,
+          "check": false,
+          "scored": true,
+          "difficulty": 0.0,
+          "question": {
+            "kind": "numeric",
+            "q": "You bought fund units for 10,000 PLN and sold them for 12,000 PLN. How much tax is due in Poland?",
+            "unit": "PLN",
+            "input": {
+              "min": 0,
+              "max": 3000,
+              "step": 10
+            },
+            "confidence": {
+              "min": 1,
+              "max": 5
+            }
+          },
+          "reveal": {
+            "answer": 380,
+            "unit": "PLN",
+            "tolerance": {
+              "kind": "absolute",
+              "band": 1
+            },
+            "why": "The gain is 2,000 PLN, taxed at 19%: 380 PLN, settled yourself in PIT-38.",
+            "sources": [
+              "podatki_fund_units"
+            ]
+          },
+          "meta": {
+            "secrets": {
+              "strings": [],
+              "numbers": [
+                380
+              ]
+            }
+          }
+        }
+      ],
+      "meta": {
+        "content_file": "I5.yaml",
+        "author": "draft by Claude (AI), 2026-11-20",
+        "reviewer": null,
+        "checked": {
+          "i5.c1": "KID at most three sides of A4: PRIIPs Regulation Art. 6(4). Fund and ETF definitions: reviewer to add a source.",
+          "i5.c2": "Our calculation: 50,000 x 1.04^20 = 109,556; 50,000 x 1.057^20 = 151,520. 6% is illustrative. Section title 'What are the costs?': PRIIPs Art. 8(3)(f).",
+          "i5.c3": "Section headings: PRIIPs Regulation Art. 8(3)(c)-(h).",
+          "i5.c4": "19%, settled yourself on PIT-38 from the 2024 tax year, loss offset within the same source: podatki_fund_units. 2,000 x 19% = 380 (our calculation)."
+        }
+      }
+    },
+    {
+      "node": "P1",
+      "panel": "PORTFOLIO",
+      "title": "Diversification and correlation",
+      "after": [
+        "I2",
+        "I4"
+      ],
+      "status": "draft",
+      "live": false,
+      "cards": [
+        {
+          "id": "p1.c1",
+          "title": "Mix things that move differently",
+          "body": "If two investments do not fall at the same time, holding both gives a smoother ride than holding either alone. In 2008, US shares fell 36.6% while 10-year US Treasury bonds gained 20.1%. A 50/50 mix of the two lost about 8%.",
+          "example": "10,000 PLN split 50/50 in 2008 ended at about 9,178, instead of about 6,345 in shares only.",
+          "links": [
+            {
+              "id": "damodaran_histret",
+              "title": "Historical returns on stocks, bonds and bills: 1928-2025",
+              "publisher": "Aswath Damodaran, NYU Stern",
+              "url": "https://pages.stern.nyu.edu/~adamodar/New_Home_Page/datafile/histretSP.html"
+            }
+          ]
+        },
+        {
+          "id": "p1.c2",
+          "title": "Correlation in plain words",
+          "body": "Correlation says whether two investments tend to move together. If they move together, mixing them protects you little. If they move apart, or without a link, mixing smooths the ride. Correlation is not fixed: the ECB notes that the stock-bond correlation was positive from the late 1960s to the late 1990s, negative in the 2000s, and has risen again.",
+          "example": "Shares and bonds in 2008 moved apart (-36.6% and +20.1%); in 2022 they moved together (-18.0% and -17.8%).",
+          "links": [
+            {
+              "id": "ecb_fsr_2022_corr",
+              "title": "Cross-asset correlations in a more inflationary environment and challenges for diversification strategies (Financial Stability Review, November 2022)",
+              "publisher": "European Central Bank (Mosk, Pangallo, Zema)",
+              "url": "https://www.ecb.europa.eu/pub/financial-stability/fsr/focus/2022/html/ecb.fsrbox202211_02~7abb48e333.en.html"
+            },
+            {
+              "id": "damodaran_histret",
+              "title": "Historical returns on stocks, bonds and bills: 1928-2025",
+              "publisher": "Aswath Damodaran, NYU Stern",
+              "url": "https://pages.stern.nyu.edu/~adamodar/New_Home_Page/datafile/histretSP.html"
+            }
+          ]
+        },
+        {
+          "id": "p1.c3",
+          "title": "2022: when both fell",
+          "body": "In 2022, US shares fell 18.0% and 10-year US Treasury bonds fell 17.8%. The ECB linked the rise in stock-bond correlation to inflation and to central banks raising rates. It warned that a higher correlation can make a mixed portfolio look less risky than it is.",
+          "example": "A 50/50 mix lost about 17.9% in 2022, close to shares alone.",
+          "links": [
+            {
+              "id": "ecb_fsr_2022_corr",
+              "title": "Cross-asset correlations in a more inflationary environment and challenges for diversification strategies (Financial Stability Review, November 2022)",
+              "publisher": "European Central Bank (Mosk, Pangallo, Zema)",
+              "url": "https://www.ecb.europa.eu/pub/financial-stability/fsr/focus/2022/html/ecb.fsrbox202211_02~7abb48e333.en.html"
+            },
+            {
+              "id": "damodaran_histret",
+              "title": "Historical returns on stocks, bonds and bills: 1928-2025",
+              "publisher": "Aswath Damodaran, NYU Stern",
+              "url": "https://pages.stern.nyu.edu/~adamodar/New_Home_Page/datafile/histretSP.html"
+            }
+          ]
+        }
+      ],
+      "items": [
+        {
+          "id": "p1.e1",
+          "node": "P1",
+          "level": "easy",
+          "kind": "single",
+          "content_version": 1,
+          "check": true,
+          "scored": true,
+          "difficulty": 0.0,
+          "question": {
+            "kind": "single",
+            "q": "Why mix shares and bonds in one portfolio?",
+            "options": [
+              "They always rise together",
+              "They often don't fall at the same time, which smooths the ride",
+              "Mixing removes all risk"
+            ],
+            "confidence": {
+              "min": 1,
+              "max": 5
+            }
+          },
+          "reveal": {
+            "answer": 1,
+            "why": "In 2008 shares fell 36.6% while 10-year US bonds gained 20.1%; a 50/50 mix lost only about 8%.",
+            "sources": [
+              "damodaran_histret"
+            ]
+          },
+          "meta": {
+            "secrets": {
+              "strings": [
+                "They often don't fall at the same time, which smooths the ride"
+              ],
+              "numbers": []
+            }
+          }
+        },
+        {
+          "id": "p1.e2",
+          "node": "P1",
+          "level": "easy",
+          "kind": "true_false",
+          "content_version": 1,
+          "check": true,
+          "scored": true,
+          "difficulty": 0.0,
+          "question": {
+            "kind": "true_false",
+            "q": "The link (correlation) between shares and bonds stays the same over time.",
+            "confidence": {
+              "min": 1,
+              "max": 5
+            }
+          },
+          "reveal": {
+            "answer": false,
+            "why": "They moved apart in 2008 and together in 2022. The ECB notes the correlation has changed sign over the decades.",
+            "sources": [
+              "ecb_fsr_2022_corr"
+            ]
+          },
+          "meta": {
+            "secrets": {
+              "strings": [],
+              "numbers": []
+            }
+          }
+        },
+        {
+          "id": "p1.e3",
+          "node": "P1",
+          "level": "easy",
+          "kind": "single",
+          "content_version": 1,
+          "check": false,
+          "scored": true,
+          "difficulty": 0.0,
+          "question": {
+            "kind": "single",
+            "q": "In 2022 a 50/50 mix of US shares and bonds lost almost as much as shares alone. Why?",
+            "options": [
+              "Shares and bonds fell together as inflation and interest rates rose",
+              "The bonds in the mix defaulted",
+              "The mix was rebalanced too often"
+            ],
+            "confidence": {
+              "min": 1,
+              "max": 5
+            }
+          },
+          "reveal": {
+            "answer": 0,
+            "why": "Both fell about 18%. The ECB links the higher correlation to inflation and rising central-bank rates.",
+            "sources": [
+              "ecb_fsr_2022_corr"
+            ]
+          },
+          "meta": {
+            "secrets": {
+              "strings": [
+                "Shares and bonds fell together as inflation and interest rates rose"
+              ],
+              "numbers": []
+            }
+          }
+        }
+      ],
+      "meta": {
+        "content_file": "P1.yaml",
+        "author": "draft by Claude (AI), 2026-11-20",
+        "reviewer": null,
+        "checked": {
+          "p1.c1": "Damodaran table 2008: S&P 500 -36.55%, 10-year T-bond +20.10%; 50/50 = -8.22% (our calculation).",
+          "p1.c2": "Correlation history: ECB FSR box, Nov 2022. 2008 and 2022 figures: Damodaran table.",
+          "p1.c3": "ECB FSR box: 'might be related to inflationary pressures', 'initial underestimation of portfolio risk'. 2022: stocks -18.04%, T-bond -17.83%, 50/50 -17.94% (Damodaran table)."
+        }
+      }
+    },
+    {
+      "node": "P2",
+      "panel": "PORTFOLIO",
+      "title": "Allocation by horizon",
+      "after": [
+        "P1",
+        "S4"
+      ],
+      "status": "draft",
+      "live": false,
+      "cards": [
+        {
+          "id": "p2.c1",
+          "title": "Time changes how much risk you can carry",
+          "body": "Shares can lose a lot in one bad year, but over longer periods the bad years have been offset more often. In US history since 1928, shares with dividends lost money in about a quarter of single years, in about one in eight 5-year periods, and in none of the 20-year periods. Money you need soon cannot wait for a recovery.",
+          "example": "US shares, 1928-2025: losses in 26 of 98 single years, 11 of 94 five-year periods, 5 of 89 ten-year periods, 0 of 79 twenty-year periods. The worst 3-year period lost 62%.",
+          "links": [
+            {
+              "id": "damodaran_histret",
+              "title": "Historical returns on stocks, bonds and bills: 1928-2025",
+              "publisher": "Aswath Damodaran, NYU Stern",
+              "url": "https://pages.stern.nyu.edu/~adamodar/New_Home_Page/datafile/histretSP.html"
+            }
+          ]
+        },
+        {
+          "id": "p2.c2",
+          "title": "One goal, one horizon, one mix",
+          "body": "Give each goal its own mix. Money for a goal two years away belongs mostly in deposits or bonds, because a bad year in shares could leave you short. A goal 30 years away can hold more shares, because there is time to recover. As the goal comes closer, move part of the money into safer assets step by step.",
+          "example": "In US history, a 50/50 mix of shares and 10-year bonds lost money in 4 of 94 five-year periods; the worst lost 17%. Shares alone: 11 of 94, worst 49%.",
+          "links": [
+            {
+              "id": "damodaran_histret",
+              "title": "Historical returns on stocks, bonds and bills: 1928-2025",
+              "publisher": "Aswath Damodaran, NYU Stern",
+              "url": "https://pages.stern.nyu.edu/~adamodar/New_Home_Page/datafile/histretSP.html"
+            }
+          ]
+        },
+        {
+          "id": "p2.c3",
+          "title": "History is a guide, not a promise",
+          "body": "These figures come from one country, the US, in one century, and they ignore inflation. Other markets have had longer bad stretches, and the Polish stock market has a much shorter history. \"No 20-year loss so far\" does not mean it cannot happen. Use history to understand the spread of outcomes, not to predict your result.",
+          "example": "0 of 79 twenty-year periods lost money in US shares; that is a record, not a guarantee.",
+          "links": [
+            {
+              "id": "damodaran_histret",
+              "title": "Historical returns on stocks, bonds and bills: 1928-2025",
+              "publisher": "Aswath Damodaran, NYU Stern",
+              "url": "https://pages.stern.nyu.edu/~adamodar/New_Home_Page/datafile/histretSP.html"
+            }
+          ]
+        }
+      ],
+      "items": [
+        {
+          "id": "p2.e1",
+          "node": "P2",
+          "level": "easy",
+          "kind": "single",
+          "content_version": 1,
+          "check": true,
+          "scored": true,
+          "difficulty": 0.0,
+          "question": {
+            "kind": "single",
+            "q": "You need the money for a flat deposit in two years. Where does most of it belong?",
+            "options": [
+              "Mostly in shares, because they earn the most",
+              "Mostly in deposits or bonds",
+              "All in one fast-growing company"
+            ],
+            "confidence": {
+              "min": 1,
+              "max": 5
+            }
+          },
+          "reveal": {
+            "answer": 1,
+            "why": "A goal two years away can't wait for a recovery after a bad year in shares, so it belongs mostly in safer assets.",
+            "sources": []
+          },
+          "meta": {
+            "secrets": {
+              "strings": [
+                "Mostly in deposits or bonds"
+              ],
+              "numbers": []
+            }
+          }
+        },
+        {
+          "id": "p2.e2",
+          "node": "P2",
+          "level": "easy",
+          "kind": "true_false",
+          "content_version": 1,
+          "check": true,
+          "scored": true,
+          "difficulty": 0.0,
+          "question": {
+            "kind": "true_false",
+            "q": "In US history, shares with dividends have never lost money over a 20-year period, so it can never happen.",
+            "confidence": {
+              "min": 1,
+              "max": 5
+            }
+          },
+          "reveal": {
+            "answer": false,
+            "why": "0 of 79 twenty-year periods lost money in US shares, but that is one country's record, not a guarantee.",
+            "sources": [
+              "damodaran_histret"
+            ]
+          },
+          "meta": {
+            "secrets": {
+              "strings": [],
+              "numbers": []
+            }
+          }
+        },
+        {
+          "id": "p2.e3",
+          "node": "P2",
+          "level": "easy",
+          "kind": "single",
+          "content_version": 1,
+          "check": false,
+          "scored": true,
+          "difficulty": 0.0,
+          "question": {
+            "kind": "single",
+            "q": "As a long-term goal comes closer, what does a horizon-based plan usually do?",
+            "options": [
+              "Moves part of the money into safer assets step by step",
+              "Moves everything into shares to catch up",
+              "Leaves the mix unchanged until the last day"
+            ],
+            "confidence": {
+              "min": 1,
+              "max": 5
+            }
+          },
+          "reveal": {
+            "answer": 0,
+            "why": "The shorter the time left, the less room there is to recover from a fall, so the mix shifts gradually towards safer assets.",
+            "sources": []
+          },
+          "meta": {
+            "secrets": {
+              "strings": [
+                "Moves part of the money into safer assets step by step"
+              ],
+              "numbers": []
+            }
+          }
+        }
+      ],
+      "meta": {
+        "content_file": "P2.yaml",
+        "author": "draft by Claude (AI), 2026-11-20",
+        "reviewer": null,
+        "checked": {
+          "p2.c1": "Rolling windows of S&P 500 incl. dividends, nominal, computed from the Damodaran table (scratch script placement_check/damodaran_facts.py, 2026-11-20).",
+          "p2.c2": "50/50 and shares-only 5-year windows from the Damodaran table (nominal).",
+          "p2.c3": "Count from the Damodaran table; the caveats are general and need no external source."
+        }
+      }
+    },
+    {
+      "node": "P4",
+      "panel": "PORTFOLIO",
+      "title": "Rebalancing and discipline in a crash",
+      "after": [
+        "P2"
+      ],
+      "status": "draft",
+      "live": false,
+      "cards": [
+        {
+          "id": "p4.c1",
+          "title": "Rebalancing",
+          "body": "You choose a target mix, for example 60% shares and 40% bonds. Markets move your mix away from it. Rebalancing means returning to the target from time to time: selling some of what grew and buying what fell. It is a rule decided in calm times, so you do not have to decide in a panic.",
+          "example": "Target 60/40 on 10,000 PLN. Shares fall and the mix becomes 50/50 at 8,000 PLN; rebalancing moves 800 PLN from bonds to shares to get back to 60/40.",
+          "links": []
+        },
+        {
+          "id": "p4.c2",
+          "title": "Selling after a fall locks in the loss",
+          "body": "A fall is a loss on paper until you sell. In 2020, US shares (S&P 500 with dividends) ended the year up 18.0%, despite the sharp fall in March. Someone who sold in March missed the recovery. Someone who kept a rule, holding or rebalancing, did not.",
+          "example": "10,000 PLN in US shares at the start of 2020 ended the year at about 11,802 (ignoring the currency).",
+          "links": [
+            {
+              "id": "damodaran_histret",
+              "title": "Historical returns on stocks, bonds and bills: 1928-2025",
+              "publisher": "Aswath Damodaran, NYU Stern",
+              "url": "https://pages.stern.nyu.edu/~adamodar/New_Home_Page/datafile/histretSP.html"
+            }
+          ]
+        },
+        {
+          "id": "p4.c3",
+          "title": "Write your rule before the storm",
+          "body": "Decide now what you will do if your investments fall 20% or 30%: hold, rebalance, or, if your goal is near, move to safer assets on a schedule. A rule written in advance protects you from fear and from headlines. The hard task in this node lets you test your rule on past crashes.",
+          "example": "My rule: if shares are more than 10 points away from 60%, rebalance once, at the end of the month.",
+          "links": []
+        }
+      ],
+      "items": [
+        {
+          "id": "p4.e1",
+          "node": "P4",
+          "level": "easy",
+          "kind": "single",
+          "content_version": 1,
+          "check": true,
+          "scored": true,
+          "difficulty": 0.0,
+          "question": {
+            "kind": "single",
+            "q": "What does rebalancing a 60/40 portfolio mean?",
+            "options": [
+              "Selling everything after a fall",
+              "Returning to the 60/40 target by selling some of what grew and buying what fell",
+              "Moving everything to what did best last year"
+            ],
+            "confidence": {
+              "min": 1,
+              "max": 5
+            }
+          },
+          "reveal": {
+            "answer": 1,
+            "why": "Rebalancing returns the mix to its target from time to time, following a rule set in calm times.",
+            "sources": []
+          },
+          "meta": {
+            "secrets": {
+              "strings": [
+                "Returning to the 60/40 target by selling some of what grew and buying what fell"
+              ],
+              "numbers": []
+            }
+          }
+        },
+        {
+          "id": "p4.e2",
+          "node": "P4",
+          "level": "easy",
+          "kind": "numeric",
+          "content_version": 1,
+          "check": true,
+          "scored": true,
+          "difficulty": 0.0,
+          "question": {
+            "kind": "numeric",
+            "q": "Your target is 60% shares. After a fall your portfolio is worth 8,000 PLN, with 4,000 PLN in shares. How much must move into shares to get back to 60%?",
+            "unit": "PLN",
+            "input": {
+              "min": 0,
+              "max": 4000,
+              "step": 50
+            },
+            "confidence": {
+              "min": 1,
+              "max": 5
+            }
+          },
+          "reveal": {
+            "answer": 800,
+            "unit": "PLN",
+            "tolerance": {
+              "kind": "absolute",
+              "band": 50
+            },
+            "why": "60% of 8,000 is 4,800 PLN. Shares are at 4,000, so 800 PLN moves from bonds to shares.",
+            "sources": []
+          },
+          "meta": {
+            "secrets": {
+              "strings": [],
+              "numbers": [
+                800
+              ]
+            }
+          }
+        },
+        {
+          "id": "p4.e3",
+          "node": "P4",
+          "level": "easy",
+          "kind": "reflection",
+          "content_version": 1,
+          "check": false,
+          "scored": false,
+          "difficulty": 0.0,
+          "question": {
+            "kind": "reflection",
+            "q": "Your investments fell 25% in a month. What do you do?",
+            "options": [
+              "Follow the rule I wrote down in advance",
+              "Sell everything before it falls further",
+              "Buy more of whatever fell most, without a plan"
+            ]
+          },
+          "reveal": {
+            "feedback": [
+              "That is the point of a rule: it protects you from deciding in a panic.",
+              "Selling after a fall locks in the loss. In 2020, those who sold in March missed the recovery.",
+              "Acting without a plan is the same problem in the other direction. A written rule is calmer."
+            ],
+            "why": null,
+            "sources": []
+          },
+          "meta": {
+            "secrets": {
+              "strings": [],
+              "numbers": []
+            }
+          }
+        }
+      ],
+      "meta": {
+        "content_file": "P4.yaml",
+        "author": "draft by Claude (AI), 2026-11-20",
+        "reviewer": null,
+        "checked": {
+          "p4.c1": "Our worked example: 60% of 8,000 = 4,800; shares at 4,000 need +800. Definition: reviewer to add a source.",
+          "p4.c2": "2020: +18.02%, Damodaran table. The size of the March fall is not stated because we have not checked a monthly source.",
+          "p4.c3": "App guidance, no external fact."
+        }
+      }
+    },
+    {
+      "node": "S1",
+      "panel": "SAFETY",
+      "title": "Emergency fund",
+      "after": [
+        "F1"
+      ],
+      "status": "draft",
+      "live": false,
+      "cards": [
+        {
+          "id": "s1.c1",
+          "title": "What an emergency fund is",
+          "body": "An emergency fund is money you keep only for surprises: a car repair, a medical bill, or a month without pay. Without it, a surprise often ends on a credit card or a quick loan, which costs much more than the surprise itself. Keep it apart from spending money and from investments, so it is there when you need it.",
+          "example": "Ania spends 4,800 PLN a month. A 3,000 PLN car repair equals about 19 days of her costs.",
+          "links": [
+            {
+              "id": "cfpb_emergency_fund",
+              "title": "An essential guide to building an emergency fund",
+              "publisher": "Consumer Financial Protection Bureau (US)",
+              "url": "https://www.consumerfinance.gov/an-essential-guide-to-building-an-emergency-fund/"
+            }
+          ]
+        },
+        {
+          "id": "s1.c2",
+          "title": "How big should it be?",
+          "body": "There is no single right number; it depends on your situation. Start from your essential monthly costs: rent, food, bills, loan instalments. Then ask how many months you would need to find new income. A steady job and no dependants need fewer months. Irregular income, or one earner in a family, needs more. Even a small buffer helps, so build one month first.",
+          "example": "Essential costs 4,800 PLN x 3 months = 14,400 PLN. Saving 600 PLN a month, that takes 24 months.",
+          "links": [
+            {
+              "id": "cfpb_emergency_fund",
+              "title": "An essential guide to building an emergency fund",
+              "publisher": "Consumer Financial Protection Bureau (US)",
+              "url": "https://www.consumerfinance.gov/an-essential-guide-to-building-an-emergency-fund/"
+            }
+          ]
+        },
+        {
+          "id": "s1.c3",
+          "title": "Where to keep it",
+          "body": "Somewhere safe and quick to reach, such as a savings account or a short bank deposit. Not in shares or crypto, because their value can fall exactly when you need the money. In Poland, money in domestic banks and credit unions is guaranteed by the Bank Guarantee Fund (BFG) up to the PLN equivalent of EUR 100,000 per person in each bank.",
+          "example": "A 14,400 PLN buffer in one Polish bank is fully within the guarantee.",
+          "links": [
+            {
+              "id": "bfg_limit",
+              "title": "Wysokość gwarancji",
+              "publisher": "Bankowy Fundusz Gwarancyjny (BFG)",
+              "url": "https://www.bfg.pl/gwarantowanie-depozytow/wysokosc-gwarancji/"
+            },
+            {
+              "id": "bfg_guarantee",
+              "title": "Gwarantowanie depozytów",
+              "publisher": "Bankowy Fundusz Gwarancyjny (BFG)",
+              "url": "https://www.bfg.pl/gwarantowanie-depozytow/"
+            },
+            {
+              "id": "cfpb_emergency_fund",
+              "title": "An essential guide to building an emergency fund",
+              "publisher": "Consumer Financial Protection Bureau (US)",
+              "url": "https://www.consumerfinance.gov/an-essential-guide-to-building-an-emergency-fund/"
+            }
+          ]
+        },
+        {
+          "id": "s1.c4",
+          "title": "You are not alone",
+          "body": "In an EU survey in 2023, 30% of adults in Poland said they had no emergency savings, or could cover their costs for less than a month without income. Among 18-24-year-olds it was 42%. Building a buffer is the first step, before investing.",
+          "example": "Of 10 young adults in Poland, about 4 could not last a month without income.",
+          "links": [
+            {
+              "id": "eb525_pl",
+              "title": "Flash Eurobarometer 525: Monitoring the level of financial literacy in the EU, volume C (Poland, weighted)",
+              "publisher": "European Commission",
+              "url": "https://data.europa.eu/data/datasets/s2953_fl525_eng"
+            }
+          ]
+        }
+      ],
+      "items": [
+        {
+          "id": "s1.e1",
+          "node": "S1",
+          "level": "easy",
+          "kind": "single",
+          "content_version": 1,
+          "check": true,
+          "scored": true,
+          "difficulty": 0.0,
+          "question": {
+            "kind": "single",
+            "q": "What is an emergency fund for?",
+            "options": [
+              "Unexpected costs, such as a car repair or a month without pay",
+              "Buying shares when prices fall",
+              "A holiday next summer"
+            ],
+            "confidence": {
+              "min": 1,
+              "max": 5
+            }
+          },
+          "reveal": {
+            "answer": 0,
+            "why": "It is money kept only for surprises, so they don't end up on a credit card or a quick loan.",
+            "sources": []
+          },
+          "meta": {
+            "secrets": {
+              "strings": [
+                "Unexpected costs, such as a car repair or a month without pay"
+              ],
+              "numbers": []
+            }
+          }
+        },
+        {
+          "id": "s1.e2",
+          "node": "S1",
+          "level": "easy",
+          "kind": "numeric",
+          "content_version": 1,
+          "check": true,
+          "scored": true,
+          "difficulty": 0.0,
+          "question": {
+            "kind": "numeric",
+            "q": "Ania's essential costs are 4,800 PLN a month. She wants a buffer for 3 months. How much is that?",
+            "unit": "PLN",
+            "input": {
+              "min": 0,
+              "max": 30000,
+              "step": 100
+            },
+            "confidence": {
+              "min": 1,
+              "max": 5
+            }
+          },
+          "reveal": {
+            "answer": 14400,
+            "unit": "PLN",
+            "tolerance": {
+              "kind": "absolute",
+              "band": 100
+            },
+            "why": "4,800 PLN x 3 months = 14,400 PLN. Start from essential costs, not total spending.",
+            "sources": []
+          },
+          "meta": {
+            "secrets": {
+              "strings": [],
+              "numbers": [
+                14400
+              ]
+            }
+          }
+        },
+        {
+          "id": "s1.e3",
+          "node": "S1",
+          "level": "easy",
+          "kind": "single",
+          "content_version": 1,
+          "check": false,
+          "scored": true,
+          "difficulty": 0.0,
+          "question": {
+            "kind": "single",
+            "q": "Where should an emergency fund be kept?",
+            "options": [
+              "In shares, because they grow fastest",
+              "In a savings account or a short bank deposit",
+              "In crypto, because it can be sold at any time"
+            ],
+            "confidence": {
+              "min": 1,
+              "max": 5
+            }
+          },
+          "reveal": {
+            "answer": 1,
+            "why": "It must be safe and quick to reach. Shares and crypto can fall exactly when you need the money.",
+            "sources": [
+              "cfpb_emergency_fund"
+            ]
+          },
+          "meta": {
+            "secrets": {
+              "strings": [
+                "In a savings account or a short bank deposit"
+              ],
+              "numbers": []
+            }
+          }
+        }
+      ],
+      "meta": {
+        "content_file": "S1.yaml",
+        "author": "draft by Claude (AI), 2026-11-20",
+        "reviewer": null,
+        "checked": {
+          "s1.c1": "Definition and examples (car repair, medical bills, loss of income): CFPB guide.",
+          "s1.c2": "'Depends on your situation' and 'even a small amount can provide some financial security': CFPB guide. The 3-month figure is an example, not a rule.",
+          "s1.c3": "EUR 100,000 per depositor per bank, joint accounts counted by share: bfg_limit. Domestic banks and credit unions covered: bfg_guarantee. 'Safe, accessible': CFPB.",
+          "s1.c4": "EB525 vol. C Poland, Q8, weighted: no savings 19.8% + under 1 month 10.5% = 30.3%; age 18-24: 20.4% + 21.5% = 41.9% (unweighted n = 98, margin about 10 points)."
+        }
+      }
+    }
+  ]
+}

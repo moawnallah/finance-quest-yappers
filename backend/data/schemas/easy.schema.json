@@ -1,0 +1,94 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "easy.schema.json",
+  "title": "Easy part of the nodes: output/easy.json",
+  "description": "Per node: cards and items. Send item `question` before the answer and `reveal` only after it; `meta` is internal. Texts are strings or {en, pl} maps until localized by the views.",
+  "type": "object",
+  "required": ["schema_version", "nodes"],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {"const": 1},
+    "nodes": {"type": "array", "items": {"$ref": "#/$defs/node"}}
+  },
+  "$defs": {
+    "text": {
+      "oneOf": [
+        {"type": "string", "minLength": 1},
+        {"type": "object", "required": ["en"], "additionalProperties": {"type": "string"}}
+      ]
+    },
+    "node": {
+      "type": "object",
+      "required": ["node", "panel", "title", "after", "status", "live", "cards", "items", "meta"],
+      "additionalProperties": false,
+      "properties": {
+        "node": {"type": "string", "pattern": "^[A-Z][0-9]+$"},
+        "panel": {"$ref": "#/$defs/text"},
+        "title": {"$ref": "#/$defs/text"},
+        "after": {"type": "array", "items": {"type": "string"}},
+        "status": {"type": "string"},
+        "live": {"type": "boolean", "description": "false until a reviewer has signed the node off"},
+        "cards": {"type": "array", "items": {"$ref": "#/$defs/card"}},
+        "items": {"type": "array", "items": {"$ref": "#/$defs/item"}},
+        "meta": {"type": "object"}
+      }
+    },
+    "card": {
+      "type": "object",
+      "required": ["id", "title", "body", "links"],
+      "additionalProperties": false,
+      "properties": {
+        "id": {"type": "string"},
+        "title": {"$ref": "#/$defs/text"},
+        "body": {"$ref": "#/$defs/text"},
+        "example": {"$ref": "#/$defs/text"},
+        "links": {"type": "array", "items": {
+          "type": "object", "required": ["id", "title", "publisher", "url"],
+          "properties": {"id": {"type": "string"}, "title": {"type": ["string", "null"]},
+                         "publisher": {"type": ["string", "null"]}, "url": {"type": ["string", "null"]}}}},
+        "valid_until": {"type": "string", "format": "date"}
+      }
+    },
+    "item": {
+      "type": "object",
+      "required": ["id", "node", "level", "kind", "content_version", "check", "scored", "difficulty", "question", "reveal", "meta"],
+      "additionalProperties": false,
+      "properties": {
+        "id": {"type": "string"},
+        "node": {"type": "string"},
+        "level": {"const": "easy"},
+        "kind": {"enum": ["single", "multi", "true_false", "numeric", "reflection"]},
+        "content_version": {"type": "integer", "minimum": 1},
+        "check": {"type": "boolean", "description": "may be drawn into prerequisite tests of later nodes"},
+        "scored": {"type": "boolean"},
+        "difficulty": {"type": "number"},
+        "question": {
+          "type": "object",
+          "required": ["kind", "q"],
+          "not": {"anyOf": [{"required": ["answer"]}, {"required": ["why"]}, {"required": ["feedback"]}, {"required": ["tolerance"]}]},
+          "properties": {
+            "kind": {"type": "string"},
+            "q": {"$ref": "#/$defs/text"},
+            "options": {"type": "array", "items": {"$ref": "#/$defs/text"}},
+            "unit": {"type": "string"},
+            "input": {"type": "object"},
+            "confidence": {"type": "object"}
+          }
+        },
+        "reveal": {
+          "type": "object",
+          "required": ["why", "sources"],
+          "properties": {
+            "answer": {},
+            "why": {"oneOf": [{"$ref": "#/$defs/text"}, {"type": "null"}]},
+            "feedback": {"type": "array", "items": {"$ref": "#/$defs/text"}},
+            "unit": {"type": "string"},
+            "tolerance": {"type": "object"},
+            "sources": {"type": "array", "items": {"type": "string"}}
+          }
+        },
+        "meta": {"type": "object"}
+      }
+    }
+  }
+}

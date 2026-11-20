@@ -13,53 +13,11 @@ Every compile step returns `public` (safe before the answer) and `private` (the 
 from __future__ import annotations
 
 import bisect
-import datetime as dt
 import re
 
+from common import Report, all_strings, as_date, is_text, localize  # shared helpers (re-exported)
+
 from .series import TRANSFORM_UNIT, TRANSFORMS, DataError, SeriesStore
-
-
-class Report:
-    """Collects problems while validating or compiling one task."""
-
-    def __init__(self):
-        self.errors: list[str] = []
-        self.warnings: list[str] = []
-
-    def error(self, msg: str):
-        self.errors.append(msg)
-
-    def warn(self, msg: str):
-        self.warnings.append(msg)
-
-
-# ---------------------------------------------------------------- text
-
-def is_text(v) -> bool:
-    """A user-facing text is a plain string (English) or a map {en: ..., pl: ...} with `en`."""
-    if isinstance(v, str):
-        return bool(v.strip())
-    return isinstance(v, dict) and isinstance(v.get("en"), str) and bool(v["en"].strip()) \
-        and all(isinstance(x, str) for x in v.values())
-
-
-def all_strings(v) -> list[str]:
-    return [v] if isinstance(v, str) else [x for x in v.values() if isinstance(x, str)] if isinstance(v, dict) else []
-
-
-def localize(v, lang: str = "en"):
-    if isinstance(v, dict):
-        return (v.get(lang) or v.get("en") or "").strip()
-    return v.strip() if isinstance(v, str) else v
-
-
-def as_date(v):
-    if isinstance(v, dt.date):
-        return v
-    try:
-        return dt.date.fromisoformat(str(v))
-    except ValueError:
-        return None
 
 
 # ---------------------------------------------------------------- stimuli

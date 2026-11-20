@@ -1,9 +1,33 @@
-# D3 Macro news: CPI, rate decisions. Only the medium task so far.
+# D3 Macro news: CPI, rate decisions. Items and the medium task so far; cards and the hard task come later.
 # SAMPLE: synthetic yield path; replace with a real series once its licence is cleared.
 node: D3
-tasks:
+panel: DECISIONS
+title: "Macro news: CPI, rate decisions"
+after: [F2]
+author: Yurii
+reviewer: null
+status: draft
+
+items:  # draft by Yurii (with Claude), 2026-11-20
+  - id: d3.e1
+    kind: single
+    q: "Inflation comes in higher than expected. What usually happens to expected interest rates?"
+    options:
+      - "They rise: rate cuts look less likely"
+      - "They fall"
+      - "Nothing: inflation and interest rates are unrelated"
+    answer: 0
+    why: "Central banks raise or hold rates to fight inflation, so a hot reading pushes expected rates up."
+    check: true
+  - id: d3.e2
+    kind: true_false
+    q: "When bond yields rise, the prices of bonds people already hold fall."
+    answer: true
+    why: "Newer bonds pay more, so older ones with lower payments become less attractive and their price drops."
+    check: true
+
+medium:
   - id: d3.m1
-    level: medium
     variant: day_x
     content_version: 1
     author: Yurii

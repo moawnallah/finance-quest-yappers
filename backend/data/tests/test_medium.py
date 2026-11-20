@@ -10,11 +10,12 @@ from medium import AttemptError, question_view, reveal_view, score
 from medium.build import NODES, SERIES, build, write
 from medium.parts import Report, score_reasons
 from medium.series import SeriesStore, TRANSFORMS, step_dates
+from common import load_sources
 from medium.task import compile_task, validate
 
 DATA = Path(__file__).resolve().parent.parent
 D1 = yaml.safe_load((NODES / "D1.yaml").read_text(encoding="utf-8"))
-D1_TASK = {"node": "D1", **D1["tasks"][0]}
+D1_TASK = {"node": "D1", "level": "medium", **D1["medium"][0]}
 TODAY = dt.date(2026, 11, 20)
 
 
@@ -24,7 +25,7 @@ def store():
 
 def compiled(task, s=None):
     s = s or store()
-    r = validate(task, s, TODAY)
+    r = validate(task, s, TODAY, sources=load_sources())
     rec = None if r.errors else compile_task(task, s, r)
     return rec, r
 
@@ -116,7 +117,10 @@ def test_bad_answers_raise(records, response, reasons, confidence):
 # ---------------------------------------------------------------- validation
 
 @pytest.mark.parametrize("mutate, message", [
-    (lambda t: t.update(id="x1.m1"), "must start with the node id"),
+    (lambda t: t.update(id="x1.m1"), "must look like d1.m<n>"),
+    (lambda t: t.update(id="d1.e1"), "must look like d1.m<n>"),
+    (lambda t: t.update(sources=["nope"]), "unknown source"),
+    (lambda t: t["reveal"].update(show=["everything"]), "reveal.show"),
     (lambda t: t.update(variant="day_x", truth="outcome"), "truth none"),
     (lambda t: t["stimulus"][0].update(kind="offer"), "not implemented"),
     (lambda t: t["response"].update(kind="number"), "not implemented"),
@@ -204,3 +208,7 @@ def test_transforms():
     assert TRANSFORMS["index100"](dates, values, 12)[0] == pytest.approx(100 / 110 * 100)
     yoy = TRANSFORMS["yoy"](dates, values, 0)
     assert yoy[:12] == [None] * 12 and yoy[12] == pytest.approx(10.0) and yoy[14] == pytest.approx(0.0)
+
+
+def test_reveal_show_defaults_to_everything(records):
+    assert set(records["d1.m1"]["reveal"]["show"]) == {"truth", "outcome", "per_box_explain", "sources"}

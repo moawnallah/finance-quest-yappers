@@ -7,6 +7,17 @@ Data series and the medium task engine. Owner: Yurii. Guide: [docs/medium_engine
 - Single-company prices are not licensed: use a synthetic series, labelled as such on screen.
 - Credit each source on screen and in `SOURCES.md`.
 
+## Easy engine (cards and quiz items)
+
+Guide: [docs/easy_engine.md](../../docs/easy_engine.md). Item kinds `single`, `multi`, `true_false`, `numeric` and `reflection`; cards with links from `backend/content/sources.yaml`; the prerequisite test from each node's `after` nodes.
+
+```bash
+cd backend/data
+python -m easy.build --strict      # -> output/easy.json and output/easy_qa.md
+```
+
+Shared helpers for both engines (texts, tolerance rule, node loading) are in `common.py`.
+
 ## Medium engine ("estimate and explain")
 
 Spec: `docs/task_engines.md`. Implemented so far: the **chart** stimulus, the **direction** response and the truths **none** (day X, graded on reasons only) and **outcome**. Other kinds (offer, table, number, calculator, ...) are added as one class each in `medium/parts.py`.

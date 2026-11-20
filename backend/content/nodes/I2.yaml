@@ -57,3 +57,37 @@ cards:
     example: "5% interest, 3% inflation: 10,000 PLN becomes 10,500 PLN, which buys what about 10,194 PLN bought a year earlier."
     links: [mf_bonds_edo, eb525_pl]
     checked: "10,500 / 1.03 = 10,194 (our calculation). EB525 vol. C Poland Q3: 68.1% correct. EDO indexation: mf_bonds_edo."
+
+items:  # draft by Yurii (with Claude), 2026-11-20, based on the cards above
+  - id: i2.e1
+    kind: single
+    q: "Up to what amount does the Bank Guarantee Fund (BFG) protect money in one Polish bank, per person?"
+    options:
+      - "The PLN equivalent of EUR 100,000"
+      - "100,000 PLN"
+      - "There is no limit"
+    answer: 0
+    why: "The BFG guarantees up to the PLN equivalent of EUR 100,000 per person in each bank."
+    sources: [bfg_limit]
+    valid_until: 2026-12-31
+    check: true
+  - id: i2.e2
+    kind: numeric
+    q: "Your deposit earns 5% in a year while prices rise 3%. By about how many percent does your buying power grow?"
+    answer: 1.94
+    unit: "%"
+    tolerance: {kind: absolute, band: 0.3}
+    input: {min: -5, max: 10, step: 0.1}
+    why: "10,500 PLN buys what about 10,194 PLN bought a year earlier (10,500 / 1.03), so about 2% more, not 5%."
+    check: true
+  - id: i2.e3
+    kind: single
+    q: "Which Polish retail Treasury bond follows inflation after its first year?"
+    options:
+      - "TOS (3 years, fixed rate)"
+      - "EDO (10 years)"
+      - "ROR (floating rate)"
+    answer: 1
+    why: "COI, EDO and the family bonds ROS and ROD follow inflation after the first year. TOS is fixed; ROR floats with the rate."
+    sources: [mf_bonds_offer]
+    valid_until: 2026-12-31

@@ -84,7 +84,7 @@
         },
         "reveal": {
           "type": "object",
-          "required": ["text", "outcome", "truth", "stimulus", "reasons", "sources"],
+          "required": ["text", "outcome", "truth", "stimulus", "reasons", "sources", "show"],
           "additionalProperties": false,
           "properties": {
             "text": {"$ref": "#/$defs/text"},
@@ -95,7 +95,8 @@
               "type": "object", "required": ["id", "weight", "explain"], "additionalProperties": false,
               "properties": {"id": {"type": "string"}, "weight": {"type": "number", "minimum": -1, "maximum": 1},
                              "explain": {"$ref": "#/$defs/text"}}}},
-            "sources": {"type": "array", "items": {"type": "string"}}
+            "sources": {"type": "array", "items": {"type": "string"}},
+            "show": {"type": "array", "items": {"enum": ["truth", "outcome", "per_box_explain", "sources"]}, "description": "what the reveal screen shows"}
           }
         },
         "meta": {"type": "object"}

@@ -1,9 +1,15 @@
-# Template for a node file with a medium "day X" chart task. Files starting with "_" are skipped.
+# Template for the medium part of a node file (a "day X" chart task). Easy items: see _TEMPLATE_easy.yaml. Files starting with "_" are skipped.
 # Spec: docs/task_engines.md, "Medium engine". Every user-facing text is a string or {en: ..., pl: ...}.
 node: D1
-tasks:
+panel: DECISIONS
+title: "What moves a price"
+after: [I4]             # prerequisite nodes
+author: ...
+reviewer: null
+status: draft
+
+medium:
   - id: d1.m1                    # <node in lower case>.m<n>
-    level: medium
     variant: day_x               # day_x (graded on reasons only) | estimate | label
     content_version: 1           # bump on any change that affects scoring
     author: ...
@@ -37,3 +43,4 @@ tasks:
     # weights: {estimate: 0.5, reasons: 0.5}   # ignored for day_x
     reveal:
       text: "The takeaway. No exact numbers: the app shows the real change."
+      # show: [truth, outcome, per_box_explain, sources]   # what the reveal screen shows (default: all)

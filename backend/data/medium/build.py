@@ -5,8 +5,7 @@
     python -m medium.build --only d1.m1
     python -m medium.build --strict    # exit 1 if any task has an error
 
-A node file looks like:  node: D1 / tasks: [ {id: d1.m1, level: medium, ...}, ... ]
-Tasks of other levels are skipped. A task with an error is left out of the output.
+Medium tasks are listed under `medium:` in each node file (node: D1 / medium: [ {id: d1.m1, ...} ]). A task with an error is left out of the output.
 """
 from __future__ import annotations
 
@@ -15,7 +14,7 @@ import json
 import sys
 from pathlib import Path
 
-import yaml
+from common import load_nodes, load_sources
 
 from .parts import Report
 from .series import DataError, SeriesStore
@@ -29,26 +28,25 @@ SCHEMA_VERSION = 1
 
 
 def load_tasks(nodes_dir: Path) -> list[dict]:
+    """The tasks under `medium:` in every node file."""
     tasks = []
-    for path in sorted(nodes_dir.glob("*.yaml")):
-        if path.name.startswith("_"):
-            continue
-        data = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
-        for t in data.get("tasks") or []:
-            if isinstance(t, dict) and t.get("level") == "medium":
-                tasks.append({"node": data.get("node"), **t, "_file": path.name})
+    for name, data in load_nodes(nodes_dir):
+        for t in data.get("medium") or []:
+            if isinstance(t, dict):
+                tasks.append({"node": data.get("node"), "level": "medium", **t, "_file": name})
     return tasks
 
 
 def build(nodes_dir: Path = NODES, series_dir: Path = SERIES, only: list[str] | None = None):
     """Returns [(task_id, record or None, Report)]."""
     store = SeriesStore(series_dir / "series.csv", series_dir / "catalog.yaml")
+    sources = load_sources(nodes_dir.parent)
     results, seen = [], set()
     for task in load_tasks(nodes_dir):
         tid = task.get("id")
         if only and tid not in only:
             continue
-        r = validate(task, store)
+        r = validate(task, store, sources=sources)
         if tid in seen:
             r.error(f"duplicate id {tid!r}")
         seen.add(tid)

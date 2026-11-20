@@ -40,3 +40,31 @@ cards:
     example: "Shares bought at the start of 2008 lost 36.6% that year (US shares), and were back above the starting value by the end of 2012."
     links: [damodaran_histret]
     checked: "Cumulative value of 1 invested at the start of 2008 in S&P 500 incl. dividends: 0.635 (2008), 0.918 (2010), 1.086 (2012); Damodaran table."
+
+items:  # draft by Yurii (with Claude), 2026-11-20, based on the cards above
+  - id: i1.e1
+    kind: single
+    q: "In investing, what does risk mean?"
+    options:
+      - "Only the chance of losing everything"
+      - "How wide the range of possible results is"
+      - "How much the investment costs"
+    answer: 1
+    why: "Risk is the spread of outcomes: a deposit gives almost the same result each year, shares a much wider range."
+    check: true
+  - id: i1.e2
+    kind: true_false
+    q: "A sensible decision can still have a bad outcome."
+    answer: true
+    why: "Because results are spread, a good choice can have a bad year. Judge a decision by what you knew and the range of outcomes."
+    check: true
+  - id: i1.e3
+    kind: multi
+    q: "Which of these are warning signs in an investment offer? Pick all that apply."
+    options:
+      - "It promises high returns with no risk"
+      - "It shows the worst years as well as the average"
+      - "It shows only the average result"
+      - "It says returns are guaranteed and much higher than a deposit"
+    answer: [0, 2, 3]
+    why: "Higher expected returns come with a wider spread. An offer that hides the bad years, or promises high returns with no risk, is a warning sign."

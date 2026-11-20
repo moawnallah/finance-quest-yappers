@@ -7,24 +7,19 @@ The compiled record has three blocks:
 """
 from __future__ import annotations
 
-import copy
 import datetime as dt
+
 import re
 
-from .parts import (RESPONSES, STIMULI, TRUTHS, Report, all_strings, as_date, is_text, localize,
+from common import HINDSIGHT, AttemptError, check_source_ids, localize_all
+from common import has_word as _has_word
+
+from .parts import (RESPONSES, STIMULI, TRUTHS, Report, all_strings, as_date, is_text,
                     private_reasons, public_reasons, score_reasons, validate_reasons)
 from .series import SeriesStore
 
 VARIANTS = {"day_x", "estimate", "label"}
-HINDSIGHT = [
-    "would later", "went on to", "turned out", "in hindsight", "eventually", "famous", "infamous",
-    "collapse", "collapsed", "soared", "plunged", "skyrocketed", "crashed", "record-breaking",
-]
-LANGS = {"en", "pl"}
-
-
-class AttemptError(ValueError):
-    """The answer doesn't fit the task."""
+REVEAL_SHOW = {"truth", "outcome", "per_box_explain", "sources"}
 
 
 def _kind(spec) -> str | None:
@@ -32,18 +27,15 @@ def _kind(spec) -> str | None:
     return spec if isinstance(spec, str) else spec.get("kind") if isinstance(spec, dict) else None
 
 
-def _has_word(text: str, word: str) -> bool:
-    return re.search(rf"(?<!\w){re.escape(word)}(?!\w)", text, re.IGNORECASE) is not None
-
-
 # ---------------------------------------------------------------- validate
 
-def validate(task: dict, store: SeriesStore, today: dt.date | None = None) -> Report:
+def validate(task: dict, store: SeriesStore, today: dt.date | None = None,
+             sources: dict | None = None) -> Report:
     r = Report()
     node = str(task.get("node", ""))
     tid = task.get("id")
-    if not isinstance(tid, str) or not tid.startswith(node.lower() + "."):
-        r.error(f"id {tid!r} must start with the node id in lower case ({node.lower()}.)")
+    if not isinstance(tid, str) or not re.match(rf"^{re.escape(node.lower())}\.m[0-9]+$", tid):
+        r.error(f"id {tid!r} must look like {node.lower()}.m<n> (the node id in lower case)")
     if task.get("level") != "medium":
         r.error("level must be medium")
     variant = task.get("variant")
@@ -61,12 +53,18 @@ def validate(task: dict, store: SeriesStore, today: dt.date | None = None) -> Re
             r.error("valid_until must be a date")
         elif until < (today or dt.date.today()):
             r.error(f"valid_until {until} is in the past")
-    if not isinstance(task.get("sources", []), list):
-        r.error("sources must be a list of source ids")
+    if sources is None:
+        if not isinstance(task.get("sources", []), list):
+            r.error("sources must be a list of source ids")
+    else:
+        check_source_ids(str(tid), task.get("sources", []), sources, r)
     if not is_text(task.get("brief")):
         r.error("brief is required")
     if not is_text((task.get("reveal") or {}).get("text")):
         r.error("reveal.text is required")
+    show = (task.get("reveal") or {}).get("show")
+    if show is not None and (not isinstance(show, list) or not set(show) <= REVEAL_SHOW):
+        r.error(f"reveal.show must be a list from {sorted(REVEAL_SHOW)}")
 
     stimuli = task.get("stimulus")
     if not isinstance(stimuli, list) or not stimuli:
@@ -175,6 +173,7 @@ def compile_task(task: dict, store: SeriesStore, r: Report) -> dict | None:
             "stimulus": private_stimuli,
             "reasons": private_reasons(task["reasons"]),
             "sources": task.get("sources", []),
+            "show": task["reveal"].get("show") or sorted(REVEAL_SHOW),
         },
         "meta": {
             "content_file": task.get("_file"),
@@ -189,24 +188,14 @@ def compile_task(task: dict, store: SeriesStore, r: Report) -> dict | None:
 
 # ---------------------------------------------------------------- views
 
-def _localize_all(value, lang: str):
-    if isinstance(value, dict):
-        if value and set(value) <= LANGS and "en" in value:
-            return localize(value, lang)
-        return {k: _localize_all(v, lang) for k, v in value.items()}
-    if isinstance(value, list):
-        return [_localize_all(v, lang) for v in value]
-    return copy.deepcopy(value)
-
-
 def question_view(record: dict, lang: str = "en") -> dict:
     """What GET /tasks/{id} returns: no truth, outcome, weights or explanations."""
     base = {k: record[k] for k in ("id", "node", "level", "variant", "content_version")}
-    return {**base, **_localize_all(record["question"], lang)}
+    return {**base, **localize_all(record["question"], lang)}
 
 
 def reveal_view(record: dict, lang: str = "en") -> dict:
-    return _localize_all(record["reveal"], lang)
+    return localize_all(record["reveal"], lang)
 
 
 # ---------------------------------------------------------------- score

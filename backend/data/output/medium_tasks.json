@@ -669,7 +669,13 @@
             "explain": "That wasn't known on day X. Using it is hindsight."
           }
         ],
-        "sources": []
+        "sources": [],
+        "show": [
+          "outcome",
+          "per_box_explain",
+          "sources",
+          "truth"
+        ]
       },
       "meta": {
         "content_file": "D1.yaml",
@@ -1349,7 +1355,13 @@
             "explain": "That wasn't known on day X. Using it is hindsight."
           }
         ],
-        "sources": []
+        "sources": [],
+        "show": [
+          "outcome",
+          "per_box_explain",
+          "sources",
+          "truth"
+        ]
       },
       "meta": {
         "content_file": "D3.yaml",

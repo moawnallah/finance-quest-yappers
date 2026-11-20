@@ -53,3 +53,36 @@ cards:
     links: [podatki_fund_units]
     valid_until: 2026-12-31
     checked: "19%, settled yourself on PIT-38 from the 2024 tax year, loss offset within the same source: podatki_fund_units. 2,000 x 19% = 380 (our calculation)."
+
+items:  # draft by Yurii (with Claude), 2026-11-20, based on the cards above
+  - id: i5.e1
+    kind: single
+    q: "What is an ETF?"
+    options:
+      - "A fund whose units are traded on a stock exchange, like shares"
+      - "A type of bank deposit"
+      - "A government savings bond"
+    answer: 0
+    why: "An ETF is a fund; its units trade on an exchange, so you can buy a whole basket in one purchase."
+    check: true
+  - id: i5.e2
+    kind: single
+    q: "Two funds hold similar investments. Which section of their KIDs should you compare first?"
+    options:
+      - "What are the costs?"
+      - "How can I complain?"
+      - "What happens if the manufacturer is unable to pay out?"
+    answer: 0
+    why: "Costs are taken every year and compound against you, so compare them before past results."
+    sources: [priips_reg]
+    check: true
+  - id: i5.e3
+    kind: numeric
+    q: "You bought fund units for 10,000 PLN and sold them for 12,000 PLN. How much tax is due in Poland?"
+    answer: 380
+    unit: PLN
+    tolerance: {kind: absolute, band: 1}
+    input: {min: 0, max: 3000, step: 10}
+    why: "The gain is 2,000 PLN, taxed at 19%: 380 PLN, settled yourself in PIT-38."
+    sources: [podatki_fund_units]
+    valid_until: 2026-12-31

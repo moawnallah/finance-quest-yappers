@@ -42,3 +42,31 @@ cards:
     example: "0 of 79 twenty-year periods lost money in US shares; that is a record, not a guarantee."
     links: [damodaran_histret]
     checked: "Count from the Damodaran table; the caveats are general and need no external source."
+
+items:  # draft by Yurii (with Claude), 2026-11-20, based on the cards above
+  - id: p2.e1
+    kind: single
+    q: "You need the money for a flat deposit in two years. Where does most of it belong?"
+    options:
+      - "Mostly in shares, because they earn the most"
+      - "Mostly in deposits or bonds"
+      - "All in one fast-growing company"
+    answer: 1
+    why: "A goal two years away can't wait for a recovery after a bad year in shares, so it belongs mostly in safer assets."
+    check: true
+  - id: p2.e2
+    kind: true_false
+    q: "In US history, shares with dividends have never lost money over a 20-year period, so it can never happen."
+    answer: false
+    why: "0 of 79 twenty-year periods lost money in US shares, but that is one country's record, not a guarantee."
+    sources: [damodaran_histret]
+    check: true
+  - id: p2.e3
+    kind: single
+    q: "As a long-term goal comes closer, what does a horizon-based plan usually do?"
+    options:
+      - "Moves part of the money into safer assets step by step"
+      - "Moves everything into shares to catch up"
+      - "Leaves the mix unchanged until the last day"
+    answer: 0
+    why: "The shorter the time left, the less room there is to recover from a fall, so the mix shifts gradually towards safer assets."

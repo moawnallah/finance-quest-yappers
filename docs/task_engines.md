@@ -89,6 +89,8 @@ The tutor never sees truth values before submission or other users' data.
 
 ## Easy engine
 
+Implementation guide (all five kinds, cards, prerequisite test): [easy_engine.md](easy_engine.md).
+
 **Item kinds.**
 
 | Kind | Response | Score |

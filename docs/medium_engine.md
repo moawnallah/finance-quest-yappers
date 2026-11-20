@@ -132,7 +132,8 @@ Rules:
                             "unit": "index (cutoff = 100)",
                             "points": [{"t": 0, "v": 100.0}, {"t": 1, "v": 98.06}]}]}],
   "reasons": [{"id": "guidance", "weight": 1.0, "explain": "Prices look ahead. ..."}],
-  "sources": []
+  "sources": [],
+  "show": ["outcome", "per_box_explain", "sources", "truth"]
 }
 ```
 
@@ -163,7 +164,7 @@ The key ones:
 
 | Field | Meaning |
 |---|---|
-| `id` | `<node in lower case>.m<n>`, e.g. `d1.m1` |
+| `id` | `<node in lower case>.m<n>`, e.g. `d1.m1` (checked) |
 | `variant` | `day_x` (graded on reasons only), with `truth: none` |
 | `content_version` | bump on any change that affects scoring |
 | `reviewer` | required before the task goes live |
@@ -171,7 +172,9 @@ The key ones:
 | `stimulus[0]` | the chart: `cutoff` (day X), `hide: [name, dates]`, `series` with `series_id`, `from`, `to`, `transform`, `label` |
 | `response` | `options`, `horizon` (`1d 1w 2w 1m 3m 6m 1y` or a number), `flat_band`, `expected` |
 | `reasons` | `pick: {min, max}` and 6-8 `boxes` with `id`, `text`, `weight` (−1..1), `explain` |
+| `sources` | ids from `backend/content/sources.yaml` (checked; `to_check` licences warn) |
 | `reveal.text` | the takeaway; no exact numbers (the app shows the real change) |
+| `reveal.show` | optional; what the reveal screen shows, from `truth`, `outcome`, `per_box_explain`, `sources` (default: all) |
 
 Rules the build enforces:
 - **Hidden names.** When a chart hides names, the series' real name and
@@ -234,9 +237,9 @@ Nothing else changes.
 
 ## Choices not fixed by the spec (please review)
 
-1. **Node files** hold tasks under `tasks:`. The loader reads tasks with
-   `level: medium` and ignores other keys, so cards and easy items can live
-   in the same file.
+1. **Node files** follow the format in skills_tree.md (`node`, `panel`,
+   `title`, `after`, ...). Medium tasks are listed under `medium:`, and the
+   loader ignores the other keys, so cards and easy items live in the same file.
 2. **Series metadata.** The spec's table is `series/series.csv`. Units,
    frequency, display permission and synthetic parameters are in a separate
    `series/catalog.yaml`.
