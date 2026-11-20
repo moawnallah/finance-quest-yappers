@@ -70,7 +70,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               ]),
               SizedBox(height: 16),
             ],
-            Expanded(child: SingleChildScrollView(child: pages[step])),
+            Expanded(child: step == 0 ? pages[0] : SingleChildScrollView(child: pages[step])),
             if (step > 0)
               FilledButton(
                 onPressed: () {
@@ -90,85 +90,71 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   }
 }
 
+/// Landing page: one screen, no scrolling. Logo, a single message, three
+/// short value points and one sign-in action.
 class _Welcome extends StatelessWidget {
   final VoidCallback onStart;
   _Welcome({required this.onStart});
 
-  Widget _feature(IconData icon, String title, String text) => Padding(
-        padding: EdgeInsets.only(bottom: 10),
-        child: Panel(
-          child: Row(children: [
-            Container(
-              width: 44, height: 44,
-              decoration: BoxDecoration(color: kPrimarySoft, borderRadius: BorderRadius.circular(12)),
-              child: Icon(icon, color: kPrimaryText),
-            ),
-            SizedBox(width: 14),
-            Expanded(
-              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                Text(title, style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16, color: kInk)),
-                SizedBox(height: 2),
-                Text(text, style: TextStyle(color: kMuted, height: 1.3)),
-              ]),
-            ),
-          ]),
-        ),
+  Widget _point(IconData icon, String text) => Padding(
+        padding: EdgeInsets.symmetric(vertical: 7),
+        child: Row(children: [
+          Icon(icon, size: 20, color: kPrimaryText),
+          SizedBox(width: 12),
+          Expanded(child: Text(text, style: TextStyle(fontSize: 15, color: kBody))),
+        ]),
       );
 
   @override
-  Widget build(BuildContext context) => Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-        SizedBox(height: 12),
-        Text('CrocoCash', style: GoogleFonts.lora(fontSize: 38, fontWeight: FontWeight.w700, color: kPrimaryText)),
-        SizedBox(height: 6),
-        Text('Learn to invest in 5-minute missions. Spin the wheel, pick a topic, and collect Scales as you learn.',
-            style: TextStyle(fontSize: 16, color: kBody, height: 1.4)),
-        SizedBox(height: 28),
-        // Hero card with a crocodile peeking over its top edge.
-        Stack(clipBehavior: Clip.none, children: [
-          Container(
-            padding: EdgeInsets.fromLTRB(20, 24, 20, 20),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(20),
-              gradient: LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight, colors: [Color(0xFF0E8430), Color(0xFF119B2A)]),
+  Widget build(BuildContext context) => LayoutBuilder(builder: (context, c) {
+        final compact = c.maxHeight < 640;
+        return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+          SizedBox(height: compact ? 4 : 12),
+          // Logo: crocodile eyes over the wordmark.
+          Row(children: [
+            Container(
+              width: 40, height: 40,
+              decoration: BoxDecoration(color: kPrimary, borderRadius: BorderRadius.circular(11)),
+              alignment: Alignment.bottomCenter,
+              child: Padding(padding: EdgeInsets.only(bottom: 9), child: CrocoEyes(width: 28)),
             ),
-            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Text('From knowing to doing', style: TextStyle(fontSize: 26, fontWeight: FontWeight.w800, color: Colors.white, height: 1.15)),
-              SizedBox(height: 8),
-              Text('13 investment types, from calm to wild, at any age.', style: TextStyle(fontSize: 15, color: Color(0xFFE3F8DA), height: 1.4)),
-              SizedBox(height: 14),
-              SizedBox(height: 10, child: CustomPaint(size: Size(double.infinity, 10), painter: CrocoRidgePainter(Color(0x55FFFFFF)))),
+            SizedBox(width: 10),
+            Text('CrocoCash', style: GoogleFonts.lora(fontSize: 22, fontWeight: FontWeight.w700, color: kInk)),
+          ]),
+          Spacer(flex: 3),
+          Text('Invest with\nconfidence.',
+              style: GoogleFonts.lora(fontSize: compact ? 36 : 44, fontWeight: FontWeight.w700, color: kInk, height: 1.08)),
+          SizedBox(height: 14),
+          Text('Short, practical lessons on 13 investment types, for every stage of life.',
+              style: TextStyle(fontSize: 17, color: kMuted, height: 1.45)),
+          SizedBox(height: compact ? 20 : 32),
+          Align(alignment: Alignment.centerLeft, child: Container(width: 40, height: 3, decoration: BoxDecoration(color: kPrimary, borderRadius: BorderRadius.circular(2)))),
+          SizedBox(height: compact ? 12 : 20),
+          _point(Icons.schedule, 'Five minutes a day'),
+          _point(Icons.account_tree_outlined, 'A clear path, from calm to wild'),
+          _point(Icons.verified_outlined, 'Education only, never sales'),
+          Spacer(flex: 4),
+          OutlinedButton(
+            style: OutlinedButton.styleFrom(
+              minimumSize: Size.fromHeight(54),
+              backgroundColor: kSurface,
+              side: BorderSide(color: kBorder),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+            ),
+            onPressed: () async {
+              if (await googleSignInDemo(context)) onStart();
+            },
+            child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+              GoogleG(size: 20),
+              SizedBox(width: 12),
+              Text('Continue with Google', style: TextStyle(fontSize: 16, color: kInk, fontWeight: FontWeight.w600)),
             ]),
           ),
-          Positioned(right: 24, top: -22, child: CrocoEyes(width: 70)),
-        ]),
-        SizedBox(height: 16),
-        _feature(Icons.donut_large, '5-minute missions', 'A wheel of topics, each with a short roadmap.'),
-        _feature(Icons.leaderboard, 'Weekly league', 'Collect Scales and climb the ranks.'),
-        _feature(Icons.auto_awesome, 'Tutor', 'Explains your mistakes using your own goal.'),
-        SizedBox(height: 16),
-        OutlinedButton(
-          style: OutlinedButton.styleFrom(minimumSize: Size.fromHeight(52), backgroundColor: kSurface, side: BorderSide(color: kBorder)),
-          onPressed: () async {
-            if (await googleSignInDemo(context)) onStart();
-          },
-          child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-            GoogleG(size: 20),
-            SizedBox(width: 10),
-            Text('Continue with Google', style: TextStyle(color: kInk, fontWeight: FontWeight.w600)),
-          ]),
-        ),
-        SizedBox(height: 10),
-        FilledButton(
-          onPressed: () async {
-            final ok = await context.push<bool>('/signin');
-            if (ok == true) onStart();
-          },
-          child: Text('Continue with email'),
-        ),
-        SizedBox(height: 14),
-        Text('Educational content, not financial advice.', textAlign: TextAlign.center, style: TextStyle(fontSize: 12, color: kMuted)),
-        SizedBox(height: 16),
-      ]);
+          SizedBox(height: 14),
+          Text('Educational content, not financial advice.', textAlign: TextAlign.center, style: TextStyle(fontSize: 12, color: kMuted)),
+          SizedBox(height: 4),
+        ]);
+      });
 }
 
 class _Choice extends StatelessWidget {
