@@ -33,7 +33,7 @@ def load_tasks(nodes_dir: Path) -> list[dict]:
     for path in sorted(nodes_dir.glob("*.yaml")):
         if path.name.startswith("_"):
             continue
-        data = yaml.safe_load(path.read_text()) or {}
+        data = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
         for t in data.get("tasks") or []:
             if isinstance(t, dict) and t.get("level") == "medium":
                 tasks.append({"node": data.get("node"), **t, "_file": path.name})
@@ -88,8 +88,8 @@ def write(results, out_dir: Path = OUT) -> Path:
     out_dir.mkdir(parents=True, exist_ok=True)
     path = out_dir / "medium_tasks.json"
     payload = {"schema_version": SCHEMA_VERSION, "tasks": [rec for _, rec, _, _ in results if rec]}
-    path.write_text(json.dumps(payload, indent=2, ensure_ascii=False) + "\n")
-    (out_dir / "medium_qa.md").write_text(qa_report(results))
+    path.write_text(json.dumps(payload, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+    (out_dir / "medium_qa.md").write_text(qa_report(results), encoding="utf-8")
     return path
 
 

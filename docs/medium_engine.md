@@ -177,8 +177,11 @@ Rules the build enforces:
 - **Hidden names.** When a chart hides names, the series' real name and
   aliases must not appear in visible text.
 - **Hindsight words** ("would later", "turned out", "crashed", ...) are
-  errors, except in boxes with a negative weight. Those are hindsight traps
-  on purpose.
+  errors, with two exceptions.
+  - Boxes with a negative weight are hindsight traps on purpose.
+  - Fields listed in a task's `hindsight_ok`, for example `[brief]`, when
+    the word states a fact already known on day X (a crash that had
+    happened).
 - **Box weights.** At least one box must have a positive weight.
 - **Direction check.** `expected` must match the data.
 - **`flat_band`.** The default depends on the horizon for `index100`
@@ -247,7 +250,7 @@ Nothing else changes.
    - `horizon`: how far after day X the outcome is measured.
 5. **The truth kind `outcome`** scores the direction for tasks that are not
    day X.
-6. **Hindsight boxes.** Boxes with a negative weight are exempt from the
-   hindsight-word check.
+6. **Hindsight boxes.** Boxes with a negative weight, and fields listed in
+   `hindsight_ok`, are exempt from the hindsight-word check.
 7. **Box count.** 6-8 boxes is a warning, not an error, so short drafts can
    be built.

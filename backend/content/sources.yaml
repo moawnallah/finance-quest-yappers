@@ -10,7 +10,7 @@
   publisher: European Commission
   url: https://data.europa.eu/data/datasets/s2953_fl525_eng
   tier: A
-  licence: to_check  # European Commission reuse notice; not yet checked
+  licence: ec_reuse_2011_833  # dataset licence on data.europa.eu: commercial reuse allowed; credit the source; do not distort the meaning (Decision 2011/833/EU, Art. 4 and 6)
   read_on: 2026-11-20
 
 - id: bfg_guarantee

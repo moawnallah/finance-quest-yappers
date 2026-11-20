@@ -35,10 +35,10 @@ class Series:
 
 class SeriesStore:
     def __init__(self, table: Path, catalog: Path):
-        self.catalog: dict[str, dict] = (yaml.safe_load(catalog.read_text()) or {}) if catalog.exists() else {}
+        self.catalog: dict[str, dict] = (yaml.safe_load(catalog.read_text(encoding="utf-8")) or {}) if catalog.exists() else {}
         self._rows: dict[str, dict[dt.date, float]] = {}
         if table.exists():
-            with table.open(newline="") as f:
+            with table.open(newline="", encoding="utf-8") as f:
                 for row in csv.DictReader(f):
                     raw = (row.get("value") or "").strip()
                     if raw:

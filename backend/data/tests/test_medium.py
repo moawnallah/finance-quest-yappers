@@ -13,7 +13,7 @@ from medium.series import SeriesStore, TRANSFORMS, step_dates
 from medium.task import compile_task, validate
 
 DATA = Path(__file__).resolve().parent.parent
-D1 = yaml.safe_load((NODES / "D1.yaml").read_text())
+D1 = yaml.safe_load((NODES / "D1.yaml").read_text(encoding="utf-8"))
 D1_TASK = {"node": "D1", **D1["tasks"][0]}
 TODAY = dt.date(2026, 11, 20)
 
@@ -39,9 +39,9 @@ def records():
 def test_samples_build_and_match_schema(tmp_path):
     results = build()
     assert results and all(rec for _, rec, _, _ in results), [r.errors for *_, r, _ in results]
-    data = json.loads(write(results, tmp_path).read_text())
+    data = json.loads(write(results, tmp_path).read_text(encoding="utf-8"))
     jsonschema = pytest.importorskip("jsonschema")
-    jsonschema.validate(data, json.loads((DATA / "schemas" / "medium_tasks.schema.json").read_text()))
+    jsonschema.validate(data, json.loads((DATA / "schemas" / "medium_tasks.schema.json").read_text(encoding="utf-8")))
 
 
 def test_build_is_deterministic():
@@ -136,6 +136,17 @@ def test_validation_errors(mutate, message):
     mutate(task)
     rec, r = compiled(task)
     assert rec is None and any(message in e for e in r.errors), r.errors
+
+
+def test_hindsight_ok_allows_a_fact_known_on_day_x():
+    # A day-X brief may state a crash that had already happened; the author marks the field.
+    task = copy.deepcopy(D1_TASK)
+    task["brief"] = "Markets crashed last week. The company reports today."
+    rec, r = compiled(task)
+    assert rec is None and any("hindsight" in e for e in r.errors)
+    task["hindsight_ok"] = ["brief"]
+    rec, r = compiled(task)
+    assert rec, r.errors
 
 
 def test_negative_boxes_may_be_hindsight():

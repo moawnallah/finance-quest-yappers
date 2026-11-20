@@ -113,6 +113,9 @@ def validate(task: dict, store: SeriesStore, today: dt.date | None = None) -> Re
     visible.update({f"reasons.{b['id']}": b["text"] for b in task["reasons"]["boxes"]})
     # Boxes with negative weight may be hindsight on purpose, so they skip the hindsight check.
     hindsight_ok = {f"reasons.{b['id']}" for b in task["reasons"]["boxes"] if b["weight"] < 0}
+    # A task may also list fields where such a word states a fact known on day X, for example a
+    # crash that had already happened: hindsight_ok: [brief, reasons.<id>, ...].
+    hindsight_ok |= set(task.get("hindsight_ok") or [])
     hidden: list[str] = []
     for i, s in enumerate(stimuli):
         hidden += STIMULI[s["kind"]].hidden_words(s, store)

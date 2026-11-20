@@ -11,6 +11,7 @@ tasks:
     sources: []                  # ids from the source register
     # valid_until: 2026-12-31    # when the task uses a limit, rate or tax rule
     brief: "Only what was known on day X, plus the news. No names if the chart hides them, no hindsight."
+    # hindsight_ok: [brief]      # only if a hindsight word states a fact already known on day X
     stimulus:
       - kind: chart              # implemented: chart
         type: line

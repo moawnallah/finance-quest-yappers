@@ -16,7 +16,7 @@ OUTPUT = Path(__file__).resolve().parent.parent / "output" / "medium_tasks.json"
 
 
 def load_records(path: Path | str = OUTPUT) -> dict[str, dict]:
-    return {t["id"]: t for t in json.loads(Path(path).read_text())["tasks"]}
+    return {t["id"]: t for t in json.loads(Path(path).read_text(encoding="utf-8"))["tasks"]}
 
 
 __all__ = ["AttemptError", "load_records", "question_view", "reveal_view", "score"]
