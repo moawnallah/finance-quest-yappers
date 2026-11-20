@@ -38,8 +38,11 @@ architecture text that was in `backend/ml/README.md`.
 | `rephrase` | User taps "Explain more simply" | The last tutor answer or card | Add new facts |
 | `recommend_reading` | Struggle flag from the recommender, or user asks | Passages and links for the node | Recommend products, firms or advisers |
 
-**Hint ladder.** Each level is recorded in `hints_used`. Proposal: each hint
-lowers the task score by 10%.
+**Hint ladder.**
+- Each hint is recorded in `hints_used`.
+- The first two hints on a task are free.
+- Every further hint lowers that task's score by 10% (a proposal).
+- The task's start screen says so.
 1. **Concept:** which idea the task is about, ending with a question back
    to the user.
 2. **Worked example with other numbers:** the same calculation on a
@@ -130,8 +133,10 @@ logged queries show that relevant passages are missed.
   cite them by those labels.
 - The output check rejects a label that was not provided.
 - The app turns the labels into source links.
-- Tier B sources are never in the prompt. They appear only in
-  `recommend_reading`, as links.
+- Source text itself is never in the prompt, only our own passages. A
+  passage may state facts from any source in `sources.yaml` whose licence
+  field is not `to_check`. Tier only decides whether a short verbatim quote
+  is allowed (tier A).
 
 ## 3. A modular model
 
@@ -337,7 +342,51 @@ checks_failed, fallback_used, hint_level, user_rating, flagged_for_review
 - `DAILY_BUDGET`, which trips automatically;
 - `USER_BLOCK`.
 
-## 6. Tests
+## 6. Admin panel: what goes from the logs to each view
+
+The panel monitors the tutor and the recommender (router), as the frozen
+plan asks.
+- It reads two event tables: `llm_events` (above) and `reco_events`
+  (below).
+- It shows pseudonymous user IDs only.
+- Access is limited to the admin role. Every kill-switch change is written
+  to `admin_audit`.
+
+**`reco_events` row**, one per router or recommender event:
+
+```
+event_id, ts, user_pseudo_id, router_version, event_type, node,
+predicted_m, observed, need, overconfidence_term, interest_term,
+priority, reason_term, path (for path_issued)
+```
+
+The `event_type` values are:
+- `path_issued`;
+- `recommendation_shown`;
+- `recommendation_accepted`;
+- `test_out`, with `observed` 1/0;
+- `first_item`, with `observed` 1/0;
+- `struggle_flag`;
+- `tutor_nudge_shown`.
+
+**When an answer is flagged for review** (`flagged_for_review = true`, and
+the masked question and answer are kept for 30 days):
+- any output check failed;
+- intent `advice_request` or `injection`;
+- the user rated it thumbs down;
+- a random 2% of all other answers, to catch what the checks miss.
+
+| View | Shows | From | Alert | Action |
+|---|---|---|---|---|
+| **Advice watch** | Advice requests and injections per day; output-check failures by type (numbers, advice, leak, citation, form); the nodes where they happen | `llm_events`: intent, checks_failed, node | More than 5% of answers in an hour fail the advice or leak check | Open the flagged queue; switch to stored explanations (`TUTOR_ENABLED=false`) |
+| **Flagged queue** | Masked question and answer, flags, mode, model, prompt version | `llm_events` and the masked text | Queue older than 24 h | A reviewer labels it: ok / advice leak / wrong number / answer leak / other. Labelled failures are added to the red-team set |
+| **Quality and cost** | Fallback rate; latency p50/p95; tokens and cost per day; thumbs up/down by mode; comparison between prompt versions | `llm_events` | p95 above 10 s; daily budget at 80% | Change `PROMPT_VERSION` or `MODEL_ALLOWLIST` |
+| **Hints and learning** (descriptive, not causal) | Hint use per task (free vs paid); score and confidence on attempts with and without a tutor session, per node | `llm_events` and attempts | A task where most users need the paid hint | Send it to the content author |
+| **Recommender** | Router forecast against reality: mean predicted m vs observed first-item success, by decile and by node; test-out pass rate; first paths issued; recommendations accepted vs ignored; struggle flags per node | `reco_events` | A node where the predicted m is off by more than 0.2 from observed success over 30+ users | Adjust that node's difficulty, or the need rules (bump `router_version`) |
+| **Population drift** | The survey answers of our users against the EB525 Polish shares (Q1, Q8, knowledge items) | survey table | — | Context for reading the other views |
+| **Switches** | Current kill-switch state, who changed it and when | env and `admin_audit` | — | Toggle (admin only) |
+
+## 7. Tests
 
 Each test has a reason:
 
@@ -350,13 +399,13 @@ Each test has a reason:
 | Red-team set: about 50 English and Polish prompts (advice extraction, "just tell me the answer", injection), run against rules and router | Expected: safe template or hint, never the answer. Run in CI on rules; on the model when the model or prompt changes |
 | Model choice set: 20 prompts | Run by hand when the model or prompt changes, not in CI |
 
-## 7. Who does what
+## 8. Who does what
 
 | Piece | Mateusz (ML) | Mohamed (backend) | Others |
 |---|---|---|---|
 | `POST /tutor` endpoint, auth, quota counter, rate limit | | builds | |
 | `ContextProvider` (DB reads: task without answers, reveal, profile aggregates) | defines the interface | implements | |
-| Tables and migrations: `kb_chunks`, `llm_events` | specifies columns | creates | |
+| Tables and migrations: `kb_chunks`, `llm_events`, `reco_events`, `admin_audit` | specifies columns | creates | |
 | `kb_ingest.py`, `search_kb` SQL | builds | runs in deploy/CI | |
 | Knowledge-base passages and `sources.yaml` | template, reviews | | content authors write; second person reviews |
 | `LLMClient` adapter, `llm.yaml`, LiteLLM | builds | provides env vars and secrets | |
@@ -365,7 +414,7 @@ Each test has a reason:
 | Model measurement and choice; Ollama on the demo laptop | runs | network access from the backend | |
 | Red-team and check tests | builds | CI job | |
 | Kill switches | reads them in the pipeline | env and admin endpoint | |
-| Admin panel: advice watch, flagged queue, latency, cost | specifies the views | API (`GET /admin/llm-events`, `GET /admin/flagged`) | Michał: UI |
+| Admin panel (section 6): seven views | specifies the views, alerts and the recommender metrics; writes `reco_events` from the router | API (`GET /admin/llm-events`, `GET /admin/reco-events`, `GET /admin/flagged`, `POST /admin/flagged/{id}/label`, `POST /admin/switches`) | Michał: UI |
 | Tutor bubble: modes, hint buttons, "Explain more simply", links, thumbs | | | Michał |
 | Pre-generated answers for the demo script | generates and reviews | stores | |
 

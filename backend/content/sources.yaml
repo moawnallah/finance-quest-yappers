@@ -1,0 +1,94 @@
+# Source register for cards, knowledge-base passages and tasks.
+# Reader: content authors and kb_ingest.py. One entry per source.
+# licence: checked by Mateusz on 2026-11-20 for data sources (GUS, NBP, OECD,
+# Eurostat, Damodaran, Shiller). For text sources (laws, regulators' pages) cards
+# state facts in our own words and link to the page: "facts_own_words".
+# read_on: the date the page was read for the facts used in cards.
+
+- id: eb525_pl
+  title: "Flash Eurobarometer 525: Monitoring the level of financial literacy in the EU, volume C (Poland, weighted)"
+  publisher: European Commission
+  url: https://data.europa.eu/data/datasets/s2953_fl525_eng
+  tier: A
+  licence: to_check  # European Commission reuse notice; not yet checked
+  read_on: 2026-11-20
+
+- id: bfg_guarantee
+  title: "Gwarantowanie depozytów"
+  publisher: Bankowy Fundusz Gwarancyjny (BFG)
+  url: https://www.bfg.pl/gwarantowanie-depozytow/
+  tier: B
+  licence: facts_own_words  # link only; no copied text
+  read_on: 2026-11-20
+
+- id: bfg_limit
+  title: "Wysokość gwarancji"
+  publisher: Bankowy Fundusz Gwarancyjny (BFG)
+  url: https://www.bfg.pl/gwarantowanie-depozytow/wysokosc-gwarancji/
+  tier: B
+  licence: facts_own_words  # link only; no copied text
+  read_on: 2026-11-20
+
+- id: mf_bonds_offer
+  title: "Obligacje skarbowe: current offer"
+  publisher: Ministerstwo Finansów
+  url: https://www.obligacjeskarbowe.pl/
+  tier: B
+  licence: facts_own_words  # no commercial reuse of their data (e.g. rate history); rules stated in our words, link only
+  read_on: 2026-11-20
+
+- id: mf_bonds_edo
+  title: "10-year inflation-indexed retail bond EDO (series EDO1136)"
+  publisher: Ministerstwo Finansów
+  url: https://www.obligacjeskarbowe.pl/oferta-obligacji/obligacje-10-letnie-edo/
+  tier: B
+  licence: facts_own_words  # no commercial reuse of their data (e.g. rate history); rules stated in our words, link only
+  read_on: 2026-11-20
+
+- id: priips_reg
+  title: "Regulation (EU) No 1286/2014 on key information documents for PRIIPs"
+  publisher: EUR-Lex
+  url: https://eur-lex.europa.eu/eli/reg/2014/1286/oj
+  tier: B
+  licence: facts_own_words  # link only; no copied text
+  read_on: 2026-11-20
+
+- id: podatki_fund_units
+  title: "Zbycie jednostek uczestnictwa w funduszu kapitałowym"
+  publisher: Ministerstwo Finansów (podatki.gov.pl)
+  url: https://podatki.gov.pl/podatki-osobiste/pit/informacje-podstawowe/co-jest-opodatkowane/zbycie-jednostek-uczestnictwa-w-funduszu-kapitalowym
+  tier: B
+  licence: facts_own_words  # link only; no copied text
+  read_on: 2026-11-20
+
+- id: ecb_fsr_2022_corr
+  title: "Cross-asset correlations in a more inflationary environment and challenges for diversification strategies (Financial Stability Review, November 2022)"
+  publisher: European Central Bank (Mosk, Pangallo, Zema)
+  url: https://www.ecb.europa.eu/pub/financial-stability/fsr/focus/2022/html/ecb.fsrbox202211_02~7abb48e333.en.html
+  tier: B
+  licence: facts_own_words  # link only; no copied text
+  read_on: 2026-11-20
+
+- id: cfpb_emergency_fund
+  title: "An essential guide to building an emergency fund"
+  publisher: Consumer Financial Protection Bureau (US)
+  url: https://www.consumerfinance.gov/an-essential-guide-to-building-an-emergency-fund/
+  tier: B
+  licence: facts_own_words  # link only; no copied text
+  read_on: 2026-11-20
+
+- id: damodaran_histret
+  title: "Historical returns on stocks, bonds and bills: 1928-2025"
+  publisher: Aswath Damodaran, NYU Stern
+  url: https://pages.stern.nyu.edu/~adamodar/New_Home_Page/datafile/histretSP.html
+  tier: C
+  licence: attribution  # checked 2026-11-20: use the published table with credit
+  read_on: 2026-11-20
+
+- id: mf_bonds_faq
+  title: "Obligacje skarbowe: FAQ"
+  publisher: Ministerstwo Finansów
+  url: https://www.obligacjeskarbowe.pl/faq/
+  tier: B
+  licence: facts_own_words  # rules stated in our words, link only
+  read_on: 2026-11-20

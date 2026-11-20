@@ -1,0 +1,57 @@
+# Node S1. Cards only; items, medium and hard tasks come later.
+# checked: which statement was verified against which source, for the reviewer.
+node: S1
+panel: SAFETY
+title: "Emergency fund"
+after: [F1]
+author: "draft by Claude (AI), 2026-11-20"
+reviewer: null
+status: draft
+
+cards:
+  - id: s1.c1
+    title: "What an emergency fund is"
+    body: >-
+      An emergency fund is money you keep only for surprises: a car repair, a
+      medical bill, or a month without pay. Without it, a surprise often ends on
+      a credit card or a quick loan, which costs much more than the surprise
+      itself. Keep it apart from spending money and from investments, so it is
+      there when you need it.
+    example: "Ania spends 4,800 PLN a month. A 3,000 PLN car repair equals about 19 days of her costs."
+    links: [cfpb_emergency_fund]
+    checked: "Definition and examples (car repair, medical bills, loss of income): CFPB guide."
+
+  - id: s1.c2
+    title: "How big should it be?"
+    body: >-
+      There is no single right number; it depends on your situation. Start
+      from your essential monthly costs: rent, food, bills, loan instalments.
+      Then ask how many months you would need to find new income. A steady job
+      and no dependants need fewer months. Irregular income, or one earner in a
+      family, needs more. Even a small buffer helps, so build one month first.
+    example: "Essential costs 4,800 PLN x 3 months = 14,400 PLN. Saving 600 PLN a month, that takes 24 months."
+    links: [cfpb_emergency_fund]
+    checked: "'Depends on your situation' and 'even a small amount can provide some financial security': CFPB guide. The 3-month figure is an example, not a rule."
+
+  - id: s1.c3
+    title: "Where to keep it"
+    body: >-
+      Somewhere safe and quick to reach, such as a savings account or a short
+      bank deposit. Not in shares or crypto, because their value can fall
+      exactly when you need the money. In Poland, money in domestic banks and
+      credit unions is guaranteed by the Bank Guarantee Fund (BFG) up to the
+      PLN equivalent of EUR 100,000 per person in each bank.
+    example: "A 14,400 PLN buffer in one Polish bank is fully within the guarantee."
+    links: [bfg_limit, bfg_guarantee, cfpb_emergency_fund]
+    checked: "EUR 100,000 per depositor per bank, joint accounts counted by share: bfg_limit. Domestic banks and credit unions covered: bfg_guarantee. 'Safe, accessible': CFPB."
+
+  - id: s1.c4
+    title: "You are not alone"
+    body: >-
+      In an EU survey in 2023, 30% of adults in Poland said they had no
+      emergency savings, or could cover their costs for less than a month
+      without income. Among 18-24-year-olds it was 42%. Building a buffer is
+      the first step, before investing.
+    example: "Of 10 young adults in Poland, about 4 could not last a month without income."
+    links: [eb525_pl]
+    checked: "EB525 vol. C Poland, Q8, weighted: no savings 19.8% + under 1 month 10.5% = 30.3%; age 18-24: 20.4% + 21.5% = 41.9% (unweighted n = 98, margin about 10 points)."

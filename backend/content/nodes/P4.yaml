@@ -1,0 +1,41 @@
+node: P4
+panel: PORTFOLIO
+title: "Rebalancing and discipline in a crash"
+after: [P2]
+author: "draft by Claude (AI), 2026-11-20"
+reviewer: null
+status: draft
+
+cards:
+  - id: p4.c1
+    title: "Rebalancing"
+    body: >-
+      You choose a target mix, for example 60% shares and 40% bonds. Markets
+      move your mix away from it. Rebalancing means returning to the target
+      from time to time: selling some of what grew and buying what fell. It is
+      a rule decided in calm times, so you do not have to decide in a panic.
+    example: "Target 60/40 on 10,000 PLN. Shares fall and the mix becomes 50/50 at 8,000 PLN; rebalancing moves 800 PLN from bonds to shares to get back to 60/40."
+    links: []
+    checked: "Our worked example: 60% of 8,000 = 4,800; shares at 4,000 need +800. Definition: reviewer to add a source."
+
+  - id: p4.c2
+    title: "Selling after a fall locks in the loss"
+    body: >-
+      A fall is a loss on paper until you sell. In 2020, US shares (S&P 500
+      with dividends) ended the year up 18.0%, despite the sharp fall in
+      March. Someone who sold in March missed the recovery. Someone who kept a
+      rule, holding or rebalancing, did not.
+    example: "10,000 PLN in US shares at the start of 2020 ended the year at about 11,802 (ignoring the currency)."
+    links: [damodaran_histret]
+    checked: "2020: +18.02%, Damodaran table. The size of the March fall is not stated because we have not checked a monthly source."
+
+  - id: p4.c3
+    title: "Write your rule before the storm"
+    body: >-
+      Decide now what you will do if your investments fall 20% or 30%: hold,
+      rebalance, or, if your goal is near, move to safer assets on a schedule.
+      A rule written in advance protects you from fear and from headlines. The
+      hard task in this node lets you test your rule on past crashes.
+    example: "My rule: if shares are more than 10 points away from 60%, rebalance once, at the end of the month."
+    links: []
+    checked: "App guidance, no external fact."
