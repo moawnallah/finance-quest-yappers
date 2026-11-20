@@ -5,6 +5,7 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart' show rootBundle;
 import '../models/content.dart';
+import 'api.dart';
 
 class Profile {
   String name = 'You';
@@ -55,6 +56,8 @@ final badgeDefs = [
 ];
 
 class AppState extends ChangeNotifier {
+  /// Backend client for the Skills screens (task engines). Scoring happens on the server.
+  Api api = Api();
   Roadmap? roadmap;
   List<Question> placement = [];
   Map<String, String> placementTopic = {}; // question id -> topic
@@ -185,7 +188,7 @@ class AppState extends ChangeNotifier {
   void setThemeMode(String m) { themeMode = m; notifyListeners(); }
   bool signedIn = false;
   void signIn(String name) { signedIn = true; profile.name = name; notifyListeners(); }
-  void signOut() { signedIn = false; profile.name = 'You'; notifyListeners(); }
+  void signOut() { signedIn = false; profile.name = 'You'; api.reset(); notifyListeners(); }
   void markCoachSeen() { coachSeen = true; notifyListeners(); }
   void notify() => notifyListeners();
 }
