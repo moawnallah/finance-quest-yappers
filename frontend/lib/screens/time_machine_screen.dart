@@ -62,14 +62,14 @@ class _TimeMachineScreenState extends State<TimeMachineScreen> {
       WidgetsBinding.instance.addPostFrameCallback((_) => s.earnBadge('calm'));
     }
     return Scaffold(
-      appBar: AppBar(title: Text('Time machine')),
+      appBar: StatsBar(title: 'Time machine', subtitle: 'Play money'),
       body: ListView(padding: EdgeInsets.all(20), children: [
         if (!s.coachSeen) ...[
           Panel(
             color: kPrimarySoft,
             border: kPrimarySoft,
             child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              CircleAvatar(backgroundColor: kPrimary, child: Icon(Icons.pets, color: Colors.white)),
+              MascotPlaceholder(size: 56),
               SizedBox(width: 12),
               Expanded(
                 child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [

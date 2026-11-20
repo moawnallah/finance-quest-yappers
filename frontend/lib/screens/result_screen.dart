@@ -24,7 +24,31 @@ class _ResultScreenState extends State<ResultScreen> {
     return Scaffold(
       appBar: StatsBar(title: 'Mission complete', subtitle: 'Nice work'),
       body: ListView(padding: EdgeInsets.all(20), children: [
-        CircleAvatar(radius: 40, backgroundColor: Color(0xFFFDB022), child: Icon(Icons.emoji_events, size: 40, color: Color(0xFF7A2E0E))),
+        Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+          MascotPlaceholder(size: 96),
+          SizedBox(width: 12),
+          CircleAvatar(radius: 32, backgroundColor: Color(0xFFFDB022), child: Icon(Icons.emoji_events, size: 32, color: Color(0xFF7A2E0E))),
+        ]),
+        if (s.lastMission != null) ...[
+          SizedBox(height: 16),
+          Panel(
+            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Row(children: [
+                Text('Scales earned', style: TextStyle(fontWeight: FontWeight.w700)),
+                Spacer(),
+                ScaleIcon(size: 20),
+                SizedBox(width: 4),
+                Text('+${s.lastMission!.$3}', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: kPrimaryText)),
+              ]),
+              if (s.lastMission!.$3 > 0) ...[
+                SizedBox(height: 6),
+                Text('${s.lastMission!.$1} of ${s.lastMission!.$2} correct × ${Rewards.correctAnswer}  +  mission ${Rewards.missionDone}',
+                    style: TextStyle(color: kMuted)),
+              ] else
+                Text('Replays earn no extra Scales.', style: TextStyle(color: kMuted)),
+            ]),
+          ),
+        ],
         SizedBox(height: 16),
         Panel(
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -61,7 +85,7 @@ class _ResultScreenState extends State<ResultScreen> {
               Expanded(
                 child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                   Text('Save your progress', style: TextStyle(fontWeight: FontWeight.w700, color: kPrimaryText)),
-                  Text('Keep your ${s.xp} XP and streak, on any device.', style: TextStyle(color: kBody)),
+                  Text('Keep your ${s.xp} Scales and streak, on any device.', style: TextStyle(color: kBody)),
                 ]),
               ),
               TextButton(onPressed: () => context.push('/signin'), child: Text('Save')),
@@ -69,7 +93,6 @@ class _ResultScreenState extends State<ResultScreen> {
           ),
         ],
         SizedBox(height: 12),
-        OutlinedButton(onPressed: () => context.push('/time-machine'), child: Text('Try the time machine')),
         TextButton(onPressed: () => context.go('/wheel'), child: Text('Back to the wheel')),
         SizedBox(height: 8),
         Text('Educational simulation, not financial advice.', textAlign: TextAlign.center, style: TextStyle(fontSize: 12, color: kMuted)),

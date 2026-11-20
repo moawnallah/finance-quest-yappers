@@ -1,4 +1,5 @@
-// Sign-in (demo). Guest-first: signing in only saves progress, with Google or an email link.
+// Sign-in (demo), required to start: Google or an email link. Nothing here
+// creates a real account; the backend's auth replaces it.
 // Nothing here creates a real account or stores data.
 
 import 'package:flutter/material.dart';
@@ -20,7 +21,7 @@ class _SignInScreenState extends State<SignInScreen> {
   void _finish(String name) {
     context.read<AppState>().signIn(name);
     if (context.canPop()) {
-      context.pop();
+      context.pop(true);
     } else {
       context.go('/wheel');
     }
@@ -31,15 +32,9 @@ class _SignInScreenState extends State<SignInScreen> {
     return Scaffold(
       appBar: AppBar(title: Text('Save your progress')),
       body: ListView(padding: EdgeInsets.all(20), children: [
-        Center(
-          child: Container(
-            width: 72, height: 72,
-            decoration: BoxDecoration(color: kPrimarySoft, shape: BoxShape.circle),
-            child: Icon(Icons.lock_outline, size: 34, color: kPrimary),
-          ),
-        ),
+        Center(child: MascotPlaceholder(size: 84)),
         SizedBox(height: 16),
-        Text('Sign in to keep your XP, streak and roadmap on every device.',
+        Text('Sign in to keep your Scales, streak and roadmap on every device.',
             textAlign: TextAlign.center, style: TextStyle(fontSize: 16, color: kBody, height: 1.4)),
         SizedBox(height: 24),
         // Google sign-in (demo). The real version uses Google OAuth (Firebase Auth
@@ -50,17 +45,9 @@ class _SignInScreenState extends State<SignInScreen> {
             backgroundColor: kSurface,
             side: BorderSide(color: kBorder),
           ),
-          onPressed: () => showDialog(
-            context: context,
-            builder: (d) => AlertDialog(
-              title: Text('Google sign-in (demo)'),
-              content: Text('In the real app this opens Google\'s own sign-in window. We would only get your name and email, to save your progress.'),
-              actions: [
-                TextButton(onPressed: () => Navigator.pop(d), child: Text('Cancel')),
-                FilledButton(onPressed: () { Navigator.pop(d); _finish('Google user'); }, child: Text('Continue')),
-              ],
-            ),
-          ),
+          onPressed: () async {
+            if (await googleSignInDemo(context, signIn: false)) _finish('Google user');
+          },
           child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
             Text('G', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: Color(0xFF4285F4))),
             SizedBox(width: 10),
@@ -114,11 +101,28 @@ class _SignInScreenState extends State<SignInScreen> {
           ),
         ],
         SizedBox(height: 16),
-        TextButton(onPressed: () => context.canPop() ? context.pop() : context.go('/'), child: Text('Not now, stay a guest')),
         SizedBox(height: 8),
         Text('Demo screen: no account is created and nothing is stored.',
             textAlign: TextAlign.center, style: TextStyle(fontSize: 11, color: kMuted)),
       ]),
     );
   }
+}
+
+/// Demo of Google sign-in: explains what the real flow does, then signs in.
+/// Returns true when the user continued.
+Future<bool> googleSignInDemo(BuildContext context, {bool signIn = true}) async {
+  final ok = await showDialog<bool>(
+    context: context,
+    builder: (d) => AlertDialog(
+      title: Text('Google sign-in (demo)'),
+      content: Text("In the real app this opens Google's own sign-in window. We would only get your name and email, to save your progress."),
+      actions: [
+        TextButton(onPressed: () => Navigator.pop(d, false), child: Text('Cancel')),
+        FilledButton(onPressed: () => Navigator.pop(d, true), child: Text('Continue')),
+      ],
+    ),
+  );
+  if (ok == true && signIn && context.mounted) context.read<AppState>().signIn('Google user');
+  return ok == true;
 }

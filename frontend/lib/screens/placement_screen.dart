@@ -105,6 +105,8 @@ class _PlacementScreenState extends State<PlacementScreen> {
     return Scaffold(
       appBar: AppBar(title: Text(widget.retest ? 'Your progress' : 'Your starting point')),
       body: ListView(padding: EdgeInsets.all(20), children: [
+        Center(child: MascotPlaceholder(size: 80)),
+        SizedBox(height: 8),
         Center(child: Text('$score of $total', style: TextStyle(fontSize: 48, fontWeight: FontWeight.w800, color: kPrimaryText))),
         if (widget.retest && before != null)
           Center(
@@ -141,14 +143,9 @@ class _PlacementScreenState extends State<PlacementScreen> {
         ],
         if (!widget.retest) ...[
           SizedBox(height: 20),
-          Text('Daily goal', style: TextStyle(fontWeight: FontWeight.w700)),
+          Text('Daily goal (Scales)', style: TextStyle(fontWeight: FontWeight.w700)),
           SizedBox(height: 8),
-          SegmentedButton<int>(
-            showSelectedIcon: false,
-            segments: [ButtonSegment(value: 10, label: Text('10 XP')), ButtonSegment(value: 20, label: Text('20 XP')), ButtonSegment(value: 30, label: Text('30 XP'))],
-            selected: {s.dailyGoal},
-            onSelectionChanged: (v) => s.setDailyGoal(v.first),
-          ),
+          DailyGoalPicker(),
         ],
         SizedBox(height: 24),
         FilledButton(

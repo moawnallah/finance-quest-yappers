@@ -58,16 +58,7 @@ class _TutorScreenState extends State<TutorScreen> {
   Widget build(BuildContext context) {
     final s = context.watch<AppState>();
     return Scaffold(
-      appBar: AppBar(
-        title: Text('Tutor'),
-        bottom: PreferredSize(
-          preferredSize: Size.fromHeight(24),
-          child: Padding(
-            padding: EdgeInsets.only(bottom: 8),
-            child: Text('Offline demo · AI version coming · educational, not advice', style: TextStyle(fontSize: 12, color: kMuted)),
-          ),
-        ),
-      ),
+      appBar: StatsBar(title: 'Tutor'),
       body: Column(children: [
         Expanded(
           child: ListView(padding: EdgeInsets.all(16), children: [

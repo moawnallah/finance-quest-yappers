@@ -53,9 +53,57 @@ class _MissionScreenState extends State<MissionScreen> {
         SizedBox(height: 8),
         Text(q.q, style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800, height: 1.25)),
         SizedBox(height: 16),
-        for (final (i, o) in q.options.indexed) _OptionTile(text: o, state: _optionState(q, i), onTap: answered ? null : () => _pick(q, i)),
+        // Answer by tapping an option, or by dragging it into the box.
+        if (!answered)
+          DragTarget<int>(
+            onAcceptWithDetails: (d) { _pick(q, d.data); s.recordAnswer(node, index); },
+            builder: (context, cand, _) => AnimatedContainer(
+              duration: Duration(milliseconds: 150),
+              height: 64,
+              margin: EdgeInsets.only(bottom: 14),
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                color: cand.isNotEmpty ? kPrimarySoft : Colors.transparent,
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: cand.isNotEmpty ? kPrimary : kBorder, width: 2),
+              ),
+              child: Row(mainAxisSize: MainAxisSize.min, children: [
+                Icon(Icons.pan_tool_alt_outlined, color: kMuted, size: 20),
+                SizedBox(width: 8),
+                Text(cand.isNotEmpty ? 'Drop it here' : 'Drag your answer here, or tap it', style: TextStyle(color: kMuted)),
+              ]),
+            ),
+          ),
+        for (final (i, o) in q.options.indexed)
+          answered
+              ? _OptionTile(text: o, state: _optionState(q, i))
+              : LayoutBuilder(
+                  builder: (context, c) => Draggable<int>(
+                    data: i,
+                    feedback: Material(
+                      color: Colors.transparent,
+                      child: SizedBox(width: c.maxWidth, child: Opacity(opacity: 0.9, child: _OptionTile(text: o, state: 'picked'))),
+                    ),
+                    childWhenDragging: Opacity(opacity: 0.35, child: _OptionTile(text: o, state: 'idle')),
+                    child: _OptionTile(text: o, state: 'idle', onTap: () { _pick(q, i); s.recordAnswer(node, index); }, draggable: true),
+                  ),
+                ),
         if (answered) ...[
           SizedBox(height: 8),
+          if (q.isScored && picked == q.answer)
+            Align(
+              alignment: Alignment.centerLeft,
+              child: Container(
+                margin: EdgeInsets.only(bottom: 8),
+                padding: EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(color: kPrimarySoft, borderRadius: BorderRadius.circular(999)),
+                child: Row(mainAxisSize: MainAxisSize.min, children: [
+                  ScaleIcon(size: 16),
+                  SizedBox(width: 4),
+                  Text('+${Rewards.correctAnswer} Scales', style: TextStyle(fontWeight: FontWeight.w700, color: kPrimaryText)),
+                ]),
+              ),
+            ),
           if (q.isScored) TutorBubble(text: _tutorText(q, s)),
           if (q.isBehaviour) TutorBubble(text: q.feedback![picked!]),
           if (!q.isScored && !q.isBehaviour) Panel(child: Text('Thanks. We use this to tailor your path. There is no right or wrong answer.')),
@@ -104,7 +152,7 @@ class _MissionScreenState extends State<MissionScreen> {
                 gradient: LinearGradient(colors: [accent.withValues(alpha: 0.18), accent.withValues(alpha: 0.05)]),
               ),
               child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-                Icon(Icons.lightbulb_outline, size: 48, color: accent),
+                MascotPlaceholder(size: 72),
                 SizedBox(height: 6),
                 Text('Illustration placeholder', style: TextStyle(fontSize: 11, color: kMuted)),
               ]),
@@ -183,7 +231,8 @@ class _OptionTile extends StatelessWidget {
   final String text;
   final String state; // idle | correct | wrong | picked
   final VoidCallback? onTap;
-  _OptionTile({required this.text, required this.state, this.onTap});
+  final bool draggable;
+  _OptionTile({required this.text, required this.state, this.onTap, this.draggable = false});
 
   @override
   Widget build(BuildContext context) {
@@ -203,7 +252,8 @@ class _OptionTile extends StatelessWidget {
           padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(14), border: Border.all(color: border, width: state == 'idle' ? 1 : 2)),
           child: Row(children: [
-            Expanded(child: Text(text, style: TextStyle(fontSize: 15))),
+            if (draggable) ...[Icon(Icons.drag_indicator, size: 18, color: kFaint), SizedBox(width: 6)],
+            Expanded(child: Text(text, style: TextStyle(fontSize: 15, color: kInk))),
             if (icon != null) Icon(icon, color: border),
           ]),
         ),

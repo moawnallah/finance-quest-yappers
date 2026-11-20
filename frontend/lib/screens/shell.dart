@@ -10,10 +10,9 @@ class AppShell extends StatelessWidget {
 
   static const tabs = [
     ('/wheel', Icons.donut_large_outlined, Icons.donut_large, 'Explore'),
-    ('/practice', Icons.show_chart_outlined, Icons.show_chart, 'Practice'),
+    ('/league', Icons.leaderboard_outlined, Icons.leaderboard, 'League'),
     ('/tutor', Icons.auto_awesome_outlined, Icons.auto_awesome, 'Tutor'),
     ('/progress', Icons.emoji_events_outlined, Icons.emoji_events, 'Progress'),
-    ('/profile', Icons.person_outline, Icons.person, 'Profile'),
   ];
 
   @override
@@ -21,7 +20,11 @@ class AppShell extends StatelessWidget {
     var index = tabs.indexWhere((t) => location.startsWith(t.$1));
     if (index < 0) index = 0;
     return Scaffold(
-      body: child,
+      body: AnimatedSwitcher(
+        duration: Duration(milliseconds: 250),
+        switchInCurve: Curves.easeOut,
+        child: KeyedSubtree(key: ValueKey(tabs[index].$1), child: child),
+      ),
       bottomNavigationBar: NavigationBar(
         selectedIndex: index,
         onDestinationSelected: (i) => context.go(tabs[i].$1),

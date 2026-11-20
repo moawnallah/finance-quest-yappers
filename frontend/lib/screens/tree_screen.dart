@@ -23,7 +23,7 @@ class TreeScreen extends StatelessWidget {
             Container(width: 36, height: 36, decoration: BoxDecoration(color: riskColor(slice.risk), borderRadius: BorderRadius.circular(10))),
             SizedBox(width: 12),
             Expanded(
-              child: Text('Risk ${slice.risk} of 5 · ${(s.sliceProgress(slice) * 100).round()}% done',
+              child: Text('${riskName(slice.risk)} ride · ${(s.sliceProgress(slice) * 100).round()}% done',
                   style: TextStyle(fontWeight: FontWeight.w600)),
             ),
           ]),

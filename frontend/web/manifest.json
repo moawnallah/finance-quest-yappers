@@ -1,6 +1,6 @@
 {
-    "name": "finance_quest",
-    "short_name": "finance_quest",
+    "name": "CrocoCash",
+    "short_name": "CrocoCash",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",

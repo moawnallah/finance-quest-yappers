@@ -1,4 +1,4 @@
-// Finance Quest draft. Run: flutter run -d chrome   (web build: flutter build web)
+// CrocoCash draft. Run: flutter run -d chrome   (web build: flutter build web)
 
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
@@ -16,7 +16,7 @@ import 'screens/placement_screen.dart';
 import 'screens/progress_screen.dart';
 import 'screens/shell.dart';
 import 'screens/tutor_screen.dart';
-import 'screens/profile_screen.dart';
+import 'screens/league_screen.dart';
 import 'screens/signin_screen.dart';
 import 'widgets/common.dart' show appDark;
 
@@ -34,10 +34,9 @@ final _router = GoRouter(
       builder: (context, state, child) => AppShell(location: state.uri.path, child: child),
       routes: [
         GoRoute(path: '/wheel', builder: (_, __) => WheelScreen()),
-        GoRoute(path: '/practice', builder: (_, __) => TimeMachineScreen()),
         GoRoute(path: '/tutor', builder: (_, __) => TutorScreen()),
         GoRoute(path: '/progress', builder: (_, __) => ProgressScreen()),
-        GoRoute(path: '/profile', builder: (_, __) => ProfileScreen()),
+        GoRoute(path: '/league', builder: (_, __) => LeagueScreen()),
       ],
     ),
     GoRoute(path: '/slice/:key', builder: (_, s) => TreeScreen(sliceKey: s.pathParameters['key']!)),
@@ -60,17 +59,36 @@ class FinanceQuestApp extends StatelessWidget {
     // so every screen uses the same palette with no in-between state.
     final systemDark = WidgetsBinding.instance.platformDispatcher.platformBrightness == Brightness.dark;
     appDark = switch (state.themeMode) { 'light' => false, 'dark' => true, _ => systemDark };
-    const primary = Color(0xFF3B4FD8);
+    const primary = Color(0xFF0E8430); // CrocoCash green, from the Figma frames
     ThemeData build(Brightness b) {
       final dark = b == Brightness.dark;
       final base = ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: primary, primary: dark ? const Color(0xFF9AA8FF) : primary, brightness: b),
-        scaffoldBackgroundColor: dark ? const Color(0xFF0F1320) : const Color(0xFFF6F7F9),
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: primary,
+          primary: dark ? const Color(0xFF8CDE6E) : primary,
+          brightness: b,
+          surface: dark ? const Color(0xFF1D1D1D) : Colors.white,
+        ),
+        scaffoldBackgroundColor: dark ? const Color(0xFF1D1D1D) : Colors.white,
         useMaterial3: true,
       );
       return base.copyWith(
         textTheme: GoogleFonts.interTextTheme(base.textTheme),
-        appBarTheme: AppBarTheme(backgroundColor: base.scaffoldBackgroundColor),
+        appBarTheme: AppBarTheme(backgroundColor: base.scaffoldBackgroundColor, surfaceTintColor: Colors.transparent),
+        navigationBarTheme: NavigationBarThemeData(
+          backgroundColor: dark ? const Color(0xFF47673C) : const Color(0xFFB8EEA5),
+          indicatorColor: dark ? const Color(0xFF1D1D1D) : Colors.white,
+          surfaceTintColor: Colors.transparent,
+        ),
+        // Smooth transitions between pages on every platform.
+        pageTransitionsTheme: const PageTransitionsTheme(builders: {
+          TargetPlatform.android: FadeForwardsPageTransitionsBuilder(),
+          TargetPlatform.iOS: FadeForwardsPageTransitionsBuilder(),
+          TargetPlatform.macOS: FadeForwardsPageTransitionsBuilder(),
+          TargetPlatform.windows: FadeForwardsPageTransitionsBuilder(),
+          TargetPlatform.linux: FadeForwardsPageTransitionsBuilder(),
+          TargetPlatform.fuchsia: FadeForwardsPageTransitionsBuilder(),
+        }),
         filledButtonTheme: FilledButtonThemeData(
           style: FilledButton.styleFrom(
             backgroundColor: primary,
@@ -82,7 +100,7 @@ class FinanceQuestApp extends StatelessWidget {
       );
     }
     return MaterialApp.router(
-      title: 'Finance Quest',
+      title: 'CrocoCash',
       debugShowCheckedModeBanner: false,
       theme: build(Brightness.light),
       darkTheme: build(Brightness.dark),

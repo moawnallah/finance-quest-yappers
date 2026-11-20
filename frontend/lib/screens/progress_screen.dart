@@ -1,10 +1,10 @@
-// Progress: level ladder, daily goal ring, badges and a weekly league
-// (ideas from Basis and Finanz). The league rows are labelled demo data.
+// Progress: today's goal, level, the three badges, the quick-check retest,
+// and how Scales are earned. The league has its own tab.
 
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../data/app_state.dart';
-import 'package:go_router/go_router.dart';
 import '../widgets/common.dart';
 
 class ProgressScreen extends StatelessWidget {
@@ -13,37 +13,87 @@ class ProgressScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final s = context.watch<AppState>();
-    final next = s.nextLevel;
-    final league = [
-      ('Demo learner A', 180), ('Demo learner B', 140), ('You', s.xp), ('Demo learner C', 60), ('Demo learner D', 20),
-    ]..sort((a, b) => b.$2.compareTo(a.$2));
+    final lvl = s.level, next = s.nextLevel;
+    final today = s.xpToday, goal = s.dailyGoal;
+    final reached = today >= goal;
     return Scaffold(
-      appBar: StatsBar(title: 'Your progress', subtitle: s.level.name),
-      body: ListView(padding: EdgeInsets.all(20), children: [
+      appBar: StatsBar(title: 'Your progress'),
+      body: ListView(padding: EdgeInsets.fromLTRB(20, 0, 20, 20), children: [
+        // Today's goal, in words and a bar.
         Panel(
-          child: Row(children: [
-            SizedBox(
-              width: 72, height: 72,
-              child: Stack(alignment: Alignment.center, children: [
-                CircularProgressIndicator(value: (s.xpToday / s.dailyGoal).clamp(0, 1), strokeWidth: 8, color: kGreen, backgroundColor: kLine),
-                Text('${s.xpToday}/${s.dailyGoal}', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 12)),
-              ]),
+          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Row(children: [
+              Text('Today', style: TextStyle(fontWeight: FontWeight.w700, color: kMuted)),
+              Spacer(),
+              if (reached) Icon(Icons.check_circle, color: kGreen, size: 20),
+            ]),
+            SizedBox(height: 6),
+            Row(crossAxisAlignment: CrossAxisAlignment.end, children: [
+              ScaleIcon(size: 26),
+              SizedBox(width: 8),
+              Text('$today', style: TextStyle(fontSize: 30, fontWeight: FontWeight.w800, color: kInk, height: 1)),
+              Padding(
+                padding: EdgeInsets.only(bottom: 3, left: 6),
+                child: Text('of $goal Scales', style: TextStyle(color: kMuted)),
+              ),
+            ]),
+            SizedBox(height: 10),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(6),
+              child: LinearProgressIndicator(value: (today / goal).clamp(0, 1).toDouble(), minHeight: 10, color: kGreen, backgroundColor: kLine),
             ),
-            SizedBox(width: 16),
-            Expanded(
-              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                Text('Level: ${s.level.name}', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 18)),
-                Text(next == null ? 'Top level reached' : '${next.minXp - s.xp} XP to ${next.name}', style: TextStyle(color: kMuted)),
-                SizedBox(height: 4),
-                Text('Streak: ${s.streak} day${s.streak == 1 ? '' : 's'}', style: TextStyle(color: kMuted)),
-              ]),
-            ),
+            SizedBox(height: 6),
+            Text(reached ? 'Daily goal reached. Nice work.' : '${goal - today} more Scales to reach today\'s goal.',
+                style: TextStyle(color: kBody)),
           ]),
         ),
         SizedBox(height: 12),
+        // Level.
+        Panel(
+          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Row(children: [
+              for (final (i, l) in levels.indexed) ...[
+                if (i > 0) Expanded(child: Divider(color: s.xp >= l.minXp ? kGreen : kLine, thickness: 3)),
+                Column(children: [
+                  CircleAvatar(
+                    radius: 14,
+                    backgroundColor: s.xp >= l.minXp ? kPrimary : kLine,
+                    child: Icon(l == lvl ? Icons.star_rounded : s.xp >= l.minXp ? Icons.check : Icons.lock, size: 15, color: s.xp >= l.minXp ? Colors.white : kFaint),
+                  ),
+                  SizedBox(height: 4),
+                  Text(l.name, style: TextStyle(fontSize: 11, fontWeight: l == lvl ? FontWeight.w800 : FontWeight.w500, color: l == lvl ? kInk : kMuted)),
+                ]),
+              ],
+            ]),
+            SizedBox(height: 10),
+            Text(next == null ? 'You reached the top level.' : '${next.minXp - s.xp} Scales to ${next.name}.', style: TextStyle(color: kBody)),
+          ]),
+        ),
+        SizedBox(height: 12),
+        // Badges: three, shown small.
+        Text('Badges', style: TextStyle(fontWeight: FontWeight.w700, color: kInk)),
+        SizedBox(height: 8),
+        Row(children: [
+          for (final b in badgeDefs)
+            Expanded(
+              child: Tooltip(
+                message: b.rule,
+                child: Column(children: [
+                  CircleAvatar(
+                    radius: 22,
+                    backgroundColor: s.badges.contains(b.id) ? Color(0xFFFDB022) : kLine,
+                    child: Icon(Icons.emoji_events, color: s.badges.contains(b.id) ? Color(0xFF7A2E0E) : kFaint),
+                  ),
+                  SizedBox(height: 4),
+                  Text(b.title, textAlign: TextAlign.center, style: TextStyle(fontSize: 12, color: s.badges.contains(b.id) ? kInk : kMuted)),
+                ]),
+              ),
+            ),
+        ]),
+        SizedBox(height: 16),
         Panel(
           child: Row(children: [
-            Icon(Icons.quiz_outlined, color: kPrimary),
+            Icon(Icons.quiz_outlined, color: kPrimaryText),
             SizedBox(width: 12),
             Expanded(
               child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -63,41 +113,21 @@ class ProgressScreen extends StatelessWidget {
           ]),
         ),
         SizedBox(height: 16),
-        Text('Levels', style: TextStyle(fontWeight: FontWeight.w700)),
-        SizedBox(height: 8),
-        Wrap(spacing: 8, runSpacing: 8, children: [
-          for (final l in levels)
-            Chip(
-              label: Text('${l.name} · ${l.minXp}'),
-              backgroundColor: s.xp >= l.minXp ? kPrimarySoft : kSurface,
-              side: BorderSide(color: s.level == l ? kPrimary : kBorder),
-            ),
-        ]),
-        SizedBox(height: 16),
-        Text('Badges', style: TextStyle(fontWeight: FontWeight.w700)),
-        SizedBox(height: 8),
-        for (final b in badgeDefs)
-          ListTile(
-            contentPadding: EdgeInsets.zero,
-            leading: CircleAvatar(
-              backgroundColor: s.badges.contains(b.id) ? Color(0xFFFDB022) : kLine,
-              child: Icon(Icons.emoji_events, color: s.badges.contains(b.id) ? Color(0xFF7A2E0E) : kFaint),
-            ),
-            title: Text(b.title, style: TextStyle(fontWeight: FontWeight.w600)),
-            subtitle: Text(b.rule),
-          ),
-        SizedBox(height: 16),
-        Text('Weekly league (demo data)', style: TextStyle(fontWeight: FontWeight.w700)),
-        SizedBox(height: 4),
-        Text('Ranks learning XP only.', style: TextStyle(fontSize: 12, color: kMuted)),
-        SizedBox(height: 8),
-        for (final (i, row) in league.indexed)
-          Panel(
-            color: row.$1 == 'You' ? kPrimarySoft : null,
+        Text('How you earn Scales', style: TextStyle(fontWeight: FontWeight.w700, color: kInk)),
+        SizedBox(height: 6),
+        for (final (what, n) in [
+          ('Correct answer', Rewards.correctAnswer),
+          ('Mission finished', Rewards.missionDone),
+          ("Today's question", Rewards.dailyRight),
+          ('Quick check finished', Rewards.quickCheck),
+        ])
+          Padding(
+            padding: EdgeInsets.symmetric(vertical: 4),
             child: Row(children: [
-              SizedBox(width: 28, child: Text('${i + 1}', style: TextStyle(fontWeight: FontWeight.w700))),
-              Expanded(child: Text(row.$1)),
-              Text('${row.$2} XP', style: TextStyle(fontWeight: FontWeight.w600)),
+              Expanded(child: Text(what, style: TextStyle(color: kBody))),
+              Text('+$n', style: TextStyle(fontWeight: FontWeight.w700, color: kPrimaryText)),
+              SizedBox(width: 4),
+              ScaleIcon(size: 14),
             ]),
           ),
       ]),

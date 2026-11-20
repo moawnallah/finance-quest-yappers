@@ -1,9 +1,12 @@
 // Onboarding: a step-by-step flow with a progress bar (idea borrowed from Finanz),
-// but guest-first: no email, surname, phone, review prompt or countdown offers.
+// with sign-in (Google or email link) first, then a few questions. No surname,
+// phone, review prompt or countdown offers.
 
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
+import 'signin_screen.dart' show googleSignInDemo;
 import '../data/app_state.dart';
 import '../widgets/common.dart';
 
@@ -91,19 +94,19 @@ class _Welcome extends StatelessWidget {
   final VoidCallback onStart;
   _Welcome({required this.onStart});
 
-  Widget _feature(IconData icon, Color color, String title, String text) => Padding(
+  Widget _feature(IconData icon, String title, String text) => Padding(
         padding: EdgeInsets.only(bottom: 10),
         child: Panel(
           child: Row(children: [
             Container(
               width: 44, height: 44,
-              decoration: BoxDecoration(color: color.withValues(alpha: 0.15), borderRadius: BorderRadius.circular(12)),
-              child: Icon(icon, color: color),
+              decoration: BoxDecoration(color: kPrimarySoft, borderRadius: BorderRadius.circular(12)),
+              child: Icon(icon, color: kPrimaryText),
             ),
             SizedBox(width: 14),
             Expanded(
               child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                Text(title, style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16)),
+                Text(title, style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16, color: kInk)),
                 SizedBox(height: 2),
                 Text(text, style: TextStyle(color: kMuted, height: 1.3)),
               ]),
@@ -114,74 +117,53 @@ class _Welcome extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-        SizedBox(height: 16),
-        Row(children: [
+        SizedBox(height: 12),
+        Text('CrocoCash', style: GoogleFonts.lora(fontSize: 38, fontWeight: FontWeight.w700, color: kPrimaryText)),
+        SizedBox(height: 6),
+        Text('Learn to invest in 5-minute missions. Spin the wheel, pick a topic, and collect Scales as you learn.',
+            style: TextStyle(fontSize: 16, color: kBody, height: 1.4)),
+        SizedBox(height: 28),
+        // Hero card with a crocodile peeking over its top edge.
+        Stack(clipBehavior: Clip.none, children: [
           Container(
-            width: 40, height: 40,
-            decoration: BoxDecoration(color: kPrimary, borderRadius: BorderRadius.circular(12)),
-            child: Icon(Icons.trending_up, color: Colors.white, size: 24),
+            padding: EdgeInsets.fromLTRB(20, 24, 20, 20),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(20),
+              gradient: LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight, colors: [Color(0xFF0E8430), Color(0xFF119B2A)]),
+            ),
+            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Text('From knowing to doing', style: TextStyle(fontSize: 26, fontWeight: FontWeight.w800, color: Colors.white, height: 1.15)),
+              SizedBox(height: 8),
+              Text('13 investment types, from calm to wild, at any age.', style: TextStyle(fontSize: 15, color: Color(0xFFE3F8DA), height: 1.4)),
+              SizedBox(height: 14),
+              SizedBox(height: 10, child: CustomPaint(size: Size(double.infinity, 10), painter: CrocoRidgePainter(Color(0x55FFFFFF)))),
+            ]),
           ),
-          SizedBox(width: 10),
-          Text('Finance Quest', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
+          Positioned(right: 24, top: -22, child: CrocoEyes(width: 70)),
         ]),
-        SizedBox(height: 20),
-        // Hero: the calm-to-bumpy colour scale used on the wheel.
-        Container(
-          padding: EdgeInsets.all(20),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(20),
-            gradient: LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight, colors: [Color(0xFF3B4FD8), Color(0xFF2A3AA8)]),
-          ),
-          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text('From knowing to doing', style: TextStyle(fontSize: 28, fontWeight: FontWeight.w800, color: Colors.white, height: 1.15)),
-            SizedBox(height: 8),
-            Text('Learn investing in 5 minutes a day, at any age. No account needed to start.',
-                style: TextStyle(fontSize: 15, color: Color(0xFFDDE2FF), height: 1.4)),
-            SizedBox(height: 16),
-            Row(children: [
-              for (var r = 1; r <= 5; r++)
-                Expanded(
-                  child: Container(
-                    height: 10,
-                    margin: EdgeInsets.only(right: r < 5 ? 4 : 0),
-                    decoration: BoxDecoration(color: riskColor(r), borderRadius: BorderRadius.circular(5)),
-                  ),
-                ),
-            ]),
-            SizedBox(height: 6),
-            Row(children: [
-              Text('Calm', style: TextStyle(fontSize: 11, color: Color(0xFFDDE2FF))),
-              Spacer(),
-              Text('13 investment types', style: TextStyle(fontSize: 11, color: Color(0xFFDDE2FF))),
-              Spacer(),
-              Text('Bumpy', style: TextStyle(fontSize: 11, color: Color(0xFFDDE2FF))),
-            ]),
+        SizedBox(height: 16),
+        _feature(Icons.donut_large, '5-minute missions', 'A wheel of topics, each with a short roadmap.'),
+        _feature(Icons.leaderboard, 'Weekly league', 'Collect Scales and climb the ranks.'),
+        _feature(Icons.auto_awesome, 'Tutor', 'Explains your mistakes using your own goal.'),
+        SizedBox(height: 16),
+        OutlinedButton(
+          style: OutlinedButton.styleFrom(minimumSize: Size.fromHeight(52), backgroundColor: kSurface, side: BorderSide(color: kBorder)),
+          onPressed: () async {
+            if (await googleSignInDemo(context)) onStart();
+          },
+          child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+            Text('G', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: Color(0xFF4285F4))),
+            SizedBox(width: 10),
+            Text('Continue with Google', style: TextStyle(color: kInk, fontWeight: FontWeight.w600)),
           ]),
         ),
-        SizedBox(height: 16),
-        _feature(Icons.donut_large, kPrimary, '5-minute missions', 'A wheel of investment types, each with a short roadmap.'),
-        _feature(Icons.history, Color(0xFF1F7A55), 'Time machine', 'Replay real market history with play money.'),
-        _feature(Icons.auto_awesome, Color(0xFFB8551A), 'Tutor', 'Explains your mistakes using your own goal.'),
-        SizedBox(height: 8),
-        Wrap(alignment: WrapAlignment.center, spacing: 8, runSpacing: 8, children: [
-          for (final t in ['Free', 'No ads', 'No trading', 'Larger text option'])
-            Container(
-              padding: EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-              decoration: BoxDecoration(borderRadius: BorderRadius.circular(999), border: Border.all(color: kBorder)),
-              child: Row(mainAxisSize: MainAxisSize.min, children: [
-                Icon(Icons.check, size: 14, color: kGreen),
-                SizedBox(width: 4),
-                Text(t, style: TextStyle(fontSize: 12, color: kBody)),
-              ]),
-            ),
-        ]),
-        SizedBox(height: 24),
-        FilledButton(onPressed: onStart, child: Text('Start as guest')),
         SizedBox(height: 10),
-        OutlinedButton(
-          onPressed: () => context.push('/signin'), // email sign-in (demo)
-          style: OutlinedButton.styleFrom(minimumSize: Size.fromHeight(48)),
-          child: Text('Sign in to continue my progress'),
+        FilledButton(
+          onPressed: () async {
+            final ok = await context.push<bool>('/signin');
+            if (ok == true) onStart();
+          },
+          child: Text('Continue with email'),
         ),
         SizedBox(height: 14),
         Text('Educational content, not financial advice.', textAlign: TextAlign.center, style: TextStyle(fontSize: 12, color: kMuted)),
