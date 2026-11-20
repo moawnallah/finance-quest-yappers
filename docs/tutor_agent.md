@@ -321,8 +321,9 @@ class ContextProvider(Protocol):
     def task_public(self, task_id: str) -> dict: ...         # no truth, no weights
     def reveal(self, attempt_id: str) -> dict | None: ...     # None before submission
     def profile_aggregates(self, user_id: str) -> dict: ...
-    def search_kb(self, node: str, query: str, k: int) -> list[dict]: ...  # SQL owned by Mateusz, run on Mohamed's connection
-    def stored_explanation(self, task_id: str, mode: str) -> str: ...
+    def task_secrets(self, task_id: str) -> dict: ...         # truth values and correct box texts, for the leak check only
+    def search_kb(self, node: str, query: str, k: int) -> list[dict]: ...  # tutor.kb.SEARCH_SQL, run on Mohamed's connection
+    def stored_explanation(self, key: str, mode: str) -> str: ...  # key: task_id, or the node for card screens
 ```
 
 **`llm_events` row** (no raw text, except masked text of flagged answers,

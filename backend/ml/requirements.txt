@@ -1,0 +1,3 @@
+pyyaml>=6
+litellm      # runtime model adapter (tutor/llm.py); the tests do not import it
+pytest>=8    # tests only
