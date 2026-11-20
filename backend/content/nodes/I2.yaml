@@ -1,0 +1,93 @@
+node: I2
+panel: INSTRUMENTS
+title: "Deposits and retail bonds"
+after: [I1, F2]
+author: "draft by Claude (AI), 2026-11-20"
+reviewer: null
+status: draft
+
+cards:
+  - id: i2.c1
+    title: "Bank deposits"
+    body: >-
+      A bank deposit pays a rate that is fixed for its term, for example 3, 6
+      or 12 months. If you break it early, you usually lose some or all of the
+      interest. Money in Polish banks and credit unions is guaranteed by the
+      Bank Guarantee Fund (BFG) up to the PLN equivalent of EUR 100,000 per
+      person in each bank.
+    example: "10,000 PLN on a 12-month deposit at an illustrative 5% earns 500 PLN before tax."
+    links: [bfg_limit, bfg_guarantee]
+    checked: "Guarantee: bfg_limit. 'Lose interest when broken early' is a general deposit feature; reviewer to confirm a source."
+
+  - id: i2.c2
+    title: "Polish retail Treasury bonds"
+    body: >-
+      The State Treasury sells savings bonds at 100 PLN each, with no buying
+      fee. Some pay a rate fixed for the whole term (TOS, 3 years). Some have a
+      floating rate (ROR, DOR). Others follow inflation after the first year
+      (COI 4 years, EDO 10 years, and the family bonds ROS and ROD). You can
+      sell them back early for a small fee per bond, taken from the interest.
+    example: "Early redemption fee per 100 PLN bond (bought from September 2024): ROR 0.50, DOR 0.70, TOS 1.00, COI 2.00, EDO 3.00 PLN. Current rates: see obligacjeskarbowe.pl."
+    links: [mf_bonds_offer, mf_bonds_faq]
+    valid_until: 2026-12-31
+    checked: "Codes, maturities and rate types: mf_bonds_offer. No buying fee, fee schedule from Sept 2024, fee deducted from interest: mf_bonds_faq (answers 4 and 29). Current rates are not copied: their data is not for commercial reuse."
+
+  - id: i2.c4
+    title: "Bonds vs funds: who pays the tax"
+    body: >-
+      Interest on Polish retail Treasury bonds is taxed at 19%, and the tax is
+      taken automatically, so you do not report it in your annual return. Gains
+      on fund units are also taxed at 19%, but since 2024 you settle them
+      yourself in PIT-38. The bonds are backed by the State Treasury and are
+      kept in a register, so they cannot be lost or stolen.
+    example: "100 PLN of interest on bonds: 19 PLN tax withheld, 81 PLN paid out."
+    links: [mf_bonds_faq, podatki_fund_units]
+    valid_until: 2026-12-31
+    checked: "19% flat tax withheld by the agent, no PIT entry: mf_bonds_faq answers 16-17. State Treasury guarantee and register: answers 10 and 13. Fund units on PIT-38: podatki_fund_units."
+
+  - id: i2.c3
+    title: "Real return: what your money buys"
+    body: >-
+      What counts is what your money can buy. If it earns 5% while prices
+      rise 3%, it buys only about 2% more. If prices rise faster than your
+      rate, you lose buying power even though the balance grows.
+      Inflation-indexed bonds are built to follow prices; fixed-rate ones are
+      not. In a 2023 EU survey, 68% of adults in Poland answered the inflation
+      question correctly.
+    example: "5% interest, 3% inflation: 10,000 PLN becomes 10,500 PLN, which buys what about 10,194 PLN bought a year earlier."
+    links: [mf_bonds_edo, eb525_pl]
+    checked: "10,500 / 1.03 = 10,194 (our calculation). EB525 vol. C Poland Q3: 68.1% correct. EDO indexation: mf_bonds_edo."
+
+items:  # draft by Yurii (with Claude), 2026-11-20, based on the cards above
+  - id: i2.e1
+    kind: single
+    q: "Up to what amount does the Bank Guarantee Fund (BFG) protect money in one Polish bank, per person?"
+    options:
+      - "The PLN equivalent of EUR 100,000"
+      - "100,000 PLN"
+      - "There is no limit"
+    answer: 0
+    why: "The BFG guarantees up to the PLN equivalent of EUR 100,000 per person in each bank."
+    sources: [bfg_limit]
+    valid_until: 2026-12-31
+    check: true
+  - id: i2.e2
+    kind: numeric
+    q: "Your deposit earns 5% in a year while prices rise 3%. By about how many percent does your buying power grow?"
+    answer: 1.94
+    unit: "%"
+    tolerance: {kind: absolute, band: 0.3}
+    input: {min: -5, max: 10, step: 0.1}
+    why: "10,500 PLN buys what about 10,194 PLN bought a year earlier (10,500 / 1.03), so about 2% more, not 5%."
+    check: true
+  - id: i2.e3
+    kind: single
+    q: "Which Polish retail Treasury bond follows inflation after its first year?"
+    options:
+      - "TOS (3 years, fixed rate)"
+      - "EDO (10 years)"
+      - "ROR (floating rate)"
+    answer: 1
+    why: "COI, EDO and the family bonds ROS and ROD follow inflation after the first year. TOS is fixed; ROR floats with the rate."
+    sources: [mf_bonds_offer]
+    valid_until: 2026-12-31

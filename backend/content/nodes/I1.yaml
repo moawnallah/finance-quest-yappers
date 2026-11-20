@@ -1,0 +1,70 @@
+node: I1
+panel: INSTRUMENTS
+title: "Risk as a spread of outcomes"
+after: [F3]
+author: "draft by Claude (AI), 2026-11-20"
+reviewer: null
+status: draft
+
+cards:
+  - id: i1.c1
+    title: "Risk is a spread of outcomes"
+    body: >-
+      Risk is not only "losing money". It is how wide the range of possible
+      results is. A deposit gives almost the same result every year. Shares
+      give a much wider range: some years far above average, some far below.
+      Before you invest, look at the bad years, not only the average.
+    example: "US shares with dividends, 1976-2025: best year +37.2%, worst year -36.6% (2008). In a year like 2008, 10,000 PLN would have become about 6,345 PLN (ignoring the currency)."
+    links: [damodaran_histret]
+    checked: "S&P 500 incl. dividends, 1976-2025: max 37.20%, min -36.55% (2008); computed from the Damodaran table, 2026-11-20."
+
+  - id: i1.c2
+    title: "Higher expected return, wider spread"
+    body: >-
+      Investments expected to earn more usually come with a wider spread of
+      results; that is the price of the higher average. In an EU survey in
+      2023, 57% of adults in Poland answered the risk-and-return question
+      correctly. Knowing this protects you from offers that promise high
+      returns with no risk.
+    example: "1976-2025, worst year: US shares -36.6%, 10-year US Treasury bonds -17.8%, a 50/50 mix of the two -17.9%."
+    links: [damodaran_histret, eb525_pl]
+    checked: "EB525 vol. C Poland Q5: 56.7% correct. Worst years from the Damodaran table: stocks -36.55% (2008), T-bond -17.83% (2022), 50/50 -17.94% (2022)."
+
+  - id: i1.c3
+    title: "A bad outcome is not always a bad decision"
+    body: >-
+      Because results are spread, a sensible choice can still have a bad year,
+      and a reckless one can get lucky. Judge a decision by what you knew and
+      by the range of outcomes it faced, not only by how it turned out. This
+      app grades your reasons and shows the outcome separately.
+    example: "Shares bought at the start of 2008 lost 36.6% that year (US shares), and were back above the starting value by the end of 2012."
+    links: [damodaran_histret]
+    checked: "Cumulative value of 1 invested at the start of 2008 in S&P 500 incl. dividends: 0.635 (2008), 0.918 (2010), 1.086 (2012); Damodaran table."
+
+items:  # draft by Yurii (with Claude), 2026-11-20, based on the cards above
+  - id: i1.e1
+    kind: single
+    q: "In investing, what does risk mean?"
+    options:
+      - "Only the chance of losing everything"
+      - "How wide the range of possible results is"
+      - "How much the investment costs"
+    answer: 1
+    why: "Risk is the spread of outcomes: a deposit gives almost the same result each year, shares a much wider range."
+    check: true
+  - id: i1.e2
+    kind: true_false
+    q: "A sensible decision can still have a bad outcome."
+    answer: true
+    why: "Because results are spread, a good choice can have a bad year. Judge a decision by what you knew and the range of outcomes."
+    check: true
+  - id: i1.e3
+    kind: multi
+    q: "Which of these are warning signs in an investment offer? Pick all that apply."
+    options:
+      - "It promises high returns with no risk"
+      - "It shows the worst years as well as the average"
+      - "It shows only the average result"
+      - "It says returns are guaranteed and much higher than a deposit"
+    answer: [0, 2, 3]
+    why: "Higher expected returns come with a wider spread. An offer that hides the bad years, or promises high returns with no risk, is a warning sign."

@@ -1,0 +1,37 @@
+# One entry per series_id. Rows of real series live in series.csv (series_id,date,value,source,licence).
+#
+#   name:       real name, hidden from the user when a chart hides names; shown in the reveal
+#   aliases:    other names that must not appear in visible text
+#   unit:       unit of the raw values (e.g. PLN, "%")
+#   frequency:  daily | monthly
+#   source, licence: as in backend/data/SOURCES.md
+#   display:    true only after the licence checklist in docs/task_engines.md is done
+#   synthetic:  parameters of a generated path (no CSV rows); the app labels it as synthetic
+#               {anchor, start, move, horizon, mode: multiplicative|additive, vol, seed, back, forward}
+
+synth_company_d1:
+  name: Synthetic listed company (fictional)
+  unit: PLN
+  frequency: daily
+  source: synthetic
+  licence: own
+  display: true
+  synthetic: {anchor: 2024-04-25, start: 100, move: -0.08, horizon: 5, seed: 11}
+
+synth_pl10y_d3:
+  name: Synthetic 10-year government bond yield (fictional)
+  unit: "%"
+  frequency: daily
+  source: synthetic
+  licence: own
+  display: true
+  synthetic: {anchor: 2024-03-15, start: 5.4, move: 0.22, horizon: 5, mode: additive, vol: 0.03, seed: 21}
+
+# Example of a real series once its licence is cleared (rows go in series.csv):
+# nbp_reference_rate:
+#   name: NBP reference rate
+#   unit: "%"
+#   frequency: daily
+#   source: NBP
+#   licence: Regulaminy NBP (to verify)
+#   display: false

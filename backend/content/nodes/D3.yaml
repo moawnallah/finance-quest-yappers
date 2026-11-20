@@ -1,0 +1,75 @@
+# D3 Macro news: CPI, rate decisions. Items and the medium task so far; cards and the hard task come later.
+# SAMPLE: synthetic yield path; replace with a real series once its licence is cleared.
+node: D3
+panel: DECISIONS
+title: "Macro news: CPI, rate decisions"
+after: [F2]
+author: Yurii
+reviewer: null
+status: draft
+
+items:  # draft by Yurii (with Claude), 2026-11-20
+  - id: d3.e1
+    kind: single
+    q: "Inflation comes in higher than expected. What usually happens to expected interest rates?"
+    options:
+      - "They rise: rate cuts look less likely"
+      - "They fall"
+      - "Nothing: inflation and interest rates are unrelated"
+    answer: 0
+    why: "Central banks raise or hold rates to fight inflation, so a hot reading pushes expected rates up."
+    check: true
+  - id: d3.e2
+    kind: true_false
+    q: "When bond yields rise, the prices of bonds people already hold fall."
+    answer: true
+    why: "Newer bonds pay more, so older ones with lower payments become less attractive and their price drops."
+    check: true
+
+medium:
+  - id: d3.m1
+    variant: day_x
+    content_version: 1
+    author: Yurii
+    reviewer: null
+    sources: []
+    brief:
+      en: >
+        Today the statistics office published the monthly CPI flash estimate. Inflation came in
+        above economists' forecasts for the second month in a row, and core inflation was also
+        higher than expected. The Monetary Policy Council (RPP) had kept rates unchanged for months.
+        Over the next week, did the 10-year government bond yield go up, down or stay flat?
+    stimulus:
+      - kind: chart
+        type: line
+        cutoff: 2024-03-15
+        hide: [name, dates]
+        series:
+          - {series_id: synth_pl10y_d3, from: 2023-12-15, to: 2024-06-14, transform: level, label: "10-year yield"}
+    response:
+      kind: direction
+      options: [up, down, flat]
+      horizon: 1w
+      flat_band: 0.05          # pp: a change within ±0.05 counts as flat
+      expected: up
+    truth: none
+    reasons:
+      pick: {min: 2, max: 3}
+      boxes:
+        - {id: fewer_cuts, weight: 1.0, text: "Higher inflation makes rate cuts less likely soon",
+           explain: "Bond yields follow expected interest rates. Fewer expected cuts push them up."}
+        - {id: core, weight: 0.7, text: "Core inflation, which the central bank watches, was also high",
+           explain: "High core inflation means the price rises are spreading, so the RPP can't wait it out."}
+        - {id: price_yield, weight: 0.3, text: "Bond prices and yields move in opposite directions",
+           explain: "True and useful, but it describes how the move works rather than what caused it."}
+        - {id: deposit, weight: 0.0, text: "Banks will advertise new deposits",
+           explain: "Not relevant to the bond market on the day."}
+        - {id: safe_haven, weight: -0.5, text: "Investors rushed to buy safe government bonds",
+           explain: "That would push yields down, and there was no sign of panic."}
+        - {id: rpp_hike, weight: -1.0, text: "The RPP raised rates the following month",
+           explain: "That wasn't known on day X. Using it is hindsight."}
+    reveal:
+      text:
+        en: >
+          Bond yields move with expectations for interest rates. An inflation surprise changes
+          those expectations quickly, so yields can move on the day of the release.

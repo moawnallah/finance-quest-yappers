@@ -1,0 +1,88 @@
+node: I5
+panel: INSTRUMENTS
+title: "Funds, ETFs, costs, the KID"
+after: [I4, F3]
+author: "draft by Claude (AI), 2026-11-20"
+reviewer: null
+status: draft
+
+cards:
+  - id: i5.c1
+    title: "What a fund is"
+    body: >-
+      A fund pools money from many people and invests it according to a
+      stated policy. You own units, and their value follows what the fund
+      holds. An ETF is a fund whose units are traded on a stock exchange, like
+      shares. In the EU, many investment products come with a Key Information
+      Document (KID) of at most three A4 pages.
+    example: "Buy 1,000 PLN of units; if the fund's holdings rise 5%, your units are worth about 1,050 PLN before costs."
+    links: [priips_reg]
+    checked: "KID at most three sides of A4: PRIIPs Regulation Art. 6(4). Fund and ETF definitions: reviewer to add a source."
+
+  - id: i5.c2
+    title: "Costs grow over time"
+    body: >-
+      Fund costs are taken from your money every year, so they compound like
+      returns do, only against you. A difference that looks small per year
+      becomes large over decades. Compare the "What are the costs?" section of
+      two KIDs before you compare their past results.
+    example: "50,000 PLN for 20 years at 6% a year before costs: with 2% yearly costs it grows to about 109,556 PLN; with 0.3% to about 151,520 PLN. The difference is 41,964 PLN."
+    links: [priips_reg]
+    checked: "Our calculation: 50,000 x 1.04^20 = 109,556; 50,000 x 1.057^20 = 151,520. 6% is illustrative. Section title 'What are the costs?': PRIIPs Art. 8(3)(f)."
+
+  - id: i5.c3
+    title: "How to read a KID"
+    body: >-
+      Every KID has the same sections in the same order. What is this product?
+      What are the risks and what could I get in return? What happens if the
+      manufacturer is unable to pay out? What are the costs? How long should I
+      hold it and can I take money out early? How can I complain? The fixed
+      order lets you compare two products side by side.
+    example: "Put two KIDs next to each other and read only 'What are the costs?' first."
+    links: [priips_reg]
+    checked: "Section headings: PRIIPs Regulation Art. 8(3)(c)-(h)."
+
+  - id: i5.c4
+    title: "Tax on fund gains in Poland"
+    body: >-
+      A gain from selling or redeeming fund units is taxed at 19%. Since 2024
+      you settle it yourself in the PIT-38 tax return. A loss can reduce gains
+      from the same source in the following years. IKE and IKZE accounts have
+      their own rules (node L1).
+    example: "Units bought for 10,000 PLN and sold for 12,000 PLN: gain 2,000 PLN, tax 380 PLN."
+    links: [podatki_fund_units]
+    valid_until: 2026-12-31
+    checked: "19%, settled yourself on PIT-38 from the 2024 tax year, loss offset within the same source: podatki_fund_units. 2,000 x 19% = 380 (our calculation)."
+
+items:  # draft by Yurii (with Claude), 2026-11-20, based on the cards above
+  - id: i5.e1
+    kind: single
+    q: "What is an ETF?"
+    options:
+      - "A fund whose units are traded on a stock exchange, like shares"
+      - "A type of bank deposit"
+      - "A government savings bond"
+    answer: 0
+    why: "An ETF is a fund; its units trade on an exchange, so you can buy a whole basket in one purchase."
+    check: true
+  - id: i5.e2
+    kind: single
+    q: "Two funds hold similar investments. Which section of their KIDs should you compare first?"
+    options:
+      - "What are the costs?"
+      - "How can I complain?"
+      - "What happens if the manufacturer is unable to pay out?"
+    answer: 0
+    why: "Costs are taken every year and compound against you, so compare them before past results."
+    sources: [priips_reg]
+    check: true
+  - id: i5.e3
+    kind: numeric
+    q: "You bought fund units for 10,000 PLN and sold them for 12,000 PLN. How much tax is due in Poland?"
+    answer: 380
+    unit: PLN
+    tolerance: {kind: absolute, band: 1}
+    input: {min: 0, max: 3000, step: 10}
+    why: "The gain is 2,000 PLN, taxed at 19%: 380 PLN, settled yourself in PIT-38."
+    sources: [podatki_fund_units]
+    valid_until: 2026-12-31

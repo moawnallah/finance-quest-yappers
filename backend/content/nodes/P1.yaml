@@ -1,0 +1,72 @@
+node: P1
+panel: PORTFOLIO
+title: "Diversification and correlation"
+after: [I2, I4]
+author: "draft by Claude (AI), 2026-11-20"
+reviewer: null
+status: draft
+
+cards:
+  - id: p1.c1
+    title: "Mix things that move differently"
+    body: >-
+      If two investments do not fall at the same time, holding both gives a
+      smoother ride than holding either alone. In 2008, US shares fell 36.6%
+      while 10-year US Treasury bonds gained 20.1%. A 50/50 mix of the two
+      lost about 8%.
+    example: "10,000 PLN split 50/50 in 2008 ended at about 9,178, instead of about 6,345 in shares only."
+    links: [damodaran_histret]
+    checked: "Damodaran table 2008: S&P 500 -36.55%, 10-year T-bond +20.10%; 50/50 = -8.22% (our calculation)."
+
+  - id: p1.c2
+    title: "Correlation in plain words"
+    body: >-
+      Correlation says whether two investments tend to move together. If they
+      move together, mixing them protects you little. If they move apart, or
+      without a link, mixing smooths the ride. Correlation is not fixed: the
+      ECB notes that the stock-bond correlation was positive from the late
+      1960s to the late 1990s, negative in the 2000s, and has risen again.
+    example: "Shares and bonds in 2008 moved apart (-36.6% and +20.1%); in 2022 they moved together (-18.0% and -17.8%)."
+    links: [ecb_fsr_2022_corr, damodaran_histret]
+    checked: "Correlation history: ECB FSR box, Nov 2022. 2008 and 2022 figures: Damodaran table."
+
+  - id: p1.c3
+    title: "2022: when both fell"
+    body: >-
+      In 2022, US shares fell 18.0% and 10-year US Treasury bonds fell 17.8%.
+      The ECB linked the rise in stock-bond correlation to inflation and to
+      central banks raising rates. It warned that a higher correlation can make
+      a mixed portfolio look less risky than it is.
+    example: "A 50/50 mix lost about 17.9% in 2022, close to shares alone."
+    links: [ecb_fsr_2022_corr, damodaran_histret]
+    checked: "ECB FSR box: 'might be related to inflationary pressures', 'initial underestimation of portfolio risk'. 2022: stocks -18.04%, T-bond -17.83%, 50/50 -17.94% (Damodaran table)."
+
+items:  # draft by Yurii (with Claude), 2026-11-20, based on the cards above
+  - id: p1.e1
+    kind: single
+    q: "Why mix shares and bonds in one portfolio?"
+    options:
+      - "They always rise together"
+      - "They often don't fall at the same time, which smooths the ride"
+      - "Mixing removes all risk"
+    answer: 1
+    why: "In 2008 shares fell 36.6% while 10-year US bonds gained 20.1%; a 50/50 mix lost only about 8%."
+    sources: [damodaran_histret]
+    check: true
+  - id: p1.e2
+    kind: true_false
+    q: "The link (correlation) between shares and bonds stays the same over time."
+    answer: false
+    why: "They moved apart in 2008 and together in 2022. The ECB notes the correlation has changed sign over the decades."
+    sources: [ecb_fsr_2022_corr]
+    check: true
+  - id: p1.e3
+    kind: single
+    q: "In 2022 a 50/50 mix of US shares and bonds lost almost as much as shares alone. Why?"
+    options:
+      - "Shares and bonds fell together as inflation and interest rates rose"
+      - "The bonds in the mix defaulted"
+      - "The mix was rebalanced too often"
+    answer: 0
+    why: "Both fell about 18%. The ECB links the higher correlation to inflation and rising central-bank rates."
+    sources: [ecb_fsr_2022_corr]

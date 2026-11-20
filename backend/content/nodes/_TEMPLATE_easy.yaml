@@ -1,0 +1,60 @@
+# Template for the easy part of a node file: cards and items. Files starting with "_" are skipped.
+# Spec: docs/task_engines.md, "Easy engine". Guide: docs/easy_engine.md.
+# Every user-facing text is a string (English) or {en: ..., pl: ...}.
+node: I4                         # panel letter + number
+panel: INSTRUMENTS
+title: "One stock vs an index"
+after: [I1]                      # prerequisite nodes; their check items form this node's prerequisite test
+author: ...
+reviewer: null                   # required before the node goes live
+status: draft
+
+cards:
+  - id: i4.c1                    # <node in lower case>.c<n>
+    title: "..."
+    body: "..."                  # at most 80 words
+    example: "..."               # one example in PLN
+    links: [eb525_pl]            # 1-2 ids from backend/content/sources.yaml
+    # valid_until: 2026-12-31    # when the card uses a limit, rate or tax rule
+    checked: "..."               # internal: which fact was checked against which source
+
+items:
+  - id: i4.e1                    # <node in lower case>.e<n>
+    kind: single                 # one correct option
+    q: "..."
+    options: ["...", "...", "..."]   # 2-6 options
+    answer: 1                    # index of the correct option, 0-based; never sent before the answer
+    why: "..."                   # shown after the answer
+    check: true                  # may be drawn into the prerequisite tests of later nodes
+    # difficulty: 0.0            # starting Elo difficulty
+    # sources: [damodaran_histret]
+    # valid_until: 2026-12-31
+    # content_version: 1         # bump on any change that affects scoring
+
+  - id: i4.e2
+    kind: multi                  # several correct options; score (correct - wrong) / number correct
+    q: "... Pick all that apply."
+    options: ["...", "...", "...", "..."]
+    answer: [0, 2]
+    why: "..."
+
+  - id: i4.e3
+    kind: true_false             # q is a statement
+    q: "..."
+    answer: false
+    why: "..."
+
+  - id: i4.e4
+    kind: numeric                # a number, scored with the tolerance rule
+    q: "..."
+    answer: 14400
+    unit: PLN
+    tolerance: {kind: absolute, band: 100}   # or {kind: relative, band: 0.05}; 0 at three bands
+    input: {min: 0, max: 30000, step: 100}   # optional slider
+    why: "..."
+
+  - id: i4.e5
+    kind: reflection             # no correct answer, not scored, no confidence; can't be a check item
+    q: "..."
+    options: ["...", "...", "..."]
+    feedback: ["...", "...", "..."]   # one per option

@@ -1,0 +1,23 @@
+# 20 English tutor requests from the demo content, for choosing the model (docs/tutor_agent.md, 3).
+# Run: python -m eval.run --set model_choice. Two people rate each answer 1-5 in the output CSV.
+# user: young_adult | investor (eval/provider.py). attempt "<task>:submitted" = after submission.
+- {id: mc01, user: young_adult, mode: explain_concept, node: S1, message: "Why do I need an emergency fund if I have a credit card?"}
+- {id: mc02, user: young_adult, mode: explain_concept, node: S1, message: "How many months should my buffer cover?"}
+- {id: mc03, user: young_adult, mode: explain_concept, node: I1, message: "What does it mean that risk is a spread of outcomes?"}
+- {id: mc04, user: young_adult, mode: explain_concept, node: I1, message: "If shares went up on average, why did people lose money in 2008?"}
+- {id: mc05, user: young_adult, mode: explain_concept, node: I2, message: "What is the difference between a fixed-rate and an inflation-indexed bond?"}
+- {id: mc06, user: young_adult, mode: explain_concept, node: I2, message: "What is a real return? My deposit pays 5% and prices rise 3%."}
+- {id: mc07, user: young_adult, mode: explain_concept, node: I4, message: "Why is one company riskier than an index?"}
+- {id: mc08, user: young_adult, mode: explain_concept, node: P1, message: "What does correlation mean in plain words?"}
+- {id: mc09, user: investor, mode: explain_concept, node: I5, message: "How much can a 2% yearly fee cost me over 20 years compared with 0.3%?"}
+- {id: mc10, user: investor, mode: explain_concept, node: I5, message: "Which sections of a KID should I read first?"}
+- {id: mc11, user: investor, mode: explain_concept, node: P1, message: "Why did both shares and bonds fall in 2022?"}
+- {id: mc12, user: investor, mode: explain_concept, node: P4, message: "What is rebalancing and why decide it in advance?"}
+- {id: mc13, user: investor, mode: explain_concept, node: P2, message: "How should my horizon change my mix?"}
+- {id: mc14, user: investor, mode: hint, node: D1, task: d1.m1, hint_level: 1, message: "I don't know where to start."}
+- {id: mc15, user: investor, mode: hint, node: D1, task: d1.m1, hint_level: 2, message: "Can you give me a similar example?"}
+- {id: mc16, user: investor, mode: hint, node: D3, task: d3.m1, hint_level: 3, message: "What on the screen matters most?"}
+- {id: mc17, user: investor, mode: explain_result, node: D1, task: d1.m1, attempt: "d1.m1:submitted", draft: {direction: up, reasons: [beat, chart_pattern]}, message: "Why was my answer wrong?"}
+- {id: mc18, user: young_adult, mode: explain_result, node: D3, task: d3.m1, attempt: "d3.m1:submitted", draft: {direction: up, reasons: [fewer_cuts, core]}, message: "What did I get right?"}
+- {id: mc19, user: young_adult, mode: rephrase, node: I1, last_answer: "Volatility describes the dispersion of returns around their mean; a wider distribution implies a higher probability of large deviations in both directions.", message: "Simpler please."}
+- {id: mc20, user: young_adult, mode: recommend_reading, node: P1, message: "I failed the diversification task twice. What should I read?"}

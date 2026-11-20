@@ -1,0 +1,1376 @@
+{
+  "schema_version": 1,
+  "tasks": [
+    {
+      "id": "d1.m1",
+      "node": "D1",
+      "level": "medium",
+      "variant": "day_x",
+      "content_version": 1,
+      "live": false,
+      "weights": {
+        "estimate": 0.0,
+        "reasons": 1.0
+      },
+      "question": {
+        "brief": {
+          "en": "Company X, a large software firm, reports quarterly results today after the close. The share price has risen strongly over the past three months. Profit beat analyst estimates, but the company said growth will slow next quarter and spending on data centres will rise sharply. Over the next week, did the share price go up or down?\n"
+        },
+        "stimulus": [
+          {
+            "kind": "chart",
+            "type": "line",
+            "x_unit": "trading_day",
+            "series": [
+              {
+                "label": "Company X",
+                "unit": "index (cutoff = 100)",
+                "points": [
+                  {
+                    "t": -65,
+                    "v": 104.8596
+                  },
+                  {
+                    "t": -64,
+                    "v": 105.9179
+                  },
+                  {
+                    "t": -63,
+                    "v": 107.6251
+                  },
+                  {
+                    "t": -62,
+                    "v": 107.9515
+                  },
+                  {
+                    "t": -61,
+                    "v": 107.0251
+                  },
+                  {
+                    "t": -60,
+                    "v": 107.136
+                  },
+                  {
+                    "t": -59,
+                    "v": 106.6562
+                  },
+                  {
+                    "t": -58,
+                    "v": 105.2431
+                  },
+                  {
+                    "t": -57,
+                    "v": 103.1272
+                  },
+                  {
+                    "t": -56,
+                    "v": 101.3084
+                  },
+                  {
+                    "t": -55,
+                    "v": 101.3017
+                  },
+                  {
+                    "t": -54,
+                    "v": 101.4851
+                  },
+                  {
+                    "t": -53,
+                    "v": 100.9088
+                  },
+                  {
+                    "t": -52,
+                    "v": 102.6541
+                  },
+                  {
+                    "t": -51,
+                    "v": 102.8748
+                  },
+                  {
+                    "t": -50,
+                    "v": 103.5968
+                  },
+                  {
+                    "t": -49,
+                    "v": 105.1229
+                  },
+                  {
+                    "t": -48,
+                    "v": 104.0934
+                  },
+                  {
+                    "t": -47,
+                    "v": 101.6617
+                  },
+                  {
+                    "t": -46,
+                    "v": 102.5837
+                  },
+                  {
+                    "t": -45,
+                    "v": 101.7397
+                  },
+                  {
+                    "t": -44,
+                    "v": 103.3529
+                  },
+                  {
+                    "t": -43,
+                    "v": 103.7725
+                  },
+                  {
+                    "t": -42,
+                    "v": 105.0337
+                  },
+                  {
+                    "t": -41,
+                    "v": 106.0006
+                  },
+                  {
+                    "t": -40,
+                    "v": 103.3869
+                  },
+                  {
+                    "t": -39,
+                    "v": 104.2831
+                  },
+                  {
+                    "t": -38,
+                    "v": 103.4441
+                  },
+                  {
+                    "t": -37,
+                    "v": 102.5098
+                  },
+                  {
+                    "t": -36,
+                    "v": 101.9759
+                  },
+                  {
+                    "t": -35,
+                    "v": 102.9203
+                  },
+                  {
+                    "t": -34,
+                    "v": 104.0184
+                  },
+                  {
+                    "t": -33,
+                    "v": 105.2884
+                  },
+                  {
+                    "t": -32,
+                    "v": 103.2121
+                  },
+                  {
+                    "t": -31,
+                    "v": 102.4833
+                  },
+                  {
+                    "t": -30,
+                    "v": 99.6032
+                  },
+                  {
+                    "t": -29,
+                    "v": 99.4814
+                  },
+                  {
+                    "t": -28,
+                    "v": 100.2004
+                  },
+                  {
+                    "t": -27,
+                    "v": 99.2859
+                  },
+                  {
+                    "t": -26,
+                    "v": 99.578
+                  },
+                  {
+                    "t": -25,
+                    "v": 99.8549
+                  },
+                  {
+                    "t": -24,
+                    "v": 101.0696
+                  },
+                  {
+                    "t": -23,
+                    "v": 100.0782
+                  },
+                  {
+                    "t": -22,
+                    "v": 99.0876
+                  },
+                  {
+                    "t": -21,
+                    "v": 98.1842
+                  },
+                  {
+                    "t": -20,
+                    "v": 100.2709
+                  },
+                  {
+                    "t": -19,
+                    "v": 101.5918
+                  },
+                  {
+                    "t": -18,
+                    "v": 101.4413
+                  },
+                  {
+                    "t": -17,
+                    "v": 101.7163
+                  },
+                  {
+                    "t": -16,
+                    "v": 101.856
+                  },
+                  {
+                    "t": -15,
+                    "v": 102.1044
+                  },
+                  {
+                    "t": -14,
+                    "v": 101.8491
+                  },
+                  {
+                    "t": -13,
+                    "v": 101.4415
+                  },
+                  {
+                    "t": -12,
+                    "v": 99.9233
+                  },
+                  {
+                    "t": -11,
+                    "v": 99.1567
+                  },
+                  {
+                    "t": -10,
+                    "v": 101.14
+                  },
+                  {
+                    "t": -9,
+                    "v": 101.7934
+                  },
+                  {
+                    "t": -8,
+                    "v": 101.8725
+                  },
+                  {
+                    "t": -7,
+                    "v": 101.6102
+                  },
+                  {
+                    "t": -6,
+                    "v": 101.6866
+                  },
+                  {
+                    "t": -5,
+                    "v": 102.1187
+                  },
+                  {
+                    "t": -4,
+                    "v": 101.3302
+                  },
+                  {
+                    "t": -3,
+                    "v": 101.5693
+                  },
+                  {
+                    "t": -2,
+                    "v": 101.8622
+                  },
+                  {
+                    "t": -1,
+                    "v": 100.9513
+                  },
+                  {
+                    "t": 0,
+                    "v": 100.0
+                  }
+                ]
+              }
+            ],
+            "synthetic": true,
+            "attribution": []
+          }
+        ],
+        "response": {
+          "kind": "direction",
+          "options": [
+            "up",
+            "down"
+          ],
+          "horizon": {
+            "label": "1w",
+            "steps": 5,
+            "unit": "trading_day"
+          }
+        },
+        "reasons": {
+          "pick": {
+            "min": 2,
+            "max": 3
+          },
+          "boxes": [
+            {
+              "id": "guidance",
+              "text": "The outlook for next quarter was weaker than expected"
+            },
+            {
+              "id": "capex",
+              "text": "Much higher spending could squeeze future profits"
+            },
+            {
+              "id": "priced_in",
+              "text": "After the run-up, good results were already expected"
+            },
+            {
+              "id": "beat",
+              "text": "Profit came in above estimates"
+            },
+            {
+              "id": "chart_pattern",
+              "text": "The chart had risen too far, so it had to fall"
+            },
+            {
+              "id": "hindsight",
+              "text": "Other software shares fell later that month"
+            }
+          ]
+        },
+        "confidence": {
+          "min": 1,
+          "max": 5
+        }
+      },
+      "reveal": {
+        "text": {
+          "en": "Good results can still mean a falling price. The market compares news with expectations and cares most about what comes next.\n"
+        },
+        "outcome": {
+          "direction": "down",
+          "change": -8.0,
+          "unit": "%",
+          "flat_band": null,
+          "steps": 5
+        },
+        "truth": null,
+        "stimulus": [
+          {
+            "kind": "chart",
+            "series": [
+              {
+                "label": "Company X",
+                "name": "Synthetic listed company (fictional)",
+                "unit": "index (cutoff = 100)",
+                "points": [
+                  {
+                    "t": 0,
+                    "v": 100.0
+                  },
+                  {
+                    "t": 1,
+                    "v": 98.0644
+                  },
+                  {
+                    "t": 2,
+                    "v": 96.0921
+                  },
+                  {
+                    "t": 3,
+                    "v": 96.3924
+                  },
+                  {
+                    "t": 4,
+                    "v": 92.9952
+                  },
+                  {
+                    "t": 5,
+                    "v": 92.0
+                  },
+                  {
+                    "t": 6,
+                    "v": 91.3278
+                  },
+                  {
+                    "t": 7,
+                    "v": 90.651
+                  },
+                  {
+                    "t": 8,
+                    "v": 90.7573
+                  },
+                  {
+                    "t": 9,
+                    "v": 91.994
+                  },
+                  {
+                    "t": 10,
+                    "v": 92.0784
+                  },
+                  {
+                    "t": 11,
+                    "v": 91.9236
+                  },
+                  {
+                    "t": 12,
+                    "v": 91.2505
+                  },
+                  {
+                    "t": 13,
+                    "v": 91.1094
+                  },
+                  {
+                    "t": 14,
+                    "v": 92.1121
+                  },
+                  {
+                    "t": 15,
+                    "v": 91.6776
+                  },
+                  {
+                    "t": 16,
+                    "v": 90.4249
+                  },
+                  {
+                    "t": 17,
+                    "v": 89.0636
+                  },
+                  {
+                    "t": 18,
+                    "v": 87.8886
+                  },
+                  {
+                    "t": 19,
+                    "v": 86.4348
+                  },
+                  {
+                    "t": 20,
+                    "v": 87.5823
+                  },
+                  {
+                    "t": 21,
+                    "v": 87.9564
+                  },
+                  {
+                    "t": 22,
+                    "v": 87.7062
+                  },
+                  {
+                    "t": 23,
+                    "v": 89.2559
+                  },
+                  {
+                    "t": 24,
+                    "v": 88.554
+                  },
+                  {
+                    "t": 25,
+                    "v": 89.3578
+                  },
+                  {
+                    "t": 26,
+                    "v": 90.2209
+                  },
+                  {
+                    "t": 27,
+                    "v": 88.5622
+                  },
+                  {
+                    "t": 28,
+                    "v": 86.9229
+                  },
+                  {
+                    "t": 29,
+                    "v": 85.9608
+                  },
+                  {
+                    "t": 30,
+                    "v": 86.9012
+                  },
+                  {
+                    "t": 31,
+                    "v": 88.2634
+                  },
+                  {
+                    "t": 32,
+                    "v": 86.9727
+                  },
+                  {
+                    "t": 33,
+                    "v": 88.074
+                  },
+                  {
+                    "t": 34,
+                    "v": 87.6701
+                  },
+                  {
+                    "t": 35,
+                    "v": 87.2571
+                  },
+                  {
+                    "t": 36,
+                    "v": 86.682
+                  },
+                  {
+                    "t": 37,
+                    "v": 86.3456
+                  },
+                  {
+                    "t": 38,
+                    "v": 84.4819
+                  },
+                  {
+                    "t": 39,
+                    "v": 83.473
+                  },
+                  {
+                    "t": 40,
+                    "v": 82.2444
+                  },
+                  {
+                    "t": 41,
+                    "v": 82.7299
+                  },
+                  {
+                    "t": 42,
+                    "v": 84.8301
+                  },
+                  {
+                    "t": 43,
+                    "v": 87.657
+                  },
+                  {
+                    "t": 44,
+                    "v": 87.3038
+                  },
+                  {
+                    "t": 45,
+                    "v": 85.5189
+                  },
+                  {
+                    "t": 46,
+                    "v": 85.1022
+                  },
+                  {
+                    "t": 47,
+                    "v": 84.1483
+                  },
+                  {
+                    "t": 48,
+                    "v": 86.175
+                  },
+                  {
+                    "t": 49,
+                    "v": 86.7675
+                  },
+                  {
+                    "t": 50,
+                    "v": 86.0121
+                  },
+                  {
+                    "t": 51,
+                    "v": 86.9834
+                  },
+                  {
+                    "t": 52,
+                    "v": 87.5446
+                  },
+                  {
+                    "t": 53,
+                    "v": 85.8537
+                  },
+                  {
+                    "t": 54,
+                    "v": 85.3079
+                  },
+                  {
+                    "t": 55,
+                    "v": 85.0632
+                  },
+                  {
+                    "t": 56,
+                    "v": 85.0825
+                  },
+                  {
+                    "t": 57,
+                    "v": 85.2175
+                  },
+                  {
+                    "t": 58,
+                    "v": 84.8715
+                  },
+                  {
+                    "t": 59,
+                    "v": 85.0651
+                  },
+                  {
+                    "t": 60,
+                    "v": 84.4689
+                  },
+                  {
+                    "t": 61,
+                    "v": 83.565
+                  },
+                  {
+                    "t": 62,
+                    "v": 85.099
+                  },
+                  {
+                    "t": 63,
+                    "v": 85.4677
+                  },
+                  {
+                    "t": 64,
+                    "v": 85.9184
+                  },
+                  {
+                    "t": 65,
+                    "v": 84.2896
+                  }
+                ]
+              }
+            ],
+            "cutoff": "2024-04-25"
+          }
+        ],
+        "reasons": [
+          {
+            "id": "guidance",
+            "weight": 1.0,
+            "explain": "Prices look ahead. A weaker outlook can outweigh a good past quarter."
+          },
+          {
+            "id": "capex",
+            "weight": 0.6,
+            "explain": "Heavy spending lowers profit margins for a while, and investors price that in."
+          },
+          {
+            "id": "priced_in",
+            "weight": 0.5,
+            "explain": "Beating estimates was partly priced in, so it added little."
+          },
+          {
+            "id": "beat",
+            "weight": 0.0,
+            "explain": "True, but known beats tend to be priced in. On its own it doesn't explain the move."
+          },
+          {
+            "id": "chart_pattern",
+            "weight": -0.5,
+            "explain": "Past moves don't force a reversal. The news on the day drove the price."
+          },
+          {
+            "id": "hindsight",
+            "weight": -1.0,
+            "explain": "That wasn't known on day X. Using it is hindsight."
+          }
+        ],
+        "sources": [],
+        "show": [
+          "outcome",
+          "per_box_explain",
+          "sources",
+          "truth"
+        ]
+      },
+      "meta": {
+        "content_file": "D1.yaml",
+        "author": "Yurii",
+        "reviewer": null,
+        "cutoff_used": "2024-04-25",
+        "synthetic": true,
+        "attribution": []
+      }
+    },
+    {
+      "id": "d3.m1",
+      "node": "D3",
+      "level": "medium",
+      "variant": "day_x",
+      "content_version": 1,
+      "live": false,
+      "weights": {
+        "estimate": 0.0,
+        "reasons": 1.0
+      },
+      "question": {
+        "brief": {
+          "en": "Today the statistics office published the monthly CPI flash estimate. Inflation came in above economists' forecasts for the second month in a row, and core inflation was also higher than expected. The Monetary Policy Council (RPP) had kept rates unchanged for months. Over the next week, did the 10-year government bond yield go up, down or stay flat?\n"
+        },
+        "stimulus": [
+          {
+            "kind": "chart",
+            "type": "line",
+            "x_unit": "trading_day",
+            "series": [
+              {
+                "label": "10-year yield",
+                "unit": "%",
+                "points": [
+                  {
+                    "t": -65,
+                    "v": 5.5186
+                  },
+                  {
+                    "t": -64,
+                    "v": 5.5146
+                  },
+                  {
+                    "t": -63,
+                    "v": 5.4752
+                  },
+                  {
+                    "t": -62,
+                    "v": 5.5615
+                  },
+                  {
+                    "t": -61,
+                    "v": 5.5708
+                  },
+                  {
+                    "t": -60,
+                    "v": 5.5783
+                  },
+                  {
+                    "t": -59,
+                    "v": 5.6276
+                  },
+                  {
+                    "t": -58,
+                    "v": 5.6521
+                  },
+                  {
+                    "t": -57,
+                    "v": 5.6541
+                  },
+                  {
+                    "t": -56,
+                    "v": 5.6214
+                  },
+                  {
+                    "t": -55,
+                    "v": 5.6171
+                  },
+                  {
+                    "t": -54,
+                    "v": 5.613
+                  },
+                  {
+                    "t": -53,
+                    "v": 5.593
+                  },
+                  {
+                    "t": -52,
+                    "v": 5.5674
+                  },
+                  {
+                    "t": -51,
+                    "v": 5.5378
+                  },
+                  {
+                    "t": -50,
+                    "v": 5.5346
+                  },
+                  {
+                    "t": -49,
+                    "v": 5.5171
+                  },
+                  {
+                    "t": -48,
+                    "v": 5.5295
+                  },
+                  {
+                    "t": -47,
+                    "v": 5.56
+                  },
+                  {
+                    "t": -46,
+                    "v": 5.5697
+                  },
+                  {
+                    "t": -45,
+                    "v": 5.5706
+                  },
+                  {
+                    "t": -44,
+                    "v": 5.6174
+                  },
+                  {
+                    "t": -43,
+                    "v": 5.6371
+                  },
+                  {
+                    "t": -42,
+                    "v": 5.5933
+                  },
+                  {
+                    "t": -41,
+                    "v": 5.5721
+                  },
+                  {
+                    "t": -40,
+                    "v": 5.5781
+                  },
+                  {
+                    "t": -39,
+                    "v": 5.552
+                  },
+                  {
+                    "t": -38,
+                    "v": 5.5749
+                  },
+                  {
+                    "t": -37,
+                    "v": 5.5228
+                  },
+                  {
+                    "t": -36,
+                    "v": 5.466
+                  },
+                  {
+                    "t": -35,
+                    "v": 5.4954
+                  },
+                  {
+                    "t": -34,
+                    "v": 5.513
+                  },
+                  {
+                    "t": -33,
+                    "v": 5.4654
+                  },
+                  {
+                    "t": -32,
+                    "v": 5.4678
+                  },
+                  {
+                    "t": -31,
+                    "v": 5.5081
+                  },
+                  {
+                    "t": -30,
+                    "v": 5.475
+                  },
+                  {
+                    "t": -29,
+                    "v": 5.4396
+                  },
+                  {
+                    "t": -28,
+                    "v": 5.4034
+                  },
+                  {
+                    "t": -27,
+                    "v": 5.3742
+                  },
+                  {
+                    "t": -26,
+                    "v": 5.3225
+                  },
+                  {
+                    "t": -25,
+                    "v": 5.3082
+                  },
+                  {
+                    "t": -24,
+                    "v": 5.265
+                  },
+                  {
+                    "t": -23,
+                    "v": 5.267
+                  },
+                  {
+                    "t": -22,
+                    "v": 5.3339
+                  },
+                  {
+                    "t": -21,
+                    "v": 5.3026
+                  },
+                  {
+                    "t": -20,
+                    "v": 5.3298
+                  },
+                  {
+                    "t": -19,
+                    "v": 5.3648
+                  },
+                  {
+                    "t": -18,
+                    "v": 5.296
+                  },
+                  {
+                    "t": -17,
+                    "v": 5.2994
+                  },
+                  {
+                    "t": -16,
+                    "v": 5.2991
+                  },
+                  {
+                    "t": -15,
+                    "v": 5.2892
+                  },
+                  {
+                    "t": -14,
+                    "v": 5.3131
+                  },
+                  {
+                    "t": -13,
+                    "v": 5.3001
+                  },
+                  {
+                    "t": -12,
+                    "v": 5.3107
+                  },
+                  {
+                    "t": -11,
+                    "v": 5.2992
+                  },
+                  {
+                    "t": -10,
+                    "v": 5.2952
+                  },
+                  {
+                    "t": -9,
+                    "v": 5.2718
+                  },
+                  {
+                    "t": -8,
+                    "v": 5.3399
+                  },
+                  {
+                    "t": -7,
+                    "v": 5.3383
+                  },
+                  {
+                    "t": -6,
+                    "v": 5.3049
+                  },
+                  {
+                    "t": -5,
+                    "v": 5.3632
+                  },
+                  {
+                    "t": -4,
+                    "v": 5.4103
+                  },
+                  {
+                    "t": -3,
+                    "v": 5.4045
+                  },
+                  {
+                    "t": -2,
+                    "v": 5.385
+                  },
+                  {
+                    "t": -1,
+                    "v": 5.3631
+                  },
+                  {
+                    "t": 0,
+                    "v": 5.4
+                  }
+                ]
+              }
+            ],
+            "synthetic": true,
+            "attribution": []
+          }
+        ],
+        "response": {
+          "kind": "direction",
+          "options": [
+            "up",
+            "down",
+            "flat"
+          ],
+          "horizon": {
+            "label": "1w",
+            "steps": 5,
+            "unit": "trading_day"
+          }
+        },
+        "reasons": {
+          "pick": {
+            "min": 2,
+            "max": 3
+          },
+          "boxes": [
+            {
+              "id": "fewer_cuts",
+              "text": "Higher inflation makes rate cuts less likely soon"
+            },
+            {
+              "id": "core",
+              "text": "Core inflation, which the central bank watches, was also high"
+            },
+            {
+              "id": "price_yield",
+              "text": "Bond prices and yields move in opposite directions"
+            },
+            {
+              "id": "deposit",
+              "text": "Banks will advertise new deposits"
+            },
+            {
+              "id": "safe_haven",
+              "text": "Investors rushed to buy safe government bonds"
+            },
+            {
+              "id": "rpp_hike",
+              "text": "The RPP raised rates the following month"
+            }
+          ]
+        },
+        "confidence": {
+          "min": 1,
+          "max": 5
+        }
+      },
+      "reveal": {
+        "text": {
+          "en": "Bond yields move with expectations for interest rates. An inflation surprise changes those expectations quickly, so yields can move on the day of the release.\n"
+        },
+        "outcome": {
+          "direction": "up",
+          "change": 0.22,
+          "unit": "pp",
+          "flat_band": 0.05,
+          "steps": 5
+        },
+        "truth": null,
+        "stimulus": [
+          {
+            "kind": "chart",
+            "series": [
+              {
+                "label": "10-year yield",
+                "name": "Synthetic 10-year government bond yield (fictional)",
+                "unit": "%",
+                "points": [
+                  {
+                    "t": 0,
+                    "v": 5.4
+                  },
+                  {
+                    "t": 1,
+                    "v": 5.4373
+                  },
+                  {
+                    "t": 2,
+                    "v": 5.4632
+                  },
+                  {
+                    "t": 3,
+                    "v": 5.5354
+                  },
+                  {
+                    "t": 4,
+                    "v": 5.5745
+                  },
+                  {
+                    "t": 5,
+                    "v": 5.62
+                  },
+                  {
+                    "t": 6,
+                    "v": 5.6779
+                  },
+                  {
+                    "t": 7,
+                    "v": 5.7038
+                  },
+                  {
+                    "t": 8,
+                    "v": 5.7411
+                  },
+                  {
+                    "t": 9,
+                    "v": 5.7536
+                  },
+                  {
+                    "t": 10,
+                    "v": 5.7921
+                  },
+                  {
+                    "t": 11,
+                    "v": 5.7871
+                  },
+                  {
+                    "t": 12,
+                    "v": 5.816
+                  },
+                  {
+                    "t": 13,
+                    "v": 5.8473
+                  },
+                  {
+                    "t": 14,
+                    "v": 5.8351
+                  },
+                  {
+                    "t": 15,
+                    "v": 5.7967
+                  },
+                  {
+                    "t": 16,
+                    "v": 5.8128
+                  },
+                  {
+                    "t": 17,
+                    "v": 5.8092
+                  },
+                  {
+                    "t": 18,
+                    "v": 5.8275
+                  },
+                  {
+                    "t": 19,
+                    "v": 5.8095
+                  },
+                  {
+                    "t": 20,
+                    "v": 5.8254
+                  },
+                  {
+                    "t": 21,
+                    "v": 5.8542
+                  },
+                  {
+                    "t": 22,
+                    "v": 5.9249
+                  },
+                  {
+                    "t": 23,
+                    "v": 5.9784
+                  },
+                  {
+                    "t": 24,
+                    "v": 5.9901
+                  },
+                  {
+                    "t": 25,
+                    "v": 6.033
+                  },
+                  {
+                    "t": 26,
+                    "v": 6.0144
+                  },
+                  {
+                    "t": 27,
+                    "v": 6.0495
+                  },
+                  {
+                    "t": 28,
+                    "v": 6.0537
+                  },
+                  {
+                    "t": 29,
+                    "v": 6.0935
+                  },
+                  {
+                    "t": 30,
+                    "v": 6.1036
+                  },
+                  {
+                    "t": 31,
+                    "v": 6.0967
+                  },
+                  {
+                    "t": 32,
+                    "v": 6.0756
+                  },
+                  {
+                    "t": 33,
+                    "v": 6.1131
+                  },
+                  {
+                    "t": 34,
+                    "v": 6.1149
+                  },
+                  {
+                    "t": 35,
+                    "v": 6.1363
+                  },
+                  {
+                    "t": 36,
+                    "v": 6.1507
+                  },
+                  {
+                    "t": 37,
+                    "v": 6.0898
+                  },
+                  {
+                    "t": 38,
+                    "v": 6.1078
+                  },
+                  {
+                    "t": 39,
+                    "v": 6.0968
+                  },
+                  {
+                    "t": 40,
+                    "v": 6.1086
+                  },
+                  {
+                    "t": 41,
+                    "v": 6.123
+                  },
+                  {
+                    "t": 42,
+                    "v": 6.0691
+                  },
+                  {
+                    "t": 43,
+                    "v": 6.0598
+                  },
+                  {
+                    "t": 44,
+                    "v": 6.058
+                  },
+                  {
+                    "t": 45,
+                    "v": 6.0697
+                  },
+                  {
+                    "t": 46,
+                    "v": 6.0978
+                  },
+                  {
+                    "t": 47,
+                    "v": 6.0775
+                  },
+                  {
+                    "t": 48,
+                    "v": 6.0707
+                  },
+                  {
+                    "t": 49,
+                    "v": 6.0893
+                  },
+                  {
+                    "t": 50,
+                    "v": 6.0347
+                  },
+                  {
+                    "t": 51,
+                    "v": 6.0901
+                  },
+                  {
+                    "t": 52,
+                    "v": 6.0619
+                  },
+                  {
+                    "t": 53,
+                    "v": 6.1013
+                  },
+                  {
+                    "t": 54,
+                    "v": 6.1057
+                  },
+                  {
+                    "t": 55,
+                    "v": 6.162
+                  },
+                  {
+                    "t": 56,
+                    "v": 6.1931
+                  },
+                  {
+                    "t": 57,
+                    "v": 6.1922
+                  },
+                  {
+                    "t": 58,
+                    "v": 6.1415
+                  },
+                  {
+                    "t": 59,
+                    "v": 6.1455
+                  },
+                  {
+                    "t": 60,
+                    "v": 6.1553
+                  },
+                  {
+                    "t": 61,
+                    "v": 6.1716
+                  },
+                  {
+                    "t": 62,
+                    "v": 6.134
+                  },
+                  {
+                    "t": 63,
+                    "v": 6.1094
+                  },
+                  {
+                    "t": 64,
+                    "v": 6.0861
+                  },
+                  {
+                    "t": 65,
+                    "v": 6.0946
+                  }
+                ]
+              }
+            ],
+            "cutoff": "2024-03-15"
+          }
+        ],
+        "reasons": [
+          {
+            "id": "fewer_cuts",
+            "weight": 1.0,
+            "explain": "Bond yields follow expected interest rates. Fewer expected cuts push them up."
+          },
+          {
+            "id": "core",
+            "weight": 0.7,
+            "explain": "High core inflation means the price rises are spreading, so the RPP can't wait it out."
+          },
+          {
+            "id": "price_yield",
+            "weight": 0.3,
+            "explain": "True and useful, but it describes how the move works rather than what caused it."
+          },
+          {
+            "id": "deposit",
+            "weight": 0.0,
+            "explain": "Not relevant to the bond market on the day."
+          },
+          {
+            "id": "safe_haven",
+            "weight": -0.5,
+            "explain": "That would push yields down, and there was no sign of panic."
+          },
+          {
+            "id": "rpp_hike",
+            "weight": -1.0,
+            "explain": "That wasn't known on day X. Using it is hindsight."
+          }
+        ],
+        "sources": [],
+        "show": [
+          "outcome",
+          "per_box_explain",
+          "sources",
+          "truth"
+        ]
+      },
+      "meta": {
+        "content_file": "D3.yaml",
+        "author": "Yurii",
+        "reviewer": null,
+        "cutoff_used": "2024-03-15",
+        "synthetic": true,
+        "attribution": []
+      }
+    }
+  ]
+}

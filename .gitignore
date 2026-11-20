@@ -1,5 +1,6 @@
 .env
 __pycache__/
+.pytest_cache/
 .venv/
 # Flutter
 .dart_tool/
@@ -9,3 +10,4 @@ build/
 .packages
 *.iml
 .idea/
+backend/ml/eval/runs/

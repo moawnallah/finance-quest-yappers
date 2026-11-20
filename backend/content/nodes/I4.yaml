@@ -1,0 +1,63 @@
+node: I4
+panel: INSTRUMENTS
+title: "One stock vs an index"
+after: [I1]
+author: "draft by Claude (AI), 2026-11-20"
+reviewer: null
+status: draft
+
+cards:
+  - id: i4.c1
+    title: "One company or a basket"
+    body: >-
+      An index is a basket of many companies, for example the largest
+      companies on one stock exchange. One company can fail, and its shares
+      can fall to zero. For a whole index to do that, all its companies would
+      have to fail at once. An index fund lets you own the whole basket in one
+      purchase. In a 2023 EU survey, 54% of adults in Poland answered the
+      diversification question correctly.
+    example: "10,000 PLN in one company can become 0 PLN. In a broad index, 2008 turned 10,000 into about 6,345 (US shares), and the index was back above its start by the end of 2012."
+    links: [eb525_pl, damodaran_histret]
+    checked: "EB525 vol. C Poland Q6: 53.5% correct. 2008 and recovery: Damodaran table (cumulative 1.086 at end of 2012). Definition of an index: reviewer to add a source."
+
+  - id: i4.c2
+    title: "What spreading cannot remove"
+    body: >-
+      Owning many companies removes the risk of one company failing. It does
+      not remove the risk of the whole market falling. In 2008 the US market
+      (S&P 500 with dividends) fell 36.6%, and owning 500 companies did not
+      prevent that. That is why portfolios also mix in other kinds of
+      investments (node P1).
+    example: "One company: 10,000 PLN can become 0. Whole market in 2008: about 6,345."
+    links: [damodaran_histret]
+    checked: "2008: -36.55%, Damodaran table."
+
+items:  # draft by Yurii (with Claude), 2026-11-20, based on the cards above
+  - id: i4.e1
+    kind: single
+    q: "Why can one company's shares fall to zero while a broad index rarely does?"
+    options:
+      - "Indexes are protected by the state"
+      - "For an index to reach zero, all its companies would have to fail at once"
+      - "The stock exchange fixes index prices"
+    answer: 1
+    why: "An index is a basket of many companies. One can fail; all failing at once is very unlikely."
+    check: true
+  - id: i4.e2
+    kind: true_false
+    q: "Owning many companies protects you from the whole market falling."
+    answer: false
+    why: "Spreading removes the risk of one company failing, not of the whole market falling: in 2008 the S&P 500 fell 36.6%."
+    sources: [damodaran_histret]
+    check: true
+  - id: i4.e3
+    kind: reflection
+    q: "A friend has all their savings in one company they like. What would you ask them first?"
+    options:
+      - "What happens to your savings if that company fails?"
+      - "How much has it gone up this year?"
+      - "Which company is it?"
+    feedback:
+      - "A good first question: it points at the risk that spreading would remove."
+      - "Past gains say little about the risk of keeping everything in one place."
+      - "Natural to ask, but the bigger question is how much depends on one company."

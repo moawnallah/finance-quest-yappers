@@ -1,0 +1,46 @@
+# Template for the medium part of a node file (a "day X" chart task). Easy items: see _TEMPLATE_easy.yaml. Files starting with "_" are skipped.
+# Spec: docs/task_engines.md, "Medium engine". Every user-facing text is a string or {en: ..., pl: ...}.
+node: D1
+panel: DECISIONS
+title: "What moves a price"
+after: [I4]             # prerequisite nodes
+author: ...
+reviewer: null
+status: draft
+
+medium:
+  - id: d1.m1                    # <node in lower case>.m<n>
+    variant: day_x               # day_x (graded on reasons only) | estimate | label
+    content_version: 1           # bump on any change that affects scoring
+    author: ...
+    reviewer: null               # required before the task goes live
+    sources: []                  # ids from the source register
+    # valid_until: 2026-12-31    # when the task uses a limit, rate or tax rule
+    brief: "Only what was known on day X, plus the news. No names if the chart hides them, no hindsight."
+    # hindsight_ok: [brief]      # only if a hindsight word states a fact already known on day X
+    stimulus:
+      - kind: chart              # implemented: chart
+        type: line
+        cutoff: 2024-04-25       # day X: the user sees data up to here
+        hide: [name, dates]      # labels instead of names, day offsets instead of dates
+        series:                  # the first series is the one the question is about
+          - {series_id: synth_company_d1, from: 2024-01-25, to: 2024-07-25, transform: index100, label: "Company X"}
+            # transform: level | index100 | yoy;  series ids are in backend/data/series/catalog.yaml
+    response:
+      kind: direction            # implemented: direction
+      options: [up, down, flat]
+      horizon: 1w                # 1d 1w 2w 1m 3m 6m 1y, or a number of observations
+      # flat_band: 2.0           # index100: % (default by horizon); other transforms: required, in the unit
+      expected: down             # what you believe happened; the build checks it against the data
+    truth: none                  # day_x: none. Other variants: outcome (more kinds later: calculator, fixed)
+    reasons:
+      pick: {min: 2, max: 3}
+      boxes:                     # 6-8 boxes; weight -1..1: relevant on day X +, irrelevant 0, wrong or hindsight -
+        - {id: a, weight: 1.0, text: "...", explain: "shown in the reveal"}
+        - {id: b, weight: 0.5, text: "...", explain: "..."}
+        - {id: c, weight: 0.0, text: "...", explain: "..."}
+        - {id: d, weight: -1.0, text: "...", explain: "..."}
+    # weights: {estimate: 0.5, reasons: 0.5}   # ignored for day_x
+    reveal:
+      text: "The takeaway. No exact numbers: the app shows the real change."
+      # show: [truth, outcome, per_box_explain, sources]   # what the reveal screen shows (default: all)

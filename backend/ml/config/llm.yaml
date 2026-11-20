@@ -1,0 +1,19 @@
+# Roles -> models. Chosen by LLM_CONFIG (default: this file). ${VAR} is read from the environment.
+# Code calls roles only. Model tags are placeholders until the measurement on the demo machine
+# (docs/tutor_agent.md, section 3). Keys under `primary` are passed to litellm.completion.
+roles:
+  tutor_small:
+    primary: {model: "ollama/${TUTOR_MODEL}", api_base: "${OLLAMA_API_BASE}", temperature: 0.3}
+    allowed_for_user_data: true
+    json_mode: true
+    timeout_s: 20
+  router:
+    primary: {model: "ollama/${ROUTER_MODEL}", api_base: "${OLLAMA_API_BASE}", temperature: 0}
+    allowed_for_user_data: true
+    json_mode: true
+    timeout_s: 10
+  tutor_cloud:
+    primary: {model: "vertex_ai/${CLOUD_MODEL}", vertex_location: "${VERTEX_AI_REGION}"}
+    allowed_for_user_data: false
+    cloud: true
+    timeout_s: 20
