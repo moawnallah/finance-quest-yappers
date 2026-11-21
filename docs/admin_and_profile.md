@@ -469,3 +469,40 @@ Vercel the tables are created at start-up, as before.
 4. **The consent text** is accepted for now.
 
 The code status of each piece is in "The analytics module".
+
+## Export (data contract)
+
+`GET /admin/export?table=<table>&format=csv` (admin key or admin account). One CSV per table for the
+bank's data platform.
+
+**Rules**
+- Pseudonymous ids only: `user` is the first 10 characters of sha256(user id), the same id the admin
+  panel shows.
+- Row-level tables contain only learners who turned on "Share my learning profile with the bank".
+- No free text: no prompts, answers, feedback text or names.
+- Synthetic demo learners are left out unless `synthetic=1` is passed.
+
+**Tables**
+
+| Table | Column | Type | Meaning |
+|---|---|---|---|
+| attempts | user | text | Pseudonymous learner id |
+| | task_id, node_id | text | The question or task and its skill-tree node |
+| | level | text | easy, medium or hard |
+| | context | text | practice, prerequisite or test_out |
+| | score | number 0-1 | The engine's score (empty for reflections) |
+| | confidence | integer 1-5 | "How sure are you?" |
+| | points | integer | Hard tasks: 51-100 when accepted |
+| | duration_ms | integer | Engine time to score |
+| | submitted_at | ISO 8601 | When the answer was sent |
+| reco_events | user, ts, event_type | text | Router and recommender events (path issued, demo_match, path_chosen, path_finished, next_steps_shown, shadow_decision) |
+| | router_version, node | text | Router version and node |
+| | predicted_m, need, priority | number | The router's mastery estimate, need and priority |
+| | path | JSON list | Node ids of a path |
+| llm_events | user, ts, mode, intent, model | text | One tutor call (model "cache" for a cache hit) |
+| | latency_ms, tokens_in, tokens_out | integer | Cost of the call |
+| | fallback_used, flagged_for_review | boolean | Whether the stored text was shown, and the review flag |
+| | checks_failed | JSON list | Names of failed output checks |
+| surveys | user, created_at | text | The starting survey |
+| | age_band, goal, horizon, self_rating, experience | text | Survey answers |
+| | knowledge_score, band | integer / text | Quick-check result (empty when skipped) |

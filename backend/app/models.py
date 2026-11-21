@@ -103,6 +103,10 @@ class User(Base):
     password_hash: Mapped[str | None] = mapped_column(String(255), nullable=True)  # scrypt, never the password
     is_admin: Mapped[bool] = mapped_column(Boolean, default=False)
     last_login_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    # "Share my learning profile with the bank": off by default, can be withdrawn. Without it a learner
+    # appears only in aggregates (groups under 5 hidden).
+    share_profile: Mapped[bool] = mapped_column(Boolean, default=False, server_default="0")
+    synthetic: Mapped[bool] = mapped_column(Boolean, default=False, server_default="0")  # demo data (app.seed --synthetic)
     profile: Mapped["Profile | None"] = relationship(back_populates="user", uselist=False)
 
 

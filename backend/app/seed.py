@@ -86,5 +86,12 @@ def seed(db: Session) -> dict:
 
 
 if __name__ == "__main__":
-    with SessionLocal() as session:
-        print("seeded:", seed(session))
+    import sys
+    if "--synthetic" in sys.argv:  # python -m app.seed --synthetic 200
+        from app.synthetic import seed_synthetic
+        n = int(sys.argv[sys.argv.index("--synthetic") + 1]) if len(sys.argv) > sys.argv.index("--synthetic") + 1 else 200
+        with SessionLocal() as session:
+            print("synthetic learners:", seed_synthetic(session, n))
+    else:
+        with SessionLocal() as session:
+            print("seeded:", seed(session))

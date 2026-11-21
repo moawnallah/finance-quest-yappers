@@ -11,6 +11,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../data/app_state.dart';
 import '../widgets/common.dart';
 
@@ -44,6 +45,9 @@ class _AdminScreenState extends State<AdminScreen> {
       api.admin('ab-results', _key),
       api.admin('study', _key),
       api.admin('tutor-metrics', _key),
+      api.admin('learners', _key),
+      api.admin('adviser-signals', _key),
+      api.admin('ai-quality', _key),
     ]);
   }
 
@@ -60,7 +64,7 @@ class _AdminScreenState extends State<AdminScreen> {
     // Admin accounts only: anyone else gets a polite stop (the backend refuses them too).
     if (!context.watch<AppState>().isAdmin) return _adminsOnly();
     return DefaultTabController(
-      length: 11,
+      length: 15,
       child: Scaffold(
         appBar: AppBar(
           title: Text('Admin panel'),
@@ -68,7 +72,7 @@ class _AdminScreenState extends State<AdminScreen> {
             IconButton(tooltip: 'Refresh', icon: Icon(Icons.refresh), onPressed: _refresh),
             IconButton(tooltip: 'Forget key', icon: Icon(Icons.logout), onPressed: () => setState(() { _key = null; _data = null; })),
           ],
-          bottom: TabBar(isScrollable: true, tabs: [Tab(text: 'Overview'), Tab(text: 'Alerts'), Tab(text: 'Questions'), Tab(text: 'Confidence'), Tab(text: 'Advice watch'),
+          bottom: TabBar(isScrollable: true, tabs: [Tab(text: 'Overview'), Tab(text: 'Learners'), Tab(text: 'Adviser signals'), Tab(text: 'AI quality'), Tab(text: 'Export'), Tab(text: 'Alerts'), Tab(text: 'Questions'), Tab(text: 'Confidence'), Tab(text: 'Advice watch'),
               Tab(text: 'Feedback'), Tab(text: 'Insights'), Tab(text: 'Study'), Tab(text: 'Tutor calls'), Tab(text: 'Recommender'), Tab(text: 'Event log')]),
         ),
         body: FutureBuilder<List<Map<String, dynamic>>>(
@@ -82,9 +86,14 @@ class _AdminScreenState extends State<AdminScreen> {
                 FilledButton(onPressed: _refresh, child: Text('Try again')),
               ]);
             }
-            final [summary, llm, reco, events, overview, items, calibration, advice, feedback, insights, clicks, ab, study, tutorMetrics] = snap.data!;
+            final [summary, llm, reco, events, overview, items, calibration, advice, feedback, insights, clicks, ab, study, tutorMetrics,
+                learners, signals, quality] = snap.data!;
             return TabBarView(children: [
-              _overview(summary),
+              _population(summary),
+              _learners(learners),
+              _signals(signals),
+              _quality(quality),
+              _export(),
               _alerts(overview),
               _items(items),
               _calibration(calibration),
@@ -600,6 +609,199 @@ class _AdminScreenState extends State<AdminScreen> {
             ? Text('Results appear after participants finish the before and after checks.', style: TextStyle(color: kMuted))
             : Panel(child: _kv(d['metrics'])),
       ]);
+
+  // ------------------------------------------------------------ bank-side views (task group E)
+
+  Widget _badge() => Container(
+        margin: EdgeInsets.only(bottom: 10),
+        padding: EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+        decoration: BoxDecoration(color: kWarnSoft, borderRadius: BorderRadius.circular(999), border: Border.all(color: kWarnBorder)),
+        child: Text('Synthetic demo data', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: kWarnText)),
+      );
+
+  Widget _bar(String label, double ours, double? poland) => Padding(
+        padding: EdgeInsets.only(bottom: 8),
+        child: Row(children: [
+          SizedBox(width: 150, child: Text(label, style: TextStyle(color: kBody))),
+          Expanded(child: Column(children: [
+            ClipRRect(borderRadius: BorderRadius.circular(5), child: LinearProgressIndicator(value: ours / 100, minHeight: 9, color: kPrimary, backgroundColor: kLine)),
+            if (poland != null) ...[
+              SizedBox(height: 3),
+              ClipRRect(borderRadius: BorderRadius.circular(5), child: LinearProgressIndicator(value: poland / 100, minHeight: 6, color: kFaint, backgroundColor: kLine)),
+            ],
+          ])),
+          SizedBox(width: 10),
+          SizedBox(width: 92, child: Text('${ours.round()}%${poland != null ? ' (PL ${poland.round()}%)' : ''}', style: TextStyle(fontSize: 12, color: kInk))),
+        ]),
+      );
+
+  /// Population (the Overview tab used in the pitch). Demo values, labelled; the live tiles follow.
+  Widget _population(Map<String, dynamic> summary) => ListView(padding: EdgeInsets.all(16), children: [
+        _badge(),
+        Text('Our learners', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: kInk)),
+        Text('Who uses CrocoCash and what they need. Aggregates only; groups under 5 are hidden.', style: TextStyle(color: kMuted)),
+        _h('Knowledge, next to Poland', 'Quick-check score bands. Grey: Poland, Flash Eurobarometer 525 (2023).'),
+        _bar('Low (0-1 right)', 31, 25.1),
+        _bar('Medium (2-3 right)', 52, 55.0),
+        _bar('High (4-5 right)', 17, 19.9),
+        _h('Needs funnel', 'Share of learners from the starting survey.'),
+        _bar('No emergency buffer', 38, 30.3),
+        _bar('Has a consumer loan', 22, null),
+        _bar('Wants to invest, holds nothing', 41, null),
+        _bar('Retirement goal, no pension product', 27, null),
+        _h('Most needed topics'),
+        Wrap(spacing: 6, runSpacing: 6, children: [
+          for (final t in ['Emergency fund', 'Inflation and real value', 'Diversification', 'Funds, ETFs and the KID', 'Deposits and bonds'])
+            _chip(t),
+        ]),
+        _h('Paths'),
+        _grid([_stat('Recommended', 200), _stat('Chose a ready path', 61), _stat('Finished a path', 74), _stat('Next steps shown', 70)]),
+        _h('After the path', 'Check-in answers.'),
+        _bar('Made progress: yes', 58, null),
+        _bar('Somewhat', 31, null),
+        _bar('No', 11, null),
+        _grid([_stat('Average confidence after the path', '3.8 / 5')]),
+        _h('System', 'Live numbers.'),
+        _overview(summary),
+      ]);
+
+  Widget _learners(Map<String, dynamic> d) {
+    final ls = (d['learners'] as List).cast<Map<String, dynamic>>();
+    return ListView(padding: EdgeInsets.all(16), children: [
+      if (d['synthetic'] == true) _badge(),
+      _h('Learners who share their profile', 'Pseudonymous ids. Learners without consent appear only in aggregates.'),
+      if (ls.isEmpty) Text('Nobody shares their profile yet.', style: TextStyle(color: kMuted)),
+      for (final l in ls.take(200))
+        Card(
+          elevation: 0,
+          color: kSurface,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12), side: BorderSide(color: kLine)),
+          child: ListTile(
+            title: Text('${l['pseudo']}${l['synthetic'] == true ? '  · synthetic' : ''}', style: TextStyle(fontWeight: FontWeight.w700, color: kInk)),
+            subtitle: Text('Goal ${'${l['goal'] ?? '-'}'.replaceAll('_', ' ')} · path ${(l['path'] as List).join(' > ')}', style: TextStyle(color: kMuted)),
+            trailing: SizedBox(width: 120, child: Row(children: [
+              Expanded(child: LinearProgressIndicator(value: (l['progress'] as num).toDouble(), color: kGreen, backgroundColor: kLine)),
+              SizedBox(width: 6),
+              Icon(Icons.chevron_right),
+            ])),
+            onTap: () => _card(l['pseudo'] as String),
+          ),
+        ),
+    ]);
+  }
+
+  Future<void> _card(String id) async {
+    Map<String, dynamic> c;
+    try {
+      c = await context.read<AppState>().api.admin('learners/$id', _key);
+    } catch (e) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e')));
+      return;
+    }
+    if (!mounted) return;
+    final sm = Map<String, dynamic>.from(c['summary'] as Map? ?? {});
+    showDialog(
+      context: context,
+      builder: (d) => AlertDialog(
+        title: Text('Learner ${c['pseudo']}'),
+        content: SizedBox(
+          width: 640,
+          child: SingleChildScrollView(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            if (c['synthetic'] == true) _badge(),
+            _h('Why this path (the router\'s need reasons)'),
+            for (final r in (c['need_reasons'] as List? ?? []).cast<Map>()) Text('• ${r['title']}: ${r['reason'] ?? ''}', style: TextStyle(color: kBody)),
+            _h('Profile'),
+            _kv({for (final e in sm.entries) if (e.key != 'activity') e.key: e.value}),
+            _h('Next steps'),
+            for (final n in (c['next_steps'] as List? ?? []).cast<Map>()) Text('• ${n['title']}${n['live'] == true ? '' : ' (coming later)'}', style: TextStyle(color: kBody)),
+            _h('Timeline'),
+            for (final e in (c['timeline'] as List? ?? []).cast<Map>().take(20))
+              Text('${'${e['ts'] ?? ''}'.split('.').first.replaceAll('T', ' ')}  ${e['name']}', style: TextStyle(fontSize: 12, color: kMuted)),
+          ])),
+        ),
+        actions: [TextButton(onPressed: () => Navigator.pop(d), child: Text('Close'))],
+      ),
+    );
+  }
+
+  Widget _signals(Map<String, dynamic> d) {
+    final sig = (d['signals'] as List).cast<Map<String, dynamic>>();
+    return ListView(padding: EdgeInsets.all(16), children: [
+      if (d['synthetic'] == true) _badge(),
+      _h('Adviser signals', 'When a conversation with an adviser is timely. Types of instruments only, never a product: the adviser assesses suitability.'),
+      if (sig.isEmpty) Text('No signals yet.', style: TextStyle(color: kMuted)),
+      for (final x in sig.take(200))
+        Container(
+          margin: EdgeInsets.only(bottom: 8),
+          padding: EdgeInsets.all(12),
+          decoration: BoxDecoration(color: kSurface, borderRadius: BorderRadius.circular(12), border: Border.all(color: kLine)),
+          child: Row(children: [
+            Icon(Icons.forum_outlined, color: kPrimaryText),
+            SizedBox(width: 10),
+            Expanded(child: Text('${x['text']}', style: TextStyle(color: kInk, height: 1.35))),
+            SizedBox(width: 8),
+            TextButton(onPressed: () => _card(x['pseudo'] as String), child: Text('${x['pseudo']}')),
+          ]),
+        ),
+    ]);
+  }
+
+  Widget _quality(Map<String, dynamic> q) {
+    final shadow = Map<String, dynamic>.from(q['shadow'] as Map? ?? {});
+    final tutor = Map<String, dynamic>.from(q['tutor'] as Map? ?? {});
+    final chosen = Map<String, dynamic>.from(q['chosen'] as Map? ?? {});
+    return ListView(padding: EdgeInsets.all(16), children: [
+      if (q['synthetic'] == true) _badge(),
+      _h('Recommender', 'Router path vs the path chosen vs finished.'),
+      _grid([
+        _stat('Paths recommended', q['recommended']),
+        _stat('Chose a ready path', q['chosen_total']),
+        _stat('Paths finished', q['finished']),
+        _stat('Next steps shown', q['next_steps_shown']),
+      ]),
+      if (chosen.isNotEmpty) ...[
+        SizedBox(height: 8),
+        Wrap(spacing: 6, runSpacing: 6, children: [for (final e in chosen.entries) _chip('${e.key}: ${e.value}')]),
+      ],
+      _h('BASAL decision model (shadow mode)', 'Logged only; the learner\'s path never changes.'),
+      _grid([
+        _stat('Shadow decisions', shadow['decisions']),
+        _stat('Errors', shadow['errors']),
+        _stat('Agreement with the router', _pct(shadow['agreement'])),
+      ]),
+      _h('Tutor'),
+      _grid([
+        _stat('Tutor answers', tutor['n']),
+        _stat('Fallback rate', _pct(tutor['fallback_rate'])),
+        _stat('Flagged for review', tutor['flagged']),
+        _stat('Advice alert', (tutor['advice_alert'] as Map?)?['on'] == true ? 'ON' : 'off',
+            tone: (tutor['advice_alert'] as Map?)?['on'] == true ? kRed : null),
+      ]),
+    ]);
+  }
+
+  Widget _export() => ListView(padding: EdgeInsets.all(16), children: [
+        _h('Export to the bank\'s data platform', 'CSV, pseudonymous ids, consenting learners only, no free text. The data contract is in docs/admin_and_profile.md.'),
+        for (final t in ['attempts', 'reco_events', 'llm_events', 'surveys'])
+          Padding(
+            padding: EdgeInsets.only(bottom: 8),
+            child: Row(children: [
+              SizedBox(width: 140, child: Text(t, style: TextStyle(fontWeight: FontWeight.w700, color: kInk))),
+              OutlinedButton.icon(onPressed: () => _download(t, false), icon: Icon(Icons.download), label: Text('Real data')),
+              SizedBox(width: 8),
+              TextButton(onPressed: () => _download(t, true), child: Text('Incl. synthetic')),
+            ]),
+          ),
+      ]);
+
+  Future<void> _download(String table, bool synthetic) async {
+    try {
+      final csv = await context.read<AppState>().api.adminText('export?table=$table&format=csv${synthetic ? '&synthetic=1' : ''}', _key);
+      await launchUrl(Uri.dataFromString(csv, mimeType: 'text/csv', encoding: utf8), webOnlyWindowName: '_blank');
+    } catch (e) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Export failed: $e')));
+    }
+  }
 
   Widget _chip(String text, {Color? tone}) => Container(
         padding: EdgeInsets.symmetric(horizontal: 8, vertical: 3),

@@ -550,9 +550,12 @@ class AppState extends ChangeNotifier {
   bool isAdmin = false;
   bool guest = false;
 
+  bool shareProfile = false; // "Share my learning profile with the bank" (off by default)
+
   void useAccount(Map<String, dynamic> a) {
     email = a['email'] as String?;
     isAdmin = a['is_admin'] == true;
+    shareProfile = a['share_profile'] == true;
     guest = false;
     signInMethod = 'email';
     signIn((a['display_name'] as String?) ?? (email ?? 'You').split('@').first);

@@ -354,6 +354,27 @@ void showSettingsSheet(BuildContext context) {
                 },
               ),
             ],
+            if (s.email != null) ...[
+              SizedBox(height: 10),
+              SwitchListTile(
+                contentPadding: EdgeInsets.zero,
+                value: s.shareProfile,
+                title: Text('Share my learning profile with the bank', style: TextStyle(fontWeight: FontWeight.w700, color: kInk)),
+                subtitle: Text('Lets an adviser see your path, progress and how sure you felt, to start a conversation. '
+                    'Off by default; you can turn it off any time.', style: TextStyle(fontSize: 12, color: kMuted)),
+                onChanged: (v) async {
+                  final before = s.shareProfile;
+                  s.shareProfile = v;
+                  s.notify();
+                  try {
+                    await s.api.setConsent(s.profile.name, v);
+                  } catch (_) {
+                    s.shareProfile = before;
+                    s.notify();
+                  }
+                },
+              ),
+            ],
             SizedBox(height: 16),
             Text('Appearance', style: TextStyle(fontWeight: FontWeight.w700, color: kInk)),
             SizedBox(height: 8),

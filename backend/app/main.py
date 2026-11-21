@@ -25,6 +25,7 @@ from app.models import (Answer, BenchmarkAnswer, BenchmarkQuestion, BenchmarkSta
                         Question, Slice, User, UserBadge)
 from app import schemas as s
 from app.insights_api import router as insights_router
+from app.bank_api import router as bank_router
 from app.tasks_api import router as skills_router
 from app.admin import router as admin_router
 from app.tutor_api import router as tutor_router
@@ -35,6 +36,7 @@ app.include_router(skills_router)
 app.include_router(admin_router)
 app.include_router(tutor_router)
 app.include_router(insights_router)
+app.include_router(bank_router)
 
 if ON_VERCEL and DATABASE_URL.startswith("sqlite:////tmp/"):
     # Serverless demo: a new instance starts with an empty /tmp, so build the schema and load the content.
@@ -118,7 +120,8 @@ def register(body: s.RegisterIn, request: Request, db: Session = Depends(get_db)
     log_event(db, user, "account_created", admin=user.is_admin)
     db.commit()
     return s.AccountOut(user_id=user.id, token=user.token, variant=user.variant, email=user.email,
-                        display_name=user.display_name, is_admin=user.is_admin)
+                        display_name=user.display_name, is_admin=user.is_admin,
+                        share_profile=bool(user.share_profile))
 
 
 @app.post("/auth/login", response_model=s.AccountOut)
@@ -135,13 +138,15 @@ def login(body: s.LoginIn, db: Session = Depends(get_db)):
     log_event(db, user, "logged_in")
     db.commit()
     return s.AccountOut(user_id=user.id, token=user.token, variant=user.variant, email=user.email,
-                        display_name=user.display_name, is_admin=user.is_admin)
+                        display_name=user.display_name, is_admin=user.is_admin,
+                        share_profile=bool(user.share_profile))
 
 
 @app.get("/me", response_model=s.AccountOut)
 def me(user: User = Depends(current_user)):
     return s.AccountOut(user_id=user.id, token=user.token, variant=user.variant, email=user.email,
-                        display_name=user.display_name, is_admin=user.is_admin)
+                        display_name=user.display_name, is_admin=user.is_admin,
+                        share_profile=bool(user.share_profile))
 
 
 @app.post("/me/profile")

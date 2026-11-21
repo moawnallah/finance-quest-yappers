@@ -5,7 +5,8 @@ so every metric is tested with hand-made rows and the API only fetches rows and 
 """
 from .metrics import (calibration_series, client_insights, first_attempts, hard_overview, item_stats, profile_summary,
                       report_alerts, study_report, tutor_overview)
+from .signals import adviser_signals
 from .study import CONSENT_TEXT, CONSENT_VERSION, participant_id
 
-__all__ = ["CONSENT_TEXT", "CONSENT_VERSION", "calibration_series", "client_insights", "first_attempts", "hard_overview", "item_stats",
+__all__ = ["CONSENT_TEXT", "adviser_signals", "CONSENT_VERSION", "calibration_series", "client_insights", "first_attempts", "hard_overview", "item_stats",
            "participant_id", "profile_summary", "report_alerts", "study_report", "tutor_overview"]

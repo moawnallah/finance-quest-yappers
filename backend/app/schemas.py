@@ -37,6 +37,7 @@ class AccountOut(BaseModel):
     email: str | None
     display_name: str
     is_admin: bool
+    share_profile: bool = False
 
 
 class ProfileIn(BaseModel):

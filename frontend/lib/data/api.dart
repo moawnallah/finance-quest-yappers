@@ -141,6 +141,7 @@ class Api {
       r = switch (method) {
         'GET' => await _http.get(uri, headers: headers),
         'PATCH' => await _http.patch(uri, headers: headers, body: jsonEncode(body ?? {})),
+        'PUT' => await _http.put(uri, headers: headers, body: jsonEncode(body ?? {})),
         'DELETE' => await _http.delete(uri, headers: headers),
         _ => await _http.post(uri, headers: headers, body: jsonEncode(body ?? {})),
       };
@@ -259,6 +260,20 @@ class Api {
       return {'path_id': id};
     }
     return Map<String, dynamic>.from(await _authed('POST', '/onboarding/choose-path', name, body: {'path_id': id}));
+  }
+
+  /// "Share my learning profile with the bank" (accounts only).
+  Future<Map<String, dynamic>> setConsent(String name, bool share) async =>
+      Map<String, dynamic>.from(await _authed('PUT', '/me/consent', name, body: {'share': share}));
+
+  /// An admin CSV export as text (with the admin key or the admin account's token).
+  Future<String> adminText(String path, String? key) async {
+    await _load();
+    final r = await _http.get(Uri.parse('$baseUrl/admin/$path'), headers: {
+      if (key != null) 'X-Admin-Key': key else if (_token != null) 'Authorization': 'Bearer $_token',
+    });
+    if (r.statusCode >= 400) throw ApiException(r.statusCode, 'http_${r.statusCode}', 'Export failed (${r.statusCode})');
+    return utf8.decode(r.bodyBytes);
   }
 
   /// The end-of-path check-in (POST /paths/finish): thanks, the other path and next_steps.
