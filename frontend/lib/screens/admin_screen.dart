@@ -8,10 +8,10 @@
 // X-Admin-Key header.
 
 import 'dart:convert';
+import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
-import 'package:url_launcher/url_launcher.dart';
 import '../data/app_state.dart';
 import '../util/save_file.dart';
 import '../widgets/common.dart';
@@ -726,12 +726,100 @@ class _AdminScreenState extends State<AdminScreen> {
     );
   }
 
+  // Adviser panel: sort and filter state for the signal rows.
+  String _sigSort = 'confidence';
+  String? _sigAge, _sigTopic;
+  static const _ageBands = ['18-24', '25-39', '40-54', '55+', 'unknown'];
+  static const _ageColors = [Color(0xFF0F766E), Color(0xFF2563EB), Color(0xFFD97706), Color(0xFF7C3AED), Color(0xFF8A8F98)];
+  Color _ageColor(String band) => _ageColors[_ageBands.indexOf(band) < 0 ? 4 : _ageBands.indexOf(band)];
+
   Widget _signals(Map<String, dynamic> d) {
-    final sig = (d['signals'] as List).cast<Map<String, dynamic>>();
+    final all = (d['signals'] as List).cast<Map<String, dynamic>>();
+    final summary = Map<String, dynamic>.from(d['summary'] as Map? ?? {});
+    final learners = (summary['learners'] as num? ?? 0).toInt(), ready = (summary['ready'] as num? ?? 0).toInt();
+    final products = Map<String, dynamic>.from(summary['products'] as Map? ?? {});
+    final topics = {for (final x in all) '${x['topic']}'}.toList()..sort();
+    var sig = all.where((x) => (_sigAge == null || (x['age_band'] ?? 'unknown') == _sigAge) && (_sigTopic == null || x['topic'] == _sigTopic)).toList();
+    int conf(Map x) => (x['confidence'] as num?)?.toInt() ?? 0;
+    sig.sort((a, b) => switch (_sigSort) {
+          'confidence' => conf(b).compareTo(conf(a)),
+          'age' => _ageBands.indexOf('${a['age_band'] ?? 'unknown'}').compareTo(_ageBands.indexOf('${b['age_band'] ?? 'unknown'}')),
+          _ => '${a['topic']}'.compareTo('${b['topic']}'),
+        });
+    final wide = MediaQuery.sizeOf(context).width >= 900;
+    final pie = _panelCard('Ready for an adviser conversation', '$ready of $learners learners have at least one signal', SizedBox(
+      height: 190,
+      child: learners == 0
+          ? Center(child: Text('No learners yet.', style: TextStyle(color: kMuted)))
+          : Row(children: [
+              Expanded(child: PieChart(PieChartData(sectionsSpace: 2, centerSpaceRadius: 34, sections: [
+                PieChartSectionData(value: ready.toDouble(), color: kPrimary, radius: 52, title: '${(100 * ready / learners).round()}%',
+                    titleStyle: TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 13)),
+                PieChartSectionData(value: (learners - ready).toDouble(), color: kLine, radius: 46,
+                    title: '${(100 * (learners - ready) / learners).round()}%', titleStyle: TextStyle(color: kInk, fontWeight: FontWeight.w700, fontSize: 12)),
+              ]))),
+              Column(mainAxisAlignment: MainAxisAlignment.center, crossAxisAlignment: CrossAxisAlignment.start, children: [
+                _legend(kPrimary, 'Ready ($ready)'),
+                _legend(kLine, 'Not yet (${learners - ready})'),
+              ]),
+            ]),
+    ));
+    final names = products.keys.toList()..sort((a, b) => _sum(products[b]).compareTo(_sum(products[a])));
+    final maxY = names.isEmpty ? 1.0 : names.map((n) => _sum(products[n])).reduce((a, b) => a > b ? a : b).toDouble();
+    final bars = _panelCard('Products learners already hold', 'Learners per product type, coloured by age group', SizedBox(
+      height: 230,
+      child: names.isEmpty
+          ? Center(child: Text('No survey answers yet.', style: TextStyle(color: kMuted)))
+          : Column(children: [
+              Expanded(child: BarChart(BarChartData(
+                maxY: maxY * 1.15,
+                gridData: FlGridData(show: true, drawVerticalLine: false, getDrawingHorizontalLine: (_) => FlLine(color: kLine, strokeWidth: 1)),
+                borderData: FlBorderData(show: false),
+                barTouchData: BarTouchData(touchTooltipData: BarTouchTooltipData(getTooltipItem: (g, _, __, ___) {
+                  final m = Map<String, dynamic>.from(products[names[g.x]] as Map);
+                  return BarTooltipItem('${names[g.x].replaceAll('_', ' ')}\n${m.entries.map((e) => '${e.key}: ${e.value}').join('\n')}',
+                      TextStyle(color: Colors.white, fontSize: 11));
+                })),
+                titlesData: FlTitlesData(
+                  topTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                  rightTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                  leftTitles: AxisTitles(sideTitles: SideTitles(showTitles: true, reservedSize: 28, interval: maxY <= 5 ? 1 : null,
+                      getTitlesWidget: (v, m) => Text(v == v.roundToDouble() ? '${v.toInt()}' : '', style: TextStyle(fontSize: 10, color: kMuted)))),
+                  bottomTitles: AxisTitles(sideTitles: SideTitles(showTitles: true, reservedSize: 34, getTitlesWidget: (v, m) => Padding(
+                    padding: EdgeInsets.only(top: 4),
+                    child: SizedBox(width: 70, child: Text(names[v.toInt()].replaceAll('_', ' '), textAlign: TextAlign.center, maxLines: 2,
+                        style: TextStyle(fontSize: 10, color: kBody))),
+                  ))),
+                ),
+                barGroups: [
+                  for (var i = 0; i < names.length; i++)
+                    BarChartGroupData(x: i, barRods: [
+                      BarChartRodData(toY: _sum(products[names[i]]).toDouble(), width: 22, borderRadius: BorderRadius.circular(4), rodStackItems: () {
+                        final m = Map<String, dynamic>.from(products[names[i]] as Map);
+                        var y = 0.0;
+                        return [for (final b in _ageBands) if ((m[b] as num? ?? 0) > 0) BarChartRodStackItem(y, y += (m[b] as num).toDouble(), _ageColor(b))];
+                      }()),
+                    ]),
+                ],
+              ))),
+              SizedBox(height: 6),
+              Wrap(spacing: 12, children: [for (final b in _ageBands) if (products.values.any((m) => (m as Map)[b] != null)) _legend(_ageColor(b), b)]),
+            ]),
+    ));
     return ListView(padding: EdgeInsets.all(16), children: [
       if (d['synthetic'] == true) _badge(),
       _h('Adviser signals', 'When a conversation with an adviser is timely. Types of instruments only, never a product: the adviser assesses suitability.'),
-      if (sig.isEmpty) Text('No signals yet.', style: TextStyle(color: kMuted)),
+      if (wide) Row(crossAxisAlignment: CrossAxisAlignment.start, children: [Expanded(child: pie), SizedBox(width: 12), Expanded(flex: 2, child: bars)])
+      else ...[pie, SizedBox(height: 12), bars],
+      SizedBox(height: 12),
+      Wrap(spacing: 10, runSpacing: 8, crossAxisAlignment: WrapCrossAlignment.center, children: [
+        _drop<String>('Sort by', _sigSort, {'confidence': 'Confidence (high first)', 'age': 'Age group', 'topic': 'Topic'}, (v) => setState(() => _sigSort = v ?? 'confidence')),
+        _drop<String?>('Age', _sigAge, {null: 'All ages', for (final b in _ageBands) b: b}, (v) => setState(() => _sigAge = v)),
+        _drop<String?>('Topic', _sigTopic, {null: 'All topics', for (final t in topics) t: t}, (v) => setState(() => _sigTopic = v)),
+        Text('${sig.length} of ${all.length} signals', style: TextStyle(color: kMuted)),
+      ]),
+      SizedBox(height: 10),
+      if (sig.isEmpty) Text(all.isEmpty ? 'No signals yet.' : 'No signals match these filters.', style: TextStyle(color: kMuted)),
       for (final x in sig.take(200))
         Container(
           margin: EdgeInsets.only(bottom: 8),
@@ -743,6 +831,12 @@ class _AdminScreenState extends State<AdminScreen> {
             Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
               if (x['label'] != null) Text('${x['label']}', style: TextStyle(color: kInk, fontWeight: FontWeight.w700)),
               Text('${x['text']}', style: TextStyle(color: kInk, height: 1.35)),
+              SizedBox(height: 4),
+              Wrap(spacing: 6, runSpacing: 4, children: [
+                _chip('Age ${x['age_band'] ?? 'unknown'}', tone: _ageColor('${x['age_band'] ?? 'unknown'}')),
+                _chip(x['confidence'] == null ? 'Confidence not given' : 'Confidence ${x['confidence']}/5'),
+                for (final pr in (x['products'] as List? ?? [])) _chip('$pr'.replaceAll('_', ' ')),
+              ]),
             ])),
             SizedBox(width: 8),
             TextButton(onPressed: () => _card(x['pseudo'] as String), child: Text('${x['pseudo']}')),
@@ -750,6 +844,38 @@ class _AdminScreenState extends State<AdminScreen> {
         ),
     ]);
   }
+
+  int _sum(dynamic m) => (m as Map).values.fold<int>(0, (a, v) => a + (v as num).toInt());
+
+  Widget _legend(Color c, String text) => Padding(
+        padding: EdgeInsets.symmetric(vertical: 3),
+        child: Row(mainAxisSize: MainAxisSize.min, children: [
+          Container(width: 12, height: 12, decoration: BoxDecoration(color: c, borderRadius: BorderRadius.circular(3))),
+          SizedBox(width: 6),
+          Text(text, style: TextStyle(fontSize: 12, color: kBody)),
+        ]),
+      );
+
+  Widget _panelCard(String title, String sub, Widget child) => Container(
+        padding: EdgeInsets.all(14),
+        decoration: BoxDecoration(color: kSurface, borderRadius: BorderRadius.circular(14), border: Border.all(color: kLine)),
+        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Text(title, style: TextStyle(fontWeight: FontWeight.w800, color: kInk)),
+          Text(sub, style: TextStyle(fontSize: 12, color: kMuted)),
+          SizedBox(height: 10),
+          child,
+        ]),
+      );
+
+  Widget _drop<T>(String label, T value, Map<T, String> options, ValueChanged<T?> onChanged) => Row(mainAxisSize: MainAxisSize.min, children: [
+        Text('$label: ', style: TextStyle(color: kMuted)),
+        DropdownButton<T>(
+          value: value,
+          underline: SizedBox(),
+          items: [for (final e in options.entries) DropdownMenuItem<T>(value: e.key, child: Text(e.value))],
+          onChanged: onChanged,
+        ),
+      ]);
 
   Widget _quality(Map<String, dynamic> q) {
     final shadow = Map<String, dynamic>.from(q['shadow'] as Map? ?? {});

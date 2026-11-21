@@ -63,3 +63,15 @@ def test_scenarios_tell_their_stories(client):
     assert "Marek, 35: confident, but struggling with funds" not in by and "Julia, 24: just started" not in by
     card = client.get(f"/admin/learners/{ls['Tomek, 31: first investment, long horizon']['pseudo']}", headers=h).json()
     assert card["label"].startswith("Tomek") and card["need_reasons"][0]["node"] == "I4"
+
+
+def test_adviser_panel_aggregates(client):
+    from app.db import SessionLocal
+    from app.synthetic import seed_scenarios
+    with SessionLocal() as db:
+        seed_scenarios(db)
+    d = client.get("/admin/adviser-signals", headers=ADMIN).json()
+    s = d["summary"]
+    assert s["learners"] >= 6 and s["ready"] == len({x["pseudo"] for x in d["signals"]}) >= 4 and s["ready"] <= s["learners"]
+    assert s["products"]["consumer_loan"].get("18-24", 0) >= 1 and sum(s["products"]["life_insurance"].values()) >= 2
+    assert all({"age_band", "confidence", "products"} <= set(x) for x in d["signals"])

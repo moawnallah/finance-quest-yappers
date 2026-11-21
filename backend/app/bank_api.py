@@ -103,7 +103,22 @@ def adviser_signals(db: Session = Depends(get_db)):
     rows = [{"pseudo": pseudo(u.id), "synthetic": u.synthetic, "label": _label(u), "survey": (db.get(Onboarding, u.id).survey if db.get(Onboarding, u.id) else {}),
              "done": _done(db, u.id), "confidence": _last_confidence(db, u.id)} for u in _visible(db)]
     sig = analytics.adviser_signals(rows)
-    return {"signals": sig, "synthetic": any(x["synthetic"] for x in sig)}
+    by = {r["pseudo"]: r for r in rows}
+    for x in sig:  # what the panel sorts and filters the rows by
+        sv = by[x["pseudo"]]["survey"] or {}
+        x.update(age_band=sv.get("age_band"), goal=sv.get("goal"), products=sv.get("products") or [],
+                 confidence=by[x["pseudo"]]["confidence"])
+    # Aggregates for the charts: who is ready for a conversation, and which products learners hold, by age.
+    ready = {x["pseudo"] for x in sig}
+    products: dict[str, dict[str, int]] = {}
+    for r in rows:
+        sv = r["survey"] or {}
+        for prod in sv.get("products") or ["none"]:
+            band = sv.get("age_band") or "unknown"
+            products.setdefault(prod, {}).setdefault(band, 0)
+            products[prod][band] += 1
+    return {"signals": sig, "synthetic": any(x["synthetic"] for x in sig) or any(r["synthetic"] for r in rows),
+            "summary": {"learners": len(rows), "ready": len(ready), "products": products}}
 
 
 @router.get("/admin/ai-quality", dependencies=admin)
