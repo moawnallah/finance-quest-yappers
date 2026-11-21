@@ -13,6 +13,7 @@ import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import '../data/app_state.dart';
+import '../data/sfx.dart';
 import '../widgets/common.dart';
 import 'skills_screen.dart' show ErrorPanel;
 
@@ -71,6 +72,7 @@ class _WheelScreenState extends State<WheelScreen> {
       body = Center(child: Text('No missions yet.', style: TextStyle(color: kMuted)));
     } else {
       body = LayoutBuilder(builder: (context, c) {
+        if (isWideWeb(context) && !s.listView) return _wide(context, s, c);
         final w = c.maxWidth;
         final wheelH = s.listView ? 132.0 : math.min(w * 0.66, c.maxHeight * 0.5);
         final panel = s.selectedPanel;
@@ -148,6 +150,82 @@ class _WheelScreenState extends State<WheelScreen> {
 
 // ---------------------------------------------------------------------------
 
+extension on _WheelScreenState {
+  /// Desktop browser: the wheel sits on the left edge (pointer facing right),
+  /// the roadmap and its header take the rest of the window.
+  Widget _wide(BuildContext context, AppState s, BoxConstraints c) {
+    final r = math.min(c.maxHeight * 0.46, c.maxWidth * 0.3);
+    final wheelW = r * 1.08 + 30;
+    final panel = s.selectedPanel;
+    return Row(children: [
+      Container(
+        width: wheelW,
+        decoration: BoxDecoration(
+          gradient: RadialGradient(
+            center: Alignment(-1.3, 0),
+            radius: 1.2,
+            colors: [kBottomGlow, kBottomGlow.withValues(alpha: 0.3), kBg],
+            stops: [0, 0.55, 1],
+          ),
+        ),
+        child: _SpinWheel(key: ValueKey('left${s.panels.join()}'), panels: s.panels, left: true),
+      ),
+      Expanded(
+        child: LayoutBuilder(builder: (context, rc) => Stack(children: [
+          NotificationListener<ScrollNotification>(
+            onNotification: _onScroll,
+            child: RefreshIndicator(
+              onRefresh: s.loadSkills,
+              child: SingleChildScrollView(
+                reverse: true,
+                physics: AlwaysScrollableScrollPhysics(),
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(minHeight: rc.maxHeight),
+                  child: Column(mainAxisAlignment: MainAxisAlignment.end, children: [
+                    SizedBox(height: _WheelScreenState.headerH),
+                    Center(
+                      child: ConstrainedBox(
+                        constraints: BoxConstraints(maxWidth: 760),
+                        child: AnimatedSwitcher(
+                          duration: Duration(milliseconds: 380),
+                          switchInCurve: Curves.easeOutCubic,
+                          layoutBuilder: (cur, prev) => Stack(alignment: Alignment.bottomCenter, children: [...prev, if (cur != null) cur]),
+                          transitionBuilder: (child, a) => FadeTransition(
+                            opacity: a,
+                            child: SlideTransition(position: Tween(begin: Offset(0.03, 0), end: Offset.zero).animate(a), child: child),
+                          ),
+                          child: _Tree(key: ValueKey(panel), panel: panel),
+                        ),
+                      ),
+                    ),
+                    SizedBox(height: 24),
+                  ]),
+                ),
+              ),
+            ),
+          ),
+          Positioned(
+            left: 0, right: 0, top: 0, height: _WheelScreenState.headerH,
+            child: IgnorePointer(
+              ignoring: !_headerVisible,
+              child: AnimatedSlide(
+                offset: _headerVisible ? Offset.zero : Offset(0, -1),
+                duration: Duration(milliseconds: 250),
+                curve: Curves.easeOutCubic,
+                child: AnimatedOpacity(
+                  opacity: _headerVisible ? 1 : 0,
+                  duration: Duration(milliseconds: 200),
+                  child: AnimatedSwitcher(duration: Duration(milliseconds: 250), child: _RoadmapHeader(key: ValueKey(panel), panel: panel)),
+                ),
+              ),
+            ),
+          ),
+        ])),
+      ),
+    ]);
+  }
+}
+
 class _RoadmapHeader extends StatelessWidget {
   final String panel;
   _RoadmapHeader({super.key, required this.panel});
@@ -193,11 +271,6 @@ class _RoadmapHeader extends StatelessWidget {
             icon: Icon(Icons.today, color: kWarnIcon),
             onPressed: () => showDailyQuestion(context),
           ),
-        IconButton(
-          tooltip: 'All skills',
-          icon: Icon(Icons.view_list_rounded, color: kPrimaryText),
-          onPressed: () => context.push('/skills'),
-        ),
       ]),
     );
   }
@@ -388,7 +461,8 @@ class _MissionNode extends StatelessWidget {
 
 class _SpinWheel extends StatefulWidget {
   final List<String> panels;
-  _SpinWheel({super.key, required this.panels});
+  final bool left; // wide web: the wheel sits on the left edge, pointer facing right
+  _SpinWheel({super.key, required this.panels, this.left = false});
   @override
   State<_SpinWheel> createState() => _SpinWheelState();
 }
@@ -433,6 +507,7 @@ class _SpinWheelState extends State<_SpinWheel> with SingleTickerProviderStateMi
     if (i != _sel) {
       _sel = i;
       HapticFeedback.selectionClick();
+      Sfx.tick();
       context.read<AppState>().selectPanel(widget.panels[i]);
     }
     setState(() {});
@@ -455,7 +530,8 @@ class _SpinWheelState extends State<_SpinWheel> with SingleTickerProviderStateMi
       return;
     }
     if (dist > _radius) return;
-    final a = _angle(d.localPosition) + math.pi / 2 - _rot.value;
+    // Angle from the pointer, in the wheel's own frame (the left wheel is turned 90 degrees).
+    final a = _angle(d.localPosition) + (widget.left ? 0 : math.pi / 2) - _rot.value;
     final i = ((a / step).round() % n + n) % n;
     var diff = (-i * step - _rot.value) % (2 * math.pi);
     if (diff > math.pi) diff -= 2 * math.pi;
@@ -467,30 +543,42 @@ class _SpinWheelState extends State<_SpinWheel> with SingleTickerProviderStateMi
     final s = context.watch<AppState>();
     return LayoutBuilder(builder: (context, c) {
       final w = c.maxWidth, h = c.maxHeight;
-      _radius = math.min(w * 0.6, (h - 18) / 0.98);
-      _centre = Offset(w / 2, h + _radius * 0.02);
+      final left = widget.left;
+      if (left) {
+        _radius = math.min(h * 0.46, w - 30);
+        _centre = Offset(-_radius * 0.04, h / 2);
+      } else {
+        _radius = math.min(w * 0.6, (h - 18) / 0.98);
+        _centre = Offset(w / 2, h + _radius * 0.02);
+      }
+      // Sideways swipe on the bottom wheel; up and down on the left wheel.
+      void dragUpdate(double d) => _rot.value += d / (_radius * 0.9);
+      void dragEnd(double v) => _snapTo(_rot.value + ((v / (_radius * 0.9)) * 0.35).clamp(-2 * math.pi, 2 * math.pi));
       return Stack(clipBehavior: Clip.none, children: [
         Positioned.fill(
           child: Semantics(
             label: 'Topic wheel. Selected: ${panelLabels[widget.panels[_sel]]}. Swipe sideways to spin, or use the arrow buttons.',
             child: GestureDetector(
               behavior: HitTestBehavior.opaque,
-              onHorizontalDragStart: (_) => _rot.stop(),
-              onHorizontalDragUpdate: (d) => _rot.value += d.delta.dx / (_radius * 0.9),
-              onHorizontalDragEnd: (d) {
-                final omega = d.velocity.pixelsPerSecond.dx / (_radius * 0.9);
-                _snapTo(_rot.value + (omega * 0.35).clamp(-2 * math.pi, 2 * math.pi));
-              },
+              onHorizontalDragStart: left ? null : (_) => _rot.stop(),
+              onHorizontalDragUpdate: left ? null : (d) => dragUpdate(d.delta.dx),
+              onHorizontalDragEnd: left ? null : (d) => dragEnd(d.velocity.pixelsPerSecond.dx),
+              onVerticalDragStart: left ? (_) => _rot.stop() : null,
+              onVerticalDragUpdate: left ? (d) => dragUpdate(d.delta.dy) : null,
+              onVerticalDragEnd: left ? (d) => dragEnd(d.velocity.pixelsPerSecond.dy) : null,
               onTapUp: _tap,
               child: MouseRegion(
                 cursor: SystemMouseCursors.grab,
-                child: CustomPaint(painter: _WheelPainter(widget.panels, s, _rot.value, _centre, _radius, _sel)),
+                child: CustomPaint(painter: _WheelPainter(widget.panels, s, _rot.value, _centre, _radius, _sel, left: left)),
               ),
             ),
           ),
         ),
-        Positioned(left: 8, top: 4, child: _SpinButton(icon: Icons.rotate_left, tip: 'Previous topic', onTap: () => _snapTo(_rot.value + step))),
-        Positioned(right: 8, top: 4, child: _SpinButton(icon: Icons.rotate_right, tip: 'Next topic', onTap: () => _snapTo(_rot.value - step))),
+        Positioned(left: 8, top: left ? 12 : 4, child: _SpinButton(icon: Icons.rotate_left, tip: 'Previous topic', onTap: () => _snapTo(_rot.value + step))),
+        Positioned(
+          right: left ? null : 8, left: left ? 8 : null, top: left ? null : 4, bottom: left ? 12 : null,
+          child: _SpinButton(icon: Icons.rotate_right, tip: 'Next topic', onTap: () => _snapTo(_rot.value - step)),
+        ),
         Positioned(
           left: 0, right: 0, top: 0,
           child: IgnorePointer(
@@ -504,7 +592,7 @@ class _SpinWheelState extends State<_SpinWheel> with SingleTickerProviderStateMi
                   child: Row(mainAxisSize: MainAxisSize.min, children: [
                     Icon(Icons.swipe, size: 16, color: Colors.white),
                     SizedBox(width: 6),
-                    Text('Swipe to spin', style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w700)),
+                    Text(left ? 'Swipe up or down to spin' : 'Swipe to spin', style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w700)),
                   ]),
                 ),
               ),
@@ -536,7 +624,8 @@ class _WheelPainter extends CustomPainter {
   final Offset c;
   final double r;
   final int sel;
-  _WheelPainter(this.panels, this.s, this.rot, this.c, this.r, this.sel);
+  final bool left;
+  _WheelPainter(this.panels, this.s, this.rot, this.c, this.r, this.sel, {this.left = false});
 
   void _arcText(Canvas canvas, double radius, double mid, String text, TextStyle style, double maxArc) {
     var tps = [for (final ch in text.characters) TextPainter(text: TextSpan(text: ch, style: style), textDirection: TextDirection.ltr)..layout()];
@@ -563,6 +652,13 @@ class _WheelPainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     final n = panels.length, step = 2 * math.pi / n;
     final rim = r * 0.12, hub = r * 0.4, face = r - rim;
+    if (left) {
+      // Same drawing as the bottom wheel, turned so the top faces right.
+      canvas.save();
+      canvas.translate(c.dx, c.dy);
+      canvas.rotate(math.pi / 2);
+      canvas.translate(-c.dx, -c.dy);
+    }
     for (var i = 0; i < n; i++) {
       final a0 = -math.pi / 2 + rot + i * step - step / 2;
       final path = Path()
@@ -614,12 +710,6 @@ class _WheelPainter extends CustomPainter {
     for (final dx in [-hub * 0.09, hub * 0.09]) {
       canvas.drawOval(Rect.fromCenter(center: Offset(c.dx + dx, c.dy - hub * 0.2), width: hub * 0.06, height: hub * 0.035), Paint()..color = kHubRim);
     }
-    final spin = TextPainter(
-      text: TextSpan(text: 'SPIN', style: GoogleFonts.lora(fontSize: r * 0.075, fontWeight: FontWeight.w700, color: Colors.white, letterSpacing: 1.5)),
-      textDirection: TextDirection.ltr,
-    )..layout();
-    spin.paint(canvas, Offset(c.dx - spin.width / 2, c.dy - hub * 0.46 - spin.height / 2));
-
     final top = Offset(c.dx, c.dy - r - 4);
     final tri = Path()
       ..moveTo(top.dx - 11, top.dy - 12)
@@ -628,6 +718,15 @@ class _WheelPainter extends CustomPainter {
       ..close();
     canvas.drawPath(tri, Paint()..color = kPrimary);
     canvas.drawPath(tri, Paint()..color = Colors.white..style = PaintingStyle.stroke..strokeWidth = 2);
+    if (left) canvas.restore();
+    final spin = TextPainter(
+      text: TextSpan(text: 'SPIN', style: GoogleFonts.lora(fontSize: r * 0.075, fontWeight: FontWeight.w700, color: Colors.white, letterSpacing: 1.5)),
+      textDirection: TextDirection.ltr,
+    )..layout();
+    // Upright on both wheels: above the centre on the bottom wheel, right of it on the left wheel.
+    final at = left ? Offset(c.dx + hub * 0.5, c.dy) : Offset(c.dx, c.dy - hub * 0.46);
+    spin.paint(canvas, at - Offset(spin.width / 2, spin.height / 2));
+
   }
 
   @override
@@ -707,6 +806,7 @@ void showDailyQuestion(BuildContext context) {
                       ? null
                       : () {
                           setD(() => picked = i);
+                          i == q.answer ? Sfx.correct() : Sfx.wrong();
                           s.answerDaily(i == q.answer);
                         },
                   child: Row(children: [

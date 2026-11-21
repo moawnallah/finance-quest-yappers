@@ -58,11 +58,12 @@ class Api {
     await prefs.remove(_tokenKey);
   }
 
-  Future<dynamic> _send(String method, String path, {Object? body, String? token}) async {
+  Future<dynamic> _send(String method, String path, {Object? body, String? token, String? adminKey}) async {
     final uri = Uri.parse('$baseUrl$path');
     final headers = {
       'Content-Type': 'application/json',
       if (token != null) 'Authorization': 'Bearer $token',
+      if (adminKey != null) 'X-Admin-Key': adminKey,
     };
     final http.Response r;
     try {
@@ -88,6 +89,20 @@ class Api {
       await reset(); // the backend lost the session (e.g. a fresh database): start a new one once
       return _send(method, path, body: body, token: await _session(name));
     }
+  }
+
+  /// Admin monitoring (GET /admin/...). The key travels in the X-Admin-Key
+  /// header only, never in the URL.
+  Future<Map<String, dynamic>> admin(String path, String key) async =>
+      Map<String, dynamic>.from(await _send('GET', '/admin/$path', adminKey: key));
+
+  /// The AI tutor (POST /tutor, docs/tutor_agent.md section 5). Returns the
+  /// tutor's text. Throws when the backend has no tutor yet; the app then
+  /// answers from the stored explanation.
+  Future<({String text, String? mermaid})> tutor(String name,
+      {required String mode, required String message, Map<String, dynamic>? context, List<Map<String, String>> history = const []}) async {
+    final r = Map<String, dynamic>.from(await _authed('POST', '/tutor', name, body: {'mode': mode, 'message': message, 'context': context, 'history': history}));
+    return (text: (r['text'] as String?) ?? '', mermaid: r['mermaid'] as String?);
   }
 
   // ---------- skills (task engines) ----------

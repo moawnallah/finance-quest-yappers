@@ -1,6 +1,7 @@
 // Progress: today's goal, level, the three badges, the quick-check retest,
 // and how Scales are earned. The league has its own tab.
 
+import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
@@ -87,6 +88,8 @@ class ProgressScreen extends StatelessWidget {
             ),
         ]),
         SizedBox(height: 16),
+        _Calibration(points: s.calibration),
+        SizedBox(height: 16),
         Panel(
           child: Row(children: [
             Icon(Icons.quiz_outlined, color: kPrimaryText),
@@ -126,6 +129,79 @@ class ProgressScreen extends StatelessWidget {
               ScaleIcon(size: 14),
             ]),
           ),
+      ]),
+    );
+  }
+}
+
+/// Confidence vs correctness: how sure the user said they were (1-5) against
+/// the score they actually got, one dot per finished mission. The dashed line
+/// is perfect self-assessment (sure 1 = 20%, sure 5 = 100%).
+class _Calibration extends StatelessWidget {
+  final List<(String, double, double)> points;
+  _Calibration({required this.points});
+
+  @override
+  Widget build(BuildContext context) {
+    String verdict = 'Finish a mission and answer "How sure are you?" to see how well your confidence matches your results.';
+    if (points.isNotEmpty) {
+      final gap = points.map((p) => p.$2 * 20 - p.$3 * 100).reduce((a, b) => a + b) / points.length;
+      verdict = gap > 15
+          ? 'You tend to feel surer than your results. Slow down on questions you feel certain about.'
+          : gap < -15
+              ? 'You know more than you think. Trust yourself a little more.'
+              : 'Your confidence matches your results well.';
+    }
+    return Panel(
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Text('How well do you know what you know?', style: TextStyle(fontWeight: FontWeight.w700, color: kInk)),
+        SizedBox(height: 4),
+        Text(verdict, style: TextStyle(color: kBody, height: 1.35)),
+        SizedBox(height: 12),
+        SizedBox(
+          height: 200,
+          child: LineChart(
+            LineChartData(
+              minX: 1, maxX: 5, minY: 0, maxY: 100,
+              gridData: FlGridData(show: true, horizontalInterval: 25, verticalInterval: 1, getDrawingHorizontalLine: (_) => FlLine(color: kLine, strokeWidth: 1), getDrawingVerticalLine: (_) => FlLine(color: kLine, strokeWidth: 1)),
+              borderData: FlBorderData(show: false),
+              lineTouchData: LineTouchData(enabled: false),
+              titlesData: FlTitlesData(
+                topTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                rightTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                bottomTitles: AxisTitles(
+                  axisNameWidget: Text('How sure you were', style: TextStyle(fontSize: 11, color: kMuted)),
+                  sideTitles: SideTitles(showTitles: true, interval: 1, reservedSize: 22, getTitlesWidget: (v, m) => Text('${v.toInt()}', style: TextStyle(fontSize: 11, color: kMuted))),
+                ),
+                leftTitles: AxisTitles(
+                  axisNameWidget: Text('Score', style: TextStyle(fontSize: 11, color: kMuted)),
+                  sideTitles: SideTitles(showTitles: true, interval: 25, reservedSize: 34, getTitlesWidget: (v, m) => Text('${v.toInt()}%', style: TextStyle(fontSize: 10, color: kMuted))),
+                ),
+              ),
+              lineBarsData: [
+                // Perfect self-assessment.
+                LineChartBarData(spots: [FlSpot(1, 20), FlSpot(5, 100)], color: kFaint, barWidth: 1.5, dashArray: [6, 4], dotData: FlDotData(show: false)),
+                // One dot per mission.
+                LineChartBarData(
+                  spots: [for (final p in points) FlSpot(p.$2.clamp(1, 5).toDouble(), (p.$3 * 100).clamp(0, 100).toDouble())],
+                  color: Colors.transparent,
+                  barWidth: 0,
+                  dotData: FlDotData(show: true, getDotPainter: (s, _, __, ___) => FlDotCirclePainter(radius: 6, color: kPrimary, strokeWidth: 2, strokeColor: Colors.white)),
+                ),
+              ],
+            ),
+          ),
+        ),
+        SizedBox(height: 6),
+        Row(children: [
+          Container(width: 10, height: 10, decoration: BoxDecoration(color: kPrimary, shape: BoxShape.circle)),
+          SizedBox(width: 6),
+          Text('A mission', style: TextStyle(fontSize: 11, color: kMuted)),
+          SizedBox(width: 14),
+          Container(width: 16, height: 2, color: kFaint),
+          SizedBox(width: 6),
+          Text('Confidence matches the score', style: TextStyle(fontSize: 11, color: kMuted)),
+        ]),
       ]),
     );
   }

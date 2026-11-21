@@ -6,6 +6,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart' show rootBundle;
 import '../models/content.dart';
 import 'api.dart';
+import 'sfx.dart';
 
 class Profile {
   String name = 'You';
@@ -77,7 +78,21 @@ const panelQuestions = {
   'PROTECTION': 'Who is on my side, and who is not?',
 };
 
+/// What the tutor chat knows when it is opened from a question.
+class TutorContext {
+  final String? node, taskId;
+  final String question;
+  final String? picked, correct, explanation;
+  final bool? wasRight;
+  TutorContext({this.node, this.taskId, required this.question, this.picked, this.correct, this.explanation, this.wasRight});
+  Map<String, dynamic> toJson() => {
+        'node': node, 'task_id': taskId, 'question': question, 'picked': picked,
+        'correct': correct, 'explanation': explanation, 'was_right': wasRight,
+      };
+}
+
 class AppState extends ChangeNotifier {
+  TutorContext? tutorContext;
   /// Backend client for the Skills screens (task engines). Scoring happens on the server.
   Api api = Api();
   Roadmap? roadmap;
@@ -158,6 +173,18 @@ class AppState extends ChangeNotifier {
   }
 
   // ---- Badges: earning one queues it, and the shell shows a dialog.
+  /// Confidence vs correctness: one point per finished mission run, with the
+  /// average "How sure are you?" answer (1-5) and the average score (0-1).
+  final List<(String, double, double)> calibration = [];
+  void addCalibration(String title, double confidence, double score) {
+    calibration.add((title, confidence, score));
+    notifyListeners();
+  }
+
+  /// Questions finished per mission, so leaving and coming back resumes.
+  final Map<String, Set<String>> answeredInMission = {};
+  void markAnswered(String skill, String taskId) => answeredInMission.putIfAbsent(skill, () => {}).add(taskId);
+
   String? pendingBadge;
   void earn(String id) {
     if (badges.add(id)) {
@@ -282,10 +309,34 @@ class AppState extends ChangeNotifier {
   void earnBadge(String id) { badges.add(id); notifyListeners(); }
   void setDailyGoal(int v) { dailyGoal = v; notifyListeners(); }
   void setLargeText(bool v) { largeText = v; notifyListeners(); }
+  bool soundOn = true;
+  void setSound(bool v) { soundOn = v; Sfx.enabled = v; notifyListeners(); }
   void setListView(bool v) { listView = v; notifyListeners(); }
   void setThemeMode(String m) { themeMode = m; notifyListeners(); }
   bool signedIn = false;
   void signIn(String name) { signedIn = true; profile.name = name; notifyListeners(); }
+
+  /// Admin emails (build setting ADMIN_EMAILS, comma separated). Signing in
+  /// with one shows the admin panel. Demo only: the backend must check this too.
+  static const adminEmails = String.fromEnvironment('ADMIN_EMAILS', defaultValue: 'admin@crococash.xyz');
+  String? email;
+  bool isAdmin = false;
+  bool guest = false;
+
+  void signInWithEmail(String e) {
+    email = e.toLowerCase();
+    isAdmin = adminEmails.split(',').map((x) => x.trim().toLowerCase()).contains(email);
+    guest = false;
+    signIn(e.split('@').first);
+  }
+
+  void signInAsGuest() {
+    guest = true;
+    isAdmin = false;
+    signedIn = false;
+    profile.name = 'Guest';
+    notifyListeners();
+  }
   void signOut() { signedIn = false; profile.name = 'You'; api.reset(); notifyListeners(); }
   void markCoachSeen() { coachSeen = true; notifyListeners(); }
   void notify() => notifyListeners();

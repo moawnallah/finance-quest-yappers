@@ -9,6 +9,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:provider/provider.dart';
 import '../data/app_state.dart';
+import '../data/sfx.dart';
 import '../widgets/common.dart';
 
 /// Loads the draft plan task for a skill, or null when it has none.
@@ -51,6 +52,7 @@ class _StepsScreenState extends State<StepsScreen> {
     final wrong = plan.where(traps.contains).length;
     score = ((lcs[n][m] / m) - 0.25 * wrong).clamp(0, 1).toDouble();
     setState(() => submitted = true);
+    score >= 0.8 ? Sfx.correct() : Sfx.wrong();
     if (score >= 0.8) context.read<AppState>().addXp(Rewards.correctAnswer);
   }
 

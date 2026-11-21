@@ -1,8 +1,10 @@
 import 'dart:math' as math;
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../data/app_state.dart';
+import '../data/sfx.dart';
 
 // Palette from the Figma frames (docs/design/Lightmode.pdf and Darkmode.pdf):
 // greens on white in light mode, greens on near-black in dark mode.
@@ -48,6 +50,20 @@ Color get kNavBand => _p(0xFFB8EEA5, 0xFF47673C);
 Color riskColor(int risk) => [
       Color(0xFF1F7A55), Color(0xFF3D8B5E), Color(0xFF8A7A1E), Color(0xFFB8551A), Color(0xFF7F1D1D)
     ][(risk - 1).clamp(0, 4)];
+
+/// Web on a wide screen (desktop browser): use the whole window. Phones and
+/// narrow windows keep the phone layout.
+bool isWideWeb(BuildContext context) => kIsWeb && MediaQuery.sizeOf(context).width >= 900;
+
+/// Centres a page in a readable column on wide web; no change on phones.
+class PageWidth extends StatelessWidget {
+  final Widget child;
+  final double max;
+  PageWidth({super.key, required this.child, this.max = 860});
+  @override
+  Widget build(BuildContext context) =>
+      isWideWeb(context) ? Center(child: ConstrainedBox(constraints: BoxConstraints(maxWidth: max), child: child)) : child;
+}
 
 /// Top header shown on every main screen: current level with progress to the
 /// next one, streak and Scales on the left, the user's avatar on the right
@@ -96,6 +112,8 @@ class StatsBar extends StatelessWidget implements PreferredSizeWidget {
           SizedBox(width: 2),
         ],
         Expanded(
+          child: GestureDetector(
+          onTap: () => GoRouter.of(context).go('/progress'),
           child: Container(
             padding: EdgeInsets.fromLTRB(14, 8, 12, 8),
             decoration: BoxDecoration(
@@ -134,6 +152,7 @@ class StatsBar extends StatelessWidget implements PreferredSizeWidget {
               SizedBox(height: 2),
               Text(next == null ? 'Top level' : '${next.minXp - s.xp} Scales to ${next.name}', style: TextStyle(fontSize: 10, color: kMuted)),
             ]),
+          ),
           ),
         ),
         SizedBox(width: 12),
@@ -175,17 +194,36 @@ class StatsBar extends StatelessWidget implements PreferredSizeWidget {
 void showSettingsSheet(BuildContext context) {
   showModalBottomSheet(
     context: context,
-    showDragHandle: true,
     isScrollControlled: true,
-    backgroundColor: kBg,
+    // The sheet paints its own background (below) so it follows a theme switch
+    // made from inside the sheet; a fixed backgroundColor would stay stale.
+    backgroundColor: Colors.transparent,
     builder: (ctx) => Consumer<AppState>(builder: (ctx, s, _) {
       final p = s.profile;
-      return SafeArea(
+      return AnimatedContainer(
+        duration: Duration(milliseconds: 200),
+        decoration: BoxDecoration(color: kBg, borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+        child: SafeArea(
         child: Padding(
-          padding: EdgeInsets.fromLTRB(20, 0, 20, 20),
+          padding: EdgeInsets.fromLTRB(20, 10, 20, 20),
           child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Center(child: Container(width: 36, height: 4, margin: EdgeInsets.only(bottom: 14), decoration: BoxDecoration(color: kBorder, borderRadius: BorderRadius.circular(2)))),
             Text(p.name, style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: kInk)),
             Text('Goal: ${p.goal} · ${p.horizonYears} years', style: TextStyle(color: kMuted)),
+            if (s.isAdmin) ...[
+              SizedBox(height: 10),
+              ListTile(
+                contentPadding: EdgeInsets.zero,
+                leading: Icon(Icons.admin_panel_settings_outlined, color: kPrimaryText),
+                title: Text('Admin panel'),
+                subtitle: Text('Logs, events and tutor calls'),
+                trailing: Icon(Icons.chevron_right),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  GoRouter.of(context).push('/admin');
+                },
+              ),
+            ],
             SizedBox(height: 16),
             Text('Appearance', style: TextStyle(fontWeight: FontWeight.w700, color: kInk)),
             SizedBox(height: 8),
@@ -200,6 +238,7 @@ void showSettingsSheet(BuildContext context) {
               onSelectionChanged: (v) => s.setThemeMode(v.first),
             ),
             SizedBox(height: 12),
+            SwitchListTile(contentPadding: EdgeInsets.zero, title: Text('Sound effects'), value: s.soundOn, onChanged: s.setSound),
             SwitchListTile(contentPadding: EdgeInsets.zero, title: Text('Larger text'), value: s.largeText, onChanged: s.setLargeText),
             SwitchListTile(contentPadding: EdgeInsets.zero, title: Text('List instead of the wheel'), value: s.listView, onChanged: s.setListView),
             SizedBox(height: 8),
@@ -207,6 +246,7 @@ void showSettingsSheet(BuildContext context) {
             SizedBox(height: 8),
             DailyGoalPicker(),
           ]),
+        ),
         ),
       );
     }),
@@ -390,10 +430,13 @@ class Panel extends StatelessWidget {
 /// (Gemini, education only, labelled as AI); here it shows the stored "why".
 class TutorBubble extends StatelessWidget {
   final String text;
-  TutorBubble({super.key, required this.text});
+  final VoidCallback? onAsk; // opens the tutor chat about this question
+  TutorBubble({super.key, required this.text, this.onAsk});
 
   @override
-  Widget build(BuildContext context) => Panel(
+  Widget build(BuildContext context) => onAsk == null ? _panel() : InkWell(borderRadius: BorderRadius.circular(16), onTap: onAsk, child: _panel());
+
+  Widget _panel() => Panel(
         border: kTutorBorder,
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           Row(children: [
@@ -405,6 +448,16 @@ class TutorBubble extends StatelessWidget {
           ]),
           SizedBox(height: 6),
           Text(text, style: TextStyle(height: 1.45, color: kBody)),
+          if (onAsk != null) ...[
+            SizedBox(height: 10),
+            Row(children: [
+              Icon(Icons.chat_bubble_outline, size: 16, color: kPrimaryText),
+              SizedBox(width: 6),
+              Text('Ask the tutor about this', style: TextStyle(fontWeight: FontWeight.w700, color: kPrimaryText)),
+              Spacer(),
+              Icon(Icons.chevron_right, color: kPrimaryText),
+            ]),
+          ],
         ]),
       );
 }
@@ -488,6 +541,7 @@ class _BadgeWatcherState extends State<BadgeWatcher> {
         final ctx = widget.navigatorKey.currentContext;
         s.clearPendingBadge();
         if (ctx != null) {
+          Sfx.badge();
           final b = badgeDefs.firstWhere((x) => x.id == id);
           await showDialog(
             context: ctx,

@@ -48,7 +48,7 @@ class _LeagueScreenState extends State<LeagueScreen> {
       appBar: StatsBar(title: '$viewing league', subtitle: own ? 'Your league' : null),
       body: Column(children: [
         Padding(
-          padding: EdgeInsets.fromLTRB(20, 0, 20, 10),
+          padding: EdgeInsets.fromLTRB(20, 12, 20, 12),
           child: SegmentedButton<String>(
             showSelectedIcon: false,
             segments: [

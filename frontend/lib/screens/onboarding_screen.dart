@@ -1,4 +1,3 @@
-import 'dart:math' as math;
 // Onboarding: a step-by-step flow with a progress bar (idea borrowed from Finanz),
 // with sign-in (Google or email link) first, then a few questions. No surname,
 // phone, review prompt or countdown offers.
@@ -91,75 +90,143 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   }
 }
 
-/// Landing page: one screen, no scrolling. Logo, a single message, three
-/// short value points and one sign-in action.
-class _Welcome extends StatelessWidget {
+/// Landing page: compact sign-in. Email and password (demo: any password of
+/// six or more characters), Google (demo), or continue as a guest. Signing in
+/// with an admin email also unlocks the admin panel.
+class _Welcome extends StatefulWidget {
   final VoidCallback onStart;
   _Welcome({required this.onStart});
+  @override
+  State<_Welcome> createState() => _WelcomeState();
+}
 
-  Widget _point(IconData icon, String text) => Padding(
-        padding: EdgeInsets.symmetric(vertical: 7),
-        child: Row(children: [
-          Icon(icon, size: 20, color: kPrimaryText),
-          SizedBox(width: 12),
-          Expanded(child: Text(text, style: TextStyle(fontSize: 15, color: kBody))),
-        ]),
+class _WelcomeState extends State<_Welcome> {
+  final _email = TextEditingController();
+  final _password = TextEditingController();
+  bool _hide = true;
+  String? _error;
+
+  @override
+  void dispose() {
+    _email.dispose();
+    _password.dispose();
+    super.dispose();
+  }
+
+  void _signIn() {
+    final email = _email.text.trim();
+    final ok = RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$').hasMatch(email);
+    if (!ok) return setState(() => _error = 'Enter a valid email address.');
+    if (_password.text.length < 6) return setState(() => _error = 'The password needs at least 6 characters.');
+    setState(() => _error = null);
+    context.read<AppState>().signInWithEmail(email);
+    widget.onStart();
+  }
+
+  InputDecoration _field(String label, IconData icon, {Widget? suffix}) => InputDecoration(
+        labelText: label,
+        prefixIcon: Icon(icon, size: 20),
+        suffixIcon: suffix,
+        filled: true,
+        fillColor: kSurface,
+        isDense: true,
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
       );
 
   @override
   Widget build(BuildContext context) => LayoutBuilder(builder: (context, c) {
-        final compact = c.maxHeight < 640;
-        return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-          SizedBox(height: compact ? 4 : 12),
-          // Logo: crocodile eyes over the wordmark.
-          Row(children: [
-            Container(
-              width: 40, height: 40,
-              decoration: BoxDecoration(color: kPrimary, borderRadius: BorderRadius.circular(11)),
-              alignment: Alignment.bottomCenter,
-              child: Padding(padding: EdgeInsets.only(bottom: 9), child: CrocoEyes(width: 28)),
+        return SingleChildScrollView(
+          child: ConstrainedBox(
+            constraints: BoxConstraints(minHeight: c.maxHeight),
+            child: IntrinsicHeight(
+              child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+                SizedBox(height: 8),
+                Row(children: [
+                  Container(
+                    width: 40, height: 40,
+                    decoration: BoxDecoration(color: kPrimary, borderRadius: BorderRadius.circular(11)),
+                    alignment: Alignment.bottomCenter,
+                    child: Padding(padding: EdgeInsets.only(bottom: 9), child: CrocoEyes(width: 28)),
+                  ),
+                  SizedBox(width: 10),
+                  Text('CrocoCash', style: GoogleFonts.lora(fontSize: 22, fontWeight: FontWeight.w700, color: kInk)),
+                ]),
+                Spacer(),
+                Text('Invest with confidence.', style: GoogleFonts.lora(fontSize: 32, fontWeight: FontWeight.w700, color: kInk, height: 1.1)),
+                SizedBox(height: 8),
+                Text('Short, practical lessons on investment types, for every stage of life.',
+                    style: TextStyle(fontSize: 16, color: kMuted, height: 1.4)),
+                SizedBox(height: 24),
+                TextField(
+                  controller: _email,
+                  keyboardType: TextInputType.emailAddress,
+                  autofillHints: [AutofillHints.email],
+                  textInputAction: TextInputAction.next,
+                  decoration: _field('Email', Icons.mail_outline),
+                ),
+                SizedBox(height: 10),
+                TextField(
+                  controller: _password,
+                  obscureText: _hide,
+                  autofillHints: [AutofillHints.password],
+                  onSubmitted: (_) => _signIn(),
+                  decoration: _field('Password', Icons.lock_outline,
+                      suffix: IconButton(
+                        tooltip: _hide ? 'Show password' : 'Hide password',
+                        icon: Icon(_hide ? Icons.visibility_outlined : Icons.visibility_off_outlined, size: 20),
+                        onPressed: () => setState(() => _hide = !_hide),
+                      )),
+                ),
+                if (_error != null) ...[
+                  SizedBox(height: 8),
+                  Text(_error!, style: TextStyle(color: kRed, fontSize: 13)),
+                ],
+                SizedBox(height: 12),
+                FilledButton(onPressed: _signIn, child: Text('Sign in')),
+                SizedBox(height: 14),
+                Row(children: [
+                  Expanded(child: Divider(color: kLine)),
+                  Padding(padding: EdgeInsets.symmetric(horizontal: 10), child: Text('or', style: TextStyle(color: kMuted))),
+                  Expanded(child: Divider(color: kLine)),
+                ]),
+                SizedBox(height: 14),
+                OutlinedButton(
+                  style: OutlinedButton.styleFrom(
+                    minimumSize: Size.fromHeight(52),
+                    backgroundColor: kSurface,
+                    side: BorderSide(color: kBorder),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                  ),
+                  onPressed: () async {
+                    if (await googleSignInDemo(context)) widget.onStart();
+                  },
+                  child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+                    GoogleG(size: 20),
+                    SizedBox(width: 12),
+                    Text('Continue with Google', style: TextStyle(fontSize: 16, color: kInk, fontWeight: FontWeight.w600)),
+                  ]),
+                ),
+                SizedBox(height: 4),
+                TextButton(
+                  onPressed: () {
+                    context.read<AppState>().signInAsGuest();
+                    widget.onStart();
+                  },
+                  child: Text('Continue as guest'),
+                ),
+                SizedBox(height: 8),
+                Row(children: [
+                  Expanded(child: _StoreButton(icon: Icons.apple, small: 'Download on the', big: 'App Store')),
+                  SizedBox(width: 10),
+                  Expanded(child: _StoreButton(icon: Icons.play_arrow_rounded, small: 'Get it on', big: 'Google Play')),
+                ]),
+                Spacer(),
+                Text('Educational content, not financial advice.', textAlign: TextAlign.center, style: TextStyle(fontSize: 12, color: kMuted)),
+                SizedBox(height: 4),
+              ]),
             ),
-            SizedBox(width: 10),
-            Text('CrocoCash', style: GoogleFonts.lora(fontSize: 22, fontWeight: FontWeight.w700, color: kInk)),
-          ]),
-          Spacer(flex: 3),
-          Text('Invest with\nconfidence.',
-              style: GoogleFonts.lora(fontSize: compact ? 36 : 44, fontWeight: FontWeight.w700, color: kInk, height: 1.08)),
-          SizedBox(height: 14),
-          Text('Short, practical lessons on investment types, for every stage of life. '
-              'Learn how stocks, bonds and funds work, what they cost and how bumpy they can be, '
-              'so your first step is an informed one.',
-              style: TextStyle(fontSize: 17, color: kMuted, height: 1.45)),
-          SizedBox(height: compact ? 20 : 32),
-          Align(alignment: Alignment.centerLeft, child: Container(width: 40, height: 3, decoration: BoxDecoration(color: kPrimary, borderRadius: BorderRadius.circular(2)))),
-          SizedBox(height: compact ? 12 : 20),
-          _point(Icons.schedule, 'Five minutes a day'),
-          _point(Icons.account_tree_outlined, 'A clear path, from calm to wild'),
-          _point(Icons.verified_outlined, 'Education only, never sales'),
-          SizedBox(height: 12),
-          // A quiet preview of the home wheel, peeking up from the bottom.
-          Expanded(flex: 4, child: ExcludeSemantics(child: CustomPaint(painter: _WheelPeekPainter(), size: Size.infinite))),
-          SizedBox(height: 12),
-          OutlinedButton(
-            style: OutlinedButton.styleFrom(
-              minimumSize: Size.fromHeight(54),
-              backgroundColor: kSurface,
-              side: BorderSide(color: kBorder),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-            ),
-            onPressed: () async {
-              if (await googleSignInDemo(context)) onStart();
-            },
-            child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-              GoogleG(size: 20),
-              SizedBox(width: 12),
-              Text('Continue with Google', style: TextStyle(fontSize: 16, color: kInk, fontWeight: FontWeight.w600)),
-            ]),
           ),
-          SizedBox(height: 14),
-          Text('Educational content, not financial advice.', textAlign: TextAlign.center, style: TextStyle(fontSize: 12, color: kMuted)),
-          SizedBox(height: 4),
-        ]);
+        );
       });
 }
 
@@ -245,45 +312,41 @@ class _Confidence extends StatelessWidget {
       ]);
 }
 
-/// Decorative half wheel for the landing page: the same green slices, rim and
-/// crocodile hub as the home screen, without labels.
-class _WheelPeekPainter extends CustomPainter {
+/// Store download button. The apps are not listed yet, so it says so.
+class _StoreButton extends StatelessWidget {
+  final IconData icon;
+  final String small, big;
+  _StoreButton({required this.icon, required this.small, required this.big});
   @override
-  void paint(Canvas canvas, Size size) {
-    if (size.height < 60) return;
-    canvas.clipRect(Offset.zero & size); // stay inside the space above the button
-    final r = math.min(size.width * 0.5, size.height * 0.95);
-    final c = Offset(size.width / 2, size.height + r * 0.05);
-    const n = 13;
-    final step = 2 * math.pi / n, rim = r * 0.12, hub = r * 0.38, face = r - rim;
-    for (var i = 0; i < n; i++) {
-      final a0 = -math.pi / 2 + i * step - step / 2;
-      final path = Path()
-        ..arcTo(Rect.fromCircle(center: c, radius: face), a0, step, true)
-        ..arcTo(Rect.fromCircle(center: c, radius: hub), a0 + step, -step, false)
-        ..close();
-      canvas.drawPath(path, Paint()..color = i == 0 ? kWheelFaceSel : kWheelFace);
-      final dir = Offset(math.cos(a0), math.sin(a0));
-      canvas.drawLine(c + dir * hub, c + dir * face, Paint()..color = kWheelLine..strokeWidth = 2);
-    }
-    canvas.drawCircle(c, r - rim / 2, Paint()..color = kWheelRim..style = PaintingStyle.stroke..strokeWidth = rim);
-    canvas.drawCircle(c, hub, Paint()..color = kHub);
-    canvas.drawCircle(c, hub - 3, Paint()..color = kHubRim..style = PaintingStyle.stroke..strokeWidth = 5);
-    paintCrocoEyes(canvas, Offset(c.dx, c.dy - hub + hub * 0.12), hub * 0.95, kHub);
-    // Pointer at the top.
-    final top = Offset(c.dx, c.dy - r - 3);
-    canvas.drawPath(
-        Path()
-          ..moveTo(top.dx - 9, top.dy - 10)
-          ..lineTo(top.dx + 9, top.dy - 10)
-          ..lineTo(top.dx, top.dy + 3)
-          ..close(),
-        Paint()..color = kPrimary);
-    // Soft fade into the page at the bottom edge.
-    final fade = Rect.fromLTWH(0, size.height * 0.7, size.width, size.height * 0.3);
-    canvas.drawRect(fade, Paint()..shader = LinearGradient(begin: Alignment.topCenter, end: Alignment.bottomCenter, colors: [kBg.withValues(alpha: 0), kBg]).createShader(fade));
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter old) => true;
+  Widget build(BuildContext context) => Semantics(
+        button: true,
+        label: '$small $big',
+        excludeSemantics: true,
+        child: Material(
+          color: Colors.black,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+            side: BorderSide(color: appDark ? Colors.white38 : Colors.black), // visible on the dark background too
+          ),
+          child: InkWell(
+            borderRadius: BorderRadius.circular(10),
+            onTap: () => ScaffoldMessenger.of(context)
+              ..hideCurrentSnackBar()
+              ..showSnackBar(SnackBar(content: Text('CrocoCash is coming to the $big soon.'))),
+            child: Padding(
+              padding: EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+              child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+                Icon(icon, color: Colors.white, size: 26),
+                SizedBox(width: 6),
+                Flexible(
+                  child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisSize: MainAxisSize.min, children: [
+                    Text(small, style: TextStyle(color: Colors.white70, fontSize: 9.5, height: 1.1)),
+                    Text(big, maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.w700, height: 1.1)),
+                  ]),
+                ),
+              ]),
+            ),
+          ),
+        ),
+      );
 }

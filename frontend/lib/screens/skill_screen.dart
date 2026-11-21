@@ -36,8 +36,15 @@ class _SkillScreenState extends State<SkillScreen> {
   }
 
   /// The mission: the questions, then the chart task, then "build your plan".
+  /// Resumes after the last finished question; starts over once all are done.
   Future<void> _startMission(String title, List<String> ids) async {
-    if (ids.isNotEmpty) await context.push('/skill-run', extra: TaskRun(title: title, taskIds: ids));
+    final done = context.read<AppState>().answeredInMission[widget.nodeId] ?? {};
+    final left = [for (final i in ids) if (!done.contains(i)) i];
+    final run = left.isEmpty || left.length == ids.length
+        ? TaskRun(title: title, taskIds: ids, skill: widget.nodeId)
+        : TaskRun(title: title, taskIds: left, skill: widget.nodeId, doneBefore: ids.length - left.length);
+    if (left.isEmpty) context.read<AppState>().answeredInMission.remove(widget.nodeId);
+    if (ids.isNotEmpty) await context.push('/skill-run', extra: run);
     if (!mounted) return;
     await _plan();
     _reload();
@@ -95,12 +102,17 @@ class _SkillScreenState extends State<SkillScreen> {
             SizedBox(height: 14),
             FilledButton.icon(
               icon: Icon(st['done'] == true ? Icons.replay : Icons.play_arrow_rounded),
-              label: Text(st['done'] == true ? 'Play again' : (st['items_answered'] as num? ?? 0) > 0 ? 'Continue mission' : 'Start mission'),
+              label: Builder(builder: (context) {
+                final ids = [for (final i in items) i['id'] as String, for (final t in medium) t['id'] as String];
+                final done = (context.watch<AppState>().answeredInMission[widget.nodeId] ?? {}).where(ids.contains).length;
+                if (done > 0 && done < ids.length) return Text('Continue mission ($done of ${ids.length} done)');
+                return Text(st['done'] == true ? 'Play again' : 'Start mission');
+              }),
               onPressed: () => _startMission(title, [for (final i in items) i['id'] as String, for (final t in medium) t['id'] as String]),
             ),
             if (cards.isNotEmpty) ...[
               SizedBox(height: 24),
-              Text('Learn', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
+              Text('Learn objectives', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
               SizedBox(height: 8),
               for (final c in cards) ...[_LessonCard(card: c), SizedBox(height: 10)],
             ],
