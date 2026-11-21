@@ -1,6 +1,7 @@
-// Weekly league: its own tab. Swipe sideways through pages of 10 learners,
-// with page dots and arrows. Ranks Scales earned from learning only.
-// The other learners are demo data until the backend serves real rankings.
+// Weekly leagues: one per level (Beginner, Intermediate, Expert). You compete
+// in your level's league; the others can be viewed. Swipe sideways through
+// pages of 10 learners. Ranks Scales earned from learning only. The other
+// learners are demo data until the backend serves real rankings.
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -15,11 +16,15 @@ class LeagueScreen extends StatefulWidget {
 
 class _LeagueScreenState extends State<LeagueScreen> {
   static const perPage = 10;
-  final _pages = PageController();
+  PageController _pages = PageController();
   int _page = 0;
+  String? _viewing; // league shown; null = your own
 
-  // 29 demo learners with fixed scores, plus you.
-  static final _demo = [for (var i = 0; i < 29; i++) ('Learner ${i + 1}', 420 - i * 14 - (i % 3) * 3)];
+  // 29 demo learners per league, scored inside that level's range.
+  static List<(String, int)> _demo(int li) {
+    final top = [290, 990, 2400][li], floor = [0, 300, 1000][li];
+    return [for (var i = 0; i < 29; i++) ('Learner ${li * 29 + i + 1}', (top - i * (top - floor) ~/ 31 - (i % 3) * 2).clamp(floor, top))];
+  }
 
   @override
   void dispose() {
@@ -32,12 +37,34 @@ class _LeagueScreenState extends State<LeagueScreen> {
   @override
   Widget build(BuildContext context) {
     final s = context.watch<AppState>();
-    final rows = [..._demo, ('You', s.xp)]..sort((a, b) => b.$2.compareTo(a.$2));
+    final mine = s.level.name;
+    final viewing = _viewing ?? mine;
+    final li = levels.indexWhere((l) => l.name == viewing);
+    final own = viewing == mine;
+    final rows = [..._demo(li), if (own) ('You', s.xp)]..sort((a, b) => b.$2.compareTo(a.$2));
     final myRank = rows.indexWhere((r) => r.$1 == 'You');
     final pageCount = (rows.length / perPage).ceil();
     return Scaffold(
-      appBar: StatsBar(title: 'Weekly league', subtitle: 'Resets Monday'),
+      appBar: StatsBar(title: '$viewing league', subtitle: own ? 'Your league' : null),
       body: Column(children: [
+        Padding(
+          padding: EdgeInsets.fromLTRB(20, 0, 20, 10),
+          child: SegmentedButton<String>(
+            showSelectedIcon: false,
+            segments: [
+              for (final l in levels)
+                ButtonSegment(value: l.name, icon: l.name == mine ? Icon(Icons.person, size: 16) : null, label: Text(l.name, overflow: TextOverflow.ellipsis)),
+            ],
+            selected: {viewing},
+            onSelectionChanged: (v) => setState(() {
+              _viewing = v.first;
+              _page = 0;
+              _pages.dispose();
+              _pages = PageController();
+            }),
+          ),
+        ),
+        if (own)
         Padding(
           padding: EdgeInsets.fromLTRB(20, 0, 20, 8),
           child: Panel(
@@ -47,7 +74,7 @@ class _LeagueScreenState extends State<LeagueScreen> {
               ScaleIcon(size: 26),
               SizedBox(width: 10),
               Expanded(
-                child: Text('You are #${myRank + 1} of ${rows.length} with ${s.xp} Scales',
+                child: Text('You are #${myRank + 1} of ${rows.length} in the $mine league, with ${s.xp} Scales',
                     style: TextStyle(fontWeight: FontWeight.w700, color: kPrimaryText)),
               ),
               TextButton(onPressed: () => _go(myRank ~/ perPage), child: Text('Find me')),
@@ -56,6 +83,7 @@ class _LeagueScreenState extends State<LeagueScreen> {
         ),
         Expanded(
           child: PageView.builder(
+            key: ValueKey(viewing),
             controller: _pages,
             itemCount: pageCount,
             onPageChanged: (p) => setState(() => _page = p),
@@ -85,7 +113,7 @@ class _LeagueScreenState extends State<LeagueScreen> {
                     ),
                 ]),
                 SizedBox(height: 4),
-                Text('Ranks ${_page * perPage + 1}-${((_page + 1) * perPage).clamp(0, rows.length)} · demo players',
+                Text('$viewing league · ranks ${_page * perPage + 1}-${((_page + 1) * perPage).clamp(0, rows.length)} · demo players',
                     style: TextStyle(fontSize: 11, color: kMuted)),
               ]),
             ),
