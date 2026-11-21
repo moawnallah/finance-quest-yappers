@@ -11,7 +11,7 @@ feature uses them.
 
 Status: first version, 2026-11-21.
 - Implemented and tested: all four path sources and the portfolio.
-- Real data: none in `series.csv` yet, so replay and bootstrap are tested on
+- Real data: none in `series/data/` yet, so replay and bootstrap are tested on
   small tables built in the tests.
 
 Architecture: [architecture.md](architecture.md).
@@ -102,7 +102,7 @@ The series ids are examples; they must match `catalog.yaml`.
 
 ## Data needed
 
-These series go into `series/series.csv` and `catalog.yaml`, with the
+These series go into `series/data/<series_id>.csv` and `catalog.yaml`, with the
 licences checked (docs/task_engines.md):
 
 | Asset | Series | Source |

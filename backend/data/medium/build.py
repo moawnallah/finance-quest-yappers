@@ -39,7 +39,7 @@ def load_tasks(nodes_dir: Path) -> list[dict]:
 
 def build(nodes_dir: Path = NODES, series_dir: Path = SERIES, only: list[str] | None = None):
     """Returns [(task_id, record or None, Report)]."""
-    store = SeriesStore(series_dir / "series.csv", series_dir / "catalog.yaml")
+    store = SeriesStore(series_dir)
     sources = load_sources(nodes_dir.parent)
     results, seen = [], set()
     for task in load_tasks(nodes_dir):

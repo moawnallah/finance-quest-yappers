@@ -9,16 +9,18 @@ from sim.portfolio import portfolio_metrics
 
 
 def store_with(tmp_path, series: dict[str, list[float]], start=dt.date(2020, 1, 1)):
-    rows, catalog = [], {}
+    catalog = {}
+    (tmp_path / "data").mkdir()
     for sid, values in series.items():
+        rows = []
         for i, v in enumerate(values):
             d = dt.date(start.year + (start.month - 1 + i) // 12, (start.month - 1 + i) % 12 + 1, 1)
-            rows.append(f"{sid},{d.isoformat()},{v},Test,CC BY 4.0")
+            rows.append(f"{d.isoformat()},{v}")
+        (tmp_path / "data" / f"{sid}.csv").write_text("date,value\n" + "\n".join(rows) + "\n", encoding="utf-8")
         catalog[sid] = {"name": sid, "unit": "index", "frequency": "monthly", "source": "Test",
                         "licence": "CC BY 4.0", "display": True}
-    (tmp_path / "series.csv").write_text("series_id,date,value,source,licence\n" + "\n".join(rows) + "\n", encoding="utf-8")
     (tmp_path / "catalog.yaml").write_text(yaml.safe_dump(catalog), encoding="utf-8")
-    return SeriesStore(tmp_path / "series.csv", tmp_path / "catalog.yaml")
+    return SeriesStore(tmp_path)
 
 
 def test_replay_returns_by_hand(tmp_path):

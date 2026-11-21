@@ -1,6 +1,6 @@
-"""Convert the three downloaded files into series.csv rows. Run once by hand; no calls at runtime.
+"""Convert the three downloaded files into one CSV per series (date,value). Run once by hand; no calls at runtime.
 
-    python series/import_demo_series.py <raw_dir> series/series.csv
+    python series/import_demo_series.py <raw_dir> series/data
 
 <raw_dir> holds (downloaded 2026-11-21, not committed):
     gus/cpi.csv     GUS "Miesięczne wskaźniki cen ... od 1982 roku", CSV (cp1250), from
@@ -8,9 +8,11 @@
     nbp/rates.xml   https://static.nbp.pl/dane/stopy/stopy_procentowe_archiwum.xml
     oecd/share.csv  https://sdmx.oecd.org/public/rest/data/OECD.SDD.STES,DSD_STES@DF_FINMARK,/POL.M.SHARE.IX.....?startPeriod=2005-01&dimensionAtObservation=AllDimensions
                     (header Accept: application/vnd.sdmx.data+csv)
-Note: this rewrites the whole table; add other series to the script before running it again.
+It writes only gus_cpi_pl_m.csv, nbp_ref_rate_m.csv and oecd_share_prices_pl_m.csv; other files in the
+directory are left alone. Source and licence of each series are in catalog.yaml.
 """
 import sys, csv, datetime as dt, xml.etree.ElementTree as ET
+from pathlib import Path
 d, out = sys.argv[1], sys.argv[2]
 
 rows = []
@@ -35,8 +37,13 @@ for r in csv.DictReader(open(f"{d}/oecd/share.csv", encoding="utf-8", newline=""
     y, m = map(int, r["TIME_PERIOD"].split("-"))
     if r["REF_AREA"] == "POL" and r["MEASURE"] == "SHARE" and r["UNIT_MEASURE"] == "IX" and r["FREQ"] == "M" and 2005 <= y <= 2025:
         rows.append(("oecd_share_prices_pl_m", dt.date(y, m, 1), round(float(r["OBS_VALUE"]), 4), "OECD", "CC BY 4.0"))
-rows.sort(key=lambda r: (r[0], r[1]))
-with open(out, "w", newline="", encoding="utf-8") as f:
-    w = csv.writer(f, lineterminator="\n"); w.writerow(["series_id", "date", "value", "source", "licence"])
-    for r in rows: w.writerow([r[0], r[1].isoformat(), r[2], r[3], r[4]])
-from collections import Counter; print(Counter(r[0] for r in rows))
+by_series = {}
+for r in rows:
+    by_series.setdefault(r[0], []).append(r)
+Path(out).mkdir(parents=True, exist_ok=True)
+for sid, rs in by_series.items():
+    rs.sort(key=lambda r: r[1])
+    with open(Path(out) / f"{sid}.csv", "w", newline="", encoding="utf-8") as f:
+        w = csv.writer(f, lineterminator="\n"); w.writerow(["date", "value"])
+        for r in rs: w.writerow([r[1].isoformat(), r[2]])
+    print(sid, len(rs))

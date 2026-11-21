@@ -8,7 +8,50 @@
       "after": [],
       "status": "draft",
       "live": false,
-      "cards": [],
+      "cards": [
+        {
+          "id": "f1.c1",
+          "title": "Income minus costs is your surplus",
+          "body": "A budget starts with two lists: what comes in each month (net pay, after tax) and what goes out. Subtract the costs from the income. What is left is your surplus: the money you can save or invest. If it is negative, you are spending more than you earn, and the gap is paid by savings or debt.",
+          "example": "Net pay 5,800 PLN; rent 2,000, food 1,200, bills 500, transport 300, phone and internet 100. Costs 4,100 PLN, surplus 1,700 PLN.",
+          "links": [
+            {
+              "id": "cfpb_budgeting",
+              "title": "Budgeting: How to create a budget and stick with it (blog, 5 June 2019, archived)",
+              "publisher": "Consumer Financial Protection Bureau (US)",
+              "url": "https://www.consumerfinance.gov/about-us/blog/budgeting-how-to-create-a-budget-and-stick-with-it/"
+            }
+          ]
+        },
+        {
+          "id": "f1.c2",
+          "title": "Fixed and variable costs",
+          "body": "Fixed costs are the same every month: rent, a loan instalment, a subscription. Variable costs change: groceries, fuel, eating out. Fixed costs are hard to cut quickly, so they set the floor of your budget. Variable costs are where you can adjust when money is tight.",
+          "example": "If fixed costs are 3,000 PLN and variable costs 1,500 PLN, cutting variable costs by a fifth saves 300 PLN a month; fixed costs stay at 3,000.",
+          "links": [
+            {
+              "id": "fcac_budget",
+              "title": "Module 1: How do I prepare a budget?",
+              "publisher": "Financial Consumer Agency of Canada (Canada.ca)",
+              "url": "https://www.canada.ca/en/financial-consumer-agency/services/financial-basics/financial-basics-videos/financial-basics-video-budgeting.html"
+            }
+          ]
+        },
+        {
+          "id": "f1.c3",
+          "title": "Spread yearly costs over the months",
+          "body": "Some costs come once or twice a year: insurance, car service, school things, holidays. If you plan only for monthly bills, these feel like surprises. Divide each yearly cost by 12 and set that amount aside every month, so the money is there when the bill arrives.",
+          "example": "A 2,400 PLN yearly bill is 200 PLN a month. Three such bills add 600 PLN to your monthly costs.",
+          "links": [
+            {
+              "id": "fcac_budget",
+              "title": "Module 1: How do I prepare a budget?",
+              "publisher": "Financial Consumer Agency of Canada (Canada.ca)",
+              "url": "https://www.canada.ca/en/financial-consumer-agency/services/financial-basics/financial-basics-videos/financial-basics-video-budgeting.html"
+            }
+          ]
+        }
+      ],
       "items": [
         {
           "id": "f1.e1",
@@ -135,7 +178,11 @@
         "content_file": "F1.yaml",
         "author": "draft by Claude (AI), 2026-11-20",
         "reviewer": null,
-        "checked": {}
+        "checked": {
+          "f1.c1": "Arithmetic: 2,000 + 1,200 + 500 + 300 + 100 = 4,100; 5,800 - 4,100 = 1,700 (Claude, 2026-11-21).",
+          "f1.c2": "Arithmetic: 1,500 / 5 = 300 (Claude, 2026-11-21).",
+          "f1.c3": "Arithmetic: 2,400 / 12 = 200; 3 x 200 = 600 (Claude, 2026-11-21)."
+        }
       }
     },
     {
@@ -147,7 +194,55 @@
       ],
       "status": "draft",
       "live": false,
-      "cards": [],
+      "cards": [
+        {
+          "id": "f2.c1",
+          "title": "Inflation: the same money buys less",
+          "body": "Inflation is the rise in prices of what households buy. In Poland, the statistics office (GUS) measures it every month from a fixed basket of goods and services. When prices rise, each zloty buys a little less, even if the number on your account stays the same.",
+          "example": "In December 2019, prices in Poland were 3.4% higher than a year earlier (GUS). 100 PLN then bought what about 96.70 PLN had bought a year before.",
+          "links": [
+            {
+              "id": "gus_cpi",
+              "title": "Miesięczne wskaźniki cen towarów i usług konsumpcyjnych od 1982 roku (CPI, monthly)",
+              "publisher": "Główny Urząd Statystyczny (GUS)",
+              "url": "https://stat.gov.pl/obszary-tematyczne/ceny-handel/wskazniki-cen/wskazniki-cen-towarow-i-uslug-konsumpcyjnych-pot-inflacja-/miesieczne-wskazniki-cen-towarow-i-uslug-konsumpcyjnych-od-1982-roku"
+            },
+            {
+              "id": "ecb_what_is_inflation",
+              "title": "What is inflation?",
+              "publisher": "European Central Bank",
+              "url": "https://www.ecb.europa.eu/ecb-and-you/explainers/tell-me-more/html/what_is_inflation.en.html"
+            }
+          ]
+        },
+        {
+          "id": "f2.c2",
+          "title": "Real return: interest minus inflation",
+          "body": "What matters is not how much your balance grows, but how much more it can buy. A quick rule: real return is about the interest rate minus inflation. If inflation is higher than the rate you earn, your savings lose buying power even while the balance grows.",
+          "example": "An account pays 3% a year and prices rise 5%. 10,000 PLN becomes 10,300 PLN, but buys about 1.9% less than a year earlier.",
+          "links": []
+        },
+        {
+          "id": "f2.c3",
+          "title": "Reading the inflation number",
+          "body": "The headline inflation rate compares prices with the same month a year earlier. A rate of 3% means prices are 3% higher than twelve months ago, not that they rose 3% this month. When the rate falls, prices are still rising, only more slowly. Prices fall only when the rate is below zero.",
+          "example": "Poland, 2020 (GUS): the rate fell from 4.6% in March to 2.4% in December, yet prices in December were still 2.4% higher than a year earlier.",
+          "links": [
+            {
+              "id": "gus_cpi",
+              "title": "Miesięczne wskaźniki cen towarów i usług konsumpcyjnych od 1982 roku (CPI, monthly)",
+              "publisher": "Główny Urząd Statystyczny (GUS)",
+              "url": "https://stat.gov.pl/obszary-tematyczne/ceny-handel/wskazniki-cen/wskazniki-cen-towarow-i-uslug-konsumpcyjnych-pot-inflacja-/miesieczne-wskazniki-cen-towarow-i-uslug-konsumpcyjnych-od-1982-roku"
+            },
+            {
+              "id": "ecb_what_is_inflation",
+              "title": "What is inflation?",
+              "publisher": "European Central Bank",
+              "url": "https://www.ecb.europa.eu/ecb-and-you/explainers/tell-me-more/html/what_is_inflation.en.html"
+            }
+          ]
+        }
+      ],
       "items": [
         {
           "id": "f2.e1",
@@ -261,7 +356,11 @@
         "content_file": "F2.yaml",
         "author": "draft by Claude (AI), 2026-11-20",
         "reviewer": null,
-        "checked": {}
+        "checked": {
+          "f2.c1": "GUS CPI, same month previous year = 100: Dec 2019 = 103.4 (series/data/gus_cpi_pl_m.csv). 100 / 1.034 = 96.71 (Claude, 2026-11-21).",
+          "f2.c2": "1.03 / 1.05 - 1 = -1.90% (Claude, 2026-11-21).",
+          "f2.c3": "GUS CPI, same month previous year = 100: Mar 2020 = 104.6, Dec 2020 = 102.4 (series/data/gus_cpi_pl_m.csv). Uses 2019-2020 only, so it does not overlap the I2 Day-X chart window after its cutoff."
+        }
       }
     },
     {
@@ -273,7 +372,62 @@
       ],
       "status": "draft",
       "live": false,
-      "cards": [],
+      "cards": [
+        {
+          "id": "f3.c1",
+          "title": "Interest on interest",
+          "body": "With compound interest, the interest you earn is added to the balance, and next year it earns interest too. The growth starts slowly and then speeds up, because each year adds a percentage of a bigger amount. With simple interest, you earn the same amount every year.",
+          "example": "2,000 PLN at 6% a year for 10 years: about 3,582 PLN with interest added each year, 3,200 PLN if the interest is paid out.",
+          "links": [
+            {
+              "id": "sec_saving_investing_tips",
+              "title": "Tips for Teaching Students About Saving and Investing",
+              "publisher": "U.S. Securities and Exchange Commission",
+              "url": "https://www.sec.gov/investor/students/tips.htm"
+            },
+            {
+              "id": "stlfed_compound_interest",
+              "title": "How Does Compound Interest Work? (Open Vault blog, 12 September 2018)",
+              "publisher": "Federal Reserve Bank of St. Louis",
+              "url": "https://www.stlouisfed.org/open-vault/2018/september/how-compound-interest-works"
+            }
+          ]
+        },
+        {
+          "id": "f3.c2",
+          "title": "Time matters most",
+          "body": "Because growth speeds up over time, the years your money stays invested count more than the amount you add later. Starting early gives compounding more years to work. Waiting ten years can cost more than a much lower monthly amount would.",
+          "example": "200 PLN a month at 5% a year (added monthly) until 65: starting at 25 gives about 305,000 PLN from 96,000 paid in; starting at 35 gives about 166,000 PLN from 72,000.",
+          "links": [
+            {
+              "id": "sec_saving_investing_tips",
+              "title": "Tips for Teaching Students About Saving and Investing",
+              "publisher": "U.S. Securities and Exchange Commission",
+              "url": "https://www.sec.gov/investor/students/tips.htm"
+            },
+            {
+              "id": "stlfed_compound_interest",
+              "title": "How Does Compound Interest Work? (Open Vault blog, 12 September 2018)",
+              "publisher": "Federal Reserve Bank of St. Louis",
+              "url": "https://www.stlouisfed.org/open-vault/2018/september/how-compound-interest-works"
+            }
+          ]
+        },
+        {
+          "id": "f3.c3",
+          "title": "The rule of 72",
+          "body": "A quick way to see compounding: divide 72 by the yearly rate to get roughly how many years it takes for money to double. It works the other way too: at a given inflation rate, it tells you how fast prices double, so your cash buys half as much.",
+          "example": "At 6% a year, money doubles in about 72 / 6 = 12 years (exactly 11.9). At 3% inflation, prices double in about 24 years.",
+          "links": [
+            {
+              "id": "sec_saving_investing_tips",
+              "title": "Tips for Teaching Students About Saving and Investing",
+              "publisher": "U.S. Securities and Exchange Commission",
+              "url": "https://www.sec.gov/investor/students/tips.htm"
+            }
+          ]
+        }
+      ],
       "items": [
         {
           "id": "f3.e1",
@@ -387,7 +541,11 @@
         "content_file": "F3.yaml",
         "author": "draft by Claude (AI), 2026-11-20",
         "reviewer": null,
-        "checked": {}
+        "checked": {
+          "f3.c1": "2,000 x 1.06^10 = 3,581.70; 2,000 + 10 x 120 = 3,200 (Claude, 2026-11-21).",
+          "f3.c2": "Future value of 200 PLN a month, r = 5%/12: n = 480 -> 305,204; n = 360 -> 166,452 (Claude, 2026-11-21). Illustrative rate, not a forecast.",
+          "f3.c3": "ln 2 / ln 1.06 = 11.90 years (Claude, 2026-11-21)."
+        }
       }
     },
     {

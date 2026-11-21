@@ -39,7 +39,7 @@ SERIES = Path(__file__).resolve().parent.parent / "series"
 
 @lru_cache(maxsize=1)
 def _store() -> SeriesStore:
-    return SeriesStore(SERIES / "series.csv", SERIES / "catalog.yaml")
+    return SeriesStore(SERIES)
 
 
 def _returns(world: dict, seed_offset: int = 0) -> dict[str, list[float]]:

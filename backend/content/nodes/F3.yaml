@@ -1,4 +1,5 @@
-# Items only so far: they feed the prerequisite tests of F4, S4, I1, I5, L1 and the router's test-out for F3.
+# Not on a demo path. Its check items feed the prerequisite tests of later nodes (I1, I5) and the
+# router's test-out; the cards are what a user reads after failing such a test.
 node: F3
 panel: FOUNDATIONS
 title: "Compound interest"
@@ -6,6 +7,40 @@ after: [F1]
 author: "draft by Claude (AI), 2026-11-20"
 reviewer: null
 status: draft
+
+cards:
+  - id: f3.c1
+    title: "Interest on interest"
+    body: >-
+      With compound interest, the interest you earn is added to the balance,
+      and next year it earns interest too. The growth starts slowly and then
+      speeds up, because each year adds a percentage of a bigger amount. With
+      simple interest, you earn the same amount every year.
+    example: "2,000 PLN at 6% a year for 10 years: about 3,582 PLN with interest added each year, 3,200 PLN if the interest is paid out."
+    links: [sec_saving_investing_tips, stlfed_compound_interest]
+    checked: "2,000 x 1.06^10 = 3,581.70; 2,000 + 10 x 120 = 3,200 (Claude, 2026-11-21)."
+
+  - id: f3.c2
+    title: "Time matters most"
+    body: >-
+      Because growth speeds up over time, the years your money stays invested
+      count more than the amount you add later. Starting early gives
+      compounding more years to work. Waiting ten years can cost more than a
+      much lower monthly amount would.
+    example: "200 PLN a month at 5% a year (added monthly) until 65: starting at 25 gives about 305,000 PLN from 96,000 paid in; starting at 35 gives about 166,000 PLN from 72,000."
+    links: [sec_saving_investing_tips, stlfed_compound_interest]
+    checked: "Future value of 200 PLN a month, r = 5%/12: n = 480 -> 305,204; n = 360 -> 166,452 (Claude, 2026-11-21). Illustrative rate, not a forecast."
+
+  - id: f3.c3
+    title: "The rule of 72"
+    body: >-
+      A quick way to see compounding: divide 72 by the yearly rate to get
+      roughly how many years it takes for money to double. It works the other
+      way too: at a given inflation rate, it tells you how fast prices double,
+      so your cash buys half as much.
+    example: "At 6% a year, money doubles in about 72 / 6 = 12 years (exactly 11.9). At 3% inflation, prices double in about 24 years."
+    links: [sec_saving_investing_tips]
+    checked: "ln 2 / ln 1.06 = 11.90 years (Claude, 2026-11-21)."
 
 items:
   - id: f3.e1

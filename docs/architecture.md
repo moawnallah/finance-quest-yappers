@@ -41,7 +41,7 @@ backend/
     common.py              kernel: texts and languages, tolerance rule, ids, source register,
                            the Engine protocol, Report (errors and warnings)
     series_store.py        the series store (kernel; moved from medium/ on 2026-11-21 so sim/ can use it)
-    series/                its data: series.csv + catalog.yaml (source, licence, display)
+    series/                its data: catalog.yaml + data/<series_id>.csv (source, licence, display)
     sim/                   simulation core (below)
     easy/  medium/  hard/  engines, all with the same interface
     build.py               one build: every engine -> output/*.json + one QA report

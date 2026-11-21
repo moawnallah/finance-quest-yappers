@@ -19,6 +19,12 @@ Only these have files in `backend/content/nodes/`.
 | S4 | deleted | Not on a demo path. |
 
 All 32 nodes stay in `backend/ml/router/tree.yaml`, so the app can show the others as present but locked.
+**F1, F2 and F3** are on neither demo path, so they are never taught there. They are still needed: their check items
+feed the **prerequisite tests** of the path nodes (F1 → S1, F2 → I2, F3 → I1 and I5) and the router's test-out.
+They had items but no cards. Each now has **3 cards** (draft, no reviewer), so a user who fails a prerequisite test and is
+sent back to an F node has something to read. Card examples use different numbers from the items, so they don't
+give away the answers. F2's GUS examples use 2019-2020 only, so they don't show the I2 chart after its cutoff.
+
 **Note for the app:** P2 has `after: [P1, S4]`, and S4 has no content. P2 must not stay locked because of S4.
 
 ## 2. The two Day-X tasks
@@ -86,7 +92,7 @@ response:
 | `oecd_share_prices_pl_m` | Share price index Poland, 2015 = 100, monthly average, no dividends | OECD SDMX API, `DSD_STES@DF_FINMARK`, `POL.M.SHARE.IX` | 2005-01 to 2025-12 (252) | CC BY 4.0 (OECD default) |
 
 - Downloaded once, on 2026-11-21. The raw files are not committed. `backend/data/series/import_demo_series.py` lists
-  the exact URLs and rebuilds `series.csv` from them.
+  the exact URLs and rebuilds the three files in `series/data/` from them.
 - **FRED is not used.** It carries the same OECD series, but its terms forbid commercial redistribution without permission.
 - Attribution rows are in `backend/data/SOURCES.md`; the source register entries are `gus_cpi`, `nbp_ref_rate` and
   `oecd_share_prices_pl` in `backend/content/sources.yaml`.
@@ -101,4 +107,4 @@ response:
 | Retarget the tutor eval sets (`ml/eval/model_choice.yaml`, `red_team.yaml`) from d1.m1/d3.m1 to i2.m1/p4.m1, **before** the rebuilt `medium_tasks.json` is pushed | Mateusz (done 2026-11-21) |
 | Router: the investor path is I4 → I5 in the tests; the demo plan says I4 → I5 → P1 → P4 | Mateusz (done 2026-11-21: demo mode extends I4 → I5 to the investor path, `router/demo.py`) |
 | `choice` widget; P2 must not be locked by S4; show `attribution` under the charts | Michał, Mohamed |
-| F1, F2 and F3 have no cards (someone who fails a test-out lands on an empty node) | content |
+| Confirm the 5 new card sources in `sources.yaml` (read 2026-11-21, link only); f2.c2 (real return) still has no link | Yurii, Mateusz |

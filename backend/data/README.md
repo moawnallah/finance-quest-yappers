@@ -2,7 +2,7 @@
 
 Data series and the medium task engine. Owner: Yurii. Guide: [docs/medium_engine.md](../../docs/medium_engine.md).
 
-- Download once and store as rows in `series/series.csv`; never call live sources during the demo.
+- Download once and store as one file per series in `series/data/<series_id>.csv`; never call live sources during the demo.
 - Sources: only those cleared in [docs/task_engines.md, "Data series and licences"](../../docs/task_engines.md#data-series-and-licences) (GUS, NBP, Ministry of Finance, Eurostat, ECB, OECD, Damodaran, Shiller). Not GPW, MSCI, stooq or Yahoo Finance.
 - Single-company prices are not licensed: use a synthetic series, labelled as such on screen.
 - Credit each source on screen and in `SOURCES.md`.
@@ -24,7 +24,7 @@ Spec: `docs/task_engines.md`. Implemented so far: the **chart** stimulus, the **
 
 ```
 ../content/nodes/<NODE>.yaml     node files; medium tasks under `tasks:` (copy _TEMPLATE.yaml)
-series/series.csv                the series table: series_id, date, value, source, licence
+series/data/<series_id>.csv      one file per real series: date, value (source, licence in catalog.yaml)
 series/catalog.yaml              per series: name, unit, frequency, licence, display, synthetic parameters
 SOURCES.md                       attribution list
 medium/                          series.py (table, transforms), parts.py (registries), task.py, build.py

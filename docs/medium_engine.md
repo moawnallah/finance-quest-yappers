@@ -29,7 +29,7 @@ day X.
 
 ```
 backend/content/nodes/<NODE>.yaml       task content, one file per skills-tree node (copy _TEMPLATE.yaml)
-backend/data/series/series.csv          the series table: series_id, date, value, source, licence
+backend/data/series/data/<id>.csv       one file per real series: date, value
 backend/data/series/catalog.yaml        one entry per series: name, unit, frequency, licence, display, synthetic
 backend/data/SOURCES.md                 attribution list
 backend/data/medium/
@@ -200,8 +200,8 @@ Rules the build enforces:
 
 ### Adding a real series
 
-1. **Download** the data once into `backend/data/series/series.csv`, one row
-   per observation (`series_id,date,value,source,licence`). Use only sources
+1. **Download** the data once into `backend/data/series/data/<series_id>.csv`, one row
+   per observation (columns `date,value`; source and licence go in the catalog). Use only sources
    cleared in task_engines.md, "Data series and licences".
 2. **Add a catalog entry** in `series/catalog.yaml` with `name`, `unit`,
    `frequency` (`daily` or `monthly`), `source`, `licence` and
@@ -240,7 +240,7 @@ Nothing else changes.
 1. **Node files** follow the format in skills_tree.md (`node`, `panel`,
    `title`, `after`, ...). Medium tasks are listed under `medium:`, and the
    loader ignores the other keys, so cards and easy items live in the same file.
-2. **Series metadata.** The spec's table is `series/series.csv`. Units,
+2. **Series metadata.** The spec's table is split into one file per series, `series/data/<series_id>.csv` (date, value). Units,
    frequency, display permission and synthetic parameters are in a separate
    `series/catalog.yaml`.
 3. **Chart fields.**

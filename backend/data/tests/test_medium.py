@@ -21,7 +21,7 @@ TODAY = dt.date(2026, 11, 20)
 
 
 def store():
-    return SeriesStore(SERIES / "series.csv", SERIES / "catalog.yaml")
+    return SeriesStore(SERIES)
 
 
 def compiled(task, s=None):
@@ -165,12 +165,13 @@ def test_negative_boxes_may_be_hindsight():
 
 def table_store(tmp_path, display=True):
     dates = step_dates(dt.date(2024, 3, 8), "daily", 80, 30)
-    rows = "".join(f"real_x,{d.isoformat()},{100 + i},TestSource,CC BY 4.0\n" for i, d in enumerate(dates))
-    (tmp_path / "series.csv").write_text("series_id,date,value,source,licence\n" + rows)
+    rows = "".join(f"{d.isoformat()},{100 + i}\n" for i, d in enumerate(dates))
+    (tmp_path / "data").mkdir()
+    (tmp_path / "data" / "real_x.csv").write_text("date,value\n" + rows, encoding="utf-8")
     (tmp_path / "catalog.yaml").write_text(yaml.safe_dump({"real_x": {
         "name": "Real X", "unit": "PLN", "frequency": "daily", "source": "TestSource",
-        "licence": "CC BY 4.0", "display": display}}))
-    return SeriesStore(tmp_path / "series.csv", tmp_path / "catalog.yaml")
+        "licence": "CC BY 4.0", "display": display}}), encoding="utf-8")
+    return SeriesStore(tmp_path)
 
 
 def real_task(cutoff="2024-03-09"):
@@ -243,3 +244,24 @@ def test_choice_validation(options, message):
     task["response"] = {"kind": "choice", "options": options}
     _, r = compiled(task)
     assert any(message in e for e in r.errors), r.errors
+
+
+def test_each_real_series_has_its_own_file():
+    # One file per series in series/data, named after its catalog id; no shared table any more.
+    s = store()
+    for sid, meta in s.catalog.items():
+        if not meta.get("synthetic"):
+            assert (SERIES / "data" / f"{sid}.csv").exists(), sid
+            assert s.get(sid).values
+    assert not (SERIES / "series.csv").exists()
+
+
+def test_missing_or_duplicate_rows_are_data_errors(tmp_path):
+    from medium.series import DataError
+    s = table_store(tmp_path)
+    (tmp_path / "data" / "real_x.csv").write_text("date,value\n2024-01-01,1\n2024-01-01,2\n", encoding="utf-8")
+    with pytest.raises(DataError, match="twice"):
+        s.get("real_x")
+    (tmp_path / "data" / "real_x.csv").unlink()
+    with pytest.raises(DataError, match="no file"):
+        SeriesStore(tmp_path).get("real_x")

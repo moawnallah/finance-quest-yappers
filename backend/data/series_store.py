@@ -3,14 +3,15 @@ and the synthetic paths defined in the catalog. Used by the medium engine (chart
 simulation core (sim.market replay and bootstrap). Moved here from medium/series.py on
 2026-11-21 so that the simulation core does not import an engine.
 
-Data lives in two files (see docs/task_engines.md, "Data series and licences"):
-- series/series.csv:  one row per observation: series_id, date, value, source, licence
-- series/catalog.yaml: one entry per series_id: name, unit, frequency, source, licence,
-                       display (may we show it?), and optional `synthetic` parameters.
+Data lives in one directory (see docs/task_engines.md, "Data series and licences"):
+- series/catalog.yaml:          one entry per series_id: name, unit, frequency, source, licence,
+                                display (may we show it?), and optional `synthetic` parameters.
+- series/data/<series_id>.csv:  one file per real series, columns date,value (one row per
+                                observation). Source and licence are in the catalog entry.
 
-A synthetic series (for example a fictional company, since single-company prices are not
-licensed) has no rows in the CSV. It is generated in memory from its catalog parameters,
-the same way every time.
+A file is read only when its series is first asked for. A synthetic series (for example a
+fictional company, since single-company prices are not licensed) has no file. It is generated
+in memory from its catalog parameters, the same way every time.
 """
 from __future__ import annotations
 
@@ -37,33 +38,45 @@ class Series:
 
 
 class SeriesStore:
-    def __init__(self, table: Path, catalog: Path):
+    def __init__(self, series_dir: Path):
+        catalog = series_dir / "catalog.yaml"
+        self.data_dir = series_dir / "data"
         self.catalog: dict[str, dict] = (yaml.safe_load(catalog.read_text(encoding="utf-8")) or {}) if catalog.exists() else {}
-        self._rows: dict[str, dict[dt.date, float]] = {}
-        if table.exists():
-            with table.open(newline="", encoding="utf-8") as f:
-                for row in csv.DictReader(f):
-                    raw = (row.get("value") or "").strip()
-                    if raw:
-                        day = dt.date.fromisoformat(row["date"].strip()[:10])
-                        self._rows.setdefault(row["series_id"].strip(), {})[day] = float(raw)
+        self._cache: dict[str, Series] = {}
 
     def meta(self, series_id: str) -> dict | None:
         return self.catalog.get(series_id)
 
     def get(self, series_id: str) -> Series:
+        if series_id in self._cache:
+            return self._cache[series_id]
         meta = self.meta(series_id)
         if meta is None:
             raise DataError(f"series {series_id!r} is not in catalog.yaml")
         if meta.get("synthetic"):
             dates, values = synthetic_path(series_id, meta)
         else:
-            rows = self._rows.get(series_id)
-            if not rows:
-                raise DataError(f"series {series_id!r} has no rows in series.csv")
-            dates = sorted(rows)
-            values = [rows[d] for d in dates]
-        return Series(series_id, dates, values, meta)
+            dates, values = self._read(series_id)
+        self._cache[series_id] = Series(series_id, dates, values, meta)
+        return self._cache[series_id]
+
+    def _read(self, series_id: str) -> tuple[list[dt.date], list[float]]:
+        path = self.data_dir / f"{series_id}.csv"
+        if not path.exists():
+            raise DataError(f"series {series_id!r} has no file data/{series_id}.csv")
+        rows: dict[dt.date, float] = {}
+        with path.open(newline="", encoding="utf-8") as f:
+            for row in csv.DictReader(f):
+                raw = (row.get("value") or "").strip()
+                if raw:
+                    day = dt.date.fromisoformat(row["date"].strip()[:10])
+                    if day in rows:
+                        raise DataError(f"data/{series_id}.csv: date {day} appears twice")
+                    rows[day] = float(raw)
+        if not rows:
+            raise DataError(f"series {series_id!r}: data/{series_id}.csv has no rows")
+        dates = sorted(rows)
+        return dates, [rows[d] for d in dates]
 
 
 # ---------------------------------------------------------------- synthetic paths
