@@ -326,16 +326,29 @@ class _TaskRunScreenState extends State<TaskRunScreen> {
       SizedBox(height: 12),
       _DayXChart(before: chart, after: after),
       SizedBox(height: 20),
-      Text('Where did it go ${_horizonText(horizon)}?', style: TextStyle(fontWeight: FontWeight.w700)),
-      SizedBox(height: 8),
-      Wrap(spacing: 8, children: [
-        for (final o in (response['options'] as List).cast<String>())
-          ChoiceChip(
-            label: Text('${_arrow(o)} ${o[0].toUpperCase()}${o.substring(1)}'),
-            selected: answer == o,
-            onSelected: reveal != null ? null : (_) => setState(() => answer = o),
+      // Two answer kinds: "direction" (up / down / flat) and "choice" (pick one
+      // of a few written options, recorded but not scored on day X).
+      if (response['kind'] == 'choice') ...[
+        Text('What would you do on this day?', style: TextStyle(fontWeight: FontWeight.w700)),
+        SizedBox(height: 8),
+        for (final o in (response['options'] as List).cast<Map<String, dynamic>>())
+          _OptionTile(
+            text: o['text'] as String,
+            picked: answer == o['id'],
+            onTap: reveal != null ? null : () => setState(() => answer = o['id']),
           ),
-      ]),
+      ] else ...[
+        Text('Where did it go ${_horizonText(horizon)}?', style: TextStyle(fontWeight: FontWeight.w700)),
+        SizedBox(height: 8),
+        Wrap(spacing: 8, children: [
+          for (final o in (response['options'] as List).cast<String>())
+            ChoiceChip(
+              label: Text('${_arrow(o)} ${o[0].toUpperCase()}${o.substring(1)}'),
+              selected: answer == o,
+              onSelected: reveal != null ? null : (_) => setState(() => answer = o),
+            ),
+        ]),
+      ],
       SizedBox(height: 20),
       Text('Why? Pick ${pick['min']} to ${pick['max']} reasons', style: TextStyle(fontWeight: FontWeight.w700)),
       SizedBox(height: 8),
