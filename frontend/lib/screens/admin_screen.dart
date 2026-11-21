@@ -26,10 +26,10 @@ class _AdminScreenState extends State<AdminScreen> {
   Future<List<Map<String, dynamic>>> _load() {
     final api = context.read<AppState>().api;
     return Future.wait([
-      api.admin('summary', _key!),
-      api.admin('llm-events?limit=100${_flaggedOnly ? '&flagged=true' : ''}', _key!),
-      api.admin('reco-events?limit=100', _key!),
-      api.admin('events?limit=100${_eventName != null ? '&name=${Uri.encodeQueryComponent(_eventName!)}' : ''}', _key!),
+      api.admin('summary', _key),
+      api.admin('llm-events?limit=100${_flaggedOnly ? '&flagged=true' : ''}', _key),
+      api.admin('reco-events?limit=100', _key),
+      api.admin('events?limit=100${_eventName != null ? '&name=${Uri.encodeQueryComponent(_eventName!)}' : ''}', _key),
     ]);
   }
 
@@ -43,7 +43,8 @@ class _AdminScreenState extends State<AdminScreen> {
 
   @override
   Widget build(BuildContext context) {
-    if (_key == null) return _keyGate();
+    final account = context.watch<AppState>().isAdmin;
+    if (_key == null && !account) return _keyGate();
     return DefaultTabController(
       length: 4,
       child: Scaffold(

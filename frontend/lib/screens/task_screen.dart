@@ -67,7 +67,7 @@ class _TaskRunScreenState extends State<TaskRunScreen> {
     if (index + 1 >= widget.run.taskIds.length && confScore.isNotEmpty) {
       final c = confScore.map((e) => e.$1).reduce((a, b) => a + b) / confScore.length;
       final sc = confScore.map((e) => e.$2).reduce((a, b) => a + b) / confScore.length;
-      context.read<AppState>().addCalibration(widget.run.title, c, sc);
+      context.read<AppState>().addCalibration(widget.run.title, c, sc, skill: widget.run.skill ?? widget.run.forNode);
     }
     setState(() {
       index++;
@@ -410,7 +410,7 @@ class _TaskRunScreenState extends State<TaskRunScreen> {
     return Scaffold(
       appBar: AppBar(title: Text(widget.run.title), automaticallyImplyLeading: false),
       body: ListView(padding: EdgeInsets.all(24), children: [
-        Center(child: MascotPlaceholder(size: 96)),
+        Center(child: MascotPlaceholder(size: 140, pose: (avg ?? 1) >= 0.8 || completedNode ? 'cheer' : 'oops')),
         SizedBox(height: 16),
         Text(
           completedNode ? 'Skill complete!' : drawn ? (passed ? 'Check passed' : 'Not this time') : 'Round done',

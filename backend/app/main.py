@@ -11,7 +11,9 @@ from fastapi.responses import JSONResponse
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
-from app import badges, progress
+from datetime import datetime, timezone
+
+from app import auth, badges, progress
 from app.catalog import CATALOG
 from app.config import AB_VARIANTS, DATABASE_URL, ON_VERCEL
 from app.db import get_db
@@ -88,6 +90,61 @@ def create_session(body: s.SessionIn, db: Session = Depends(get_db)):
     log_event(db, user, "session_created")
     db.commit()
     return s.SessionOut(user_id=user.id, token=user.token, variant=user.variant)
+
+
+@app.post("/auth/register", response_model=s.AccountOut, status_code=201)
+def register(body: s.RegisterIn, request: Request, db: Session = Depends(get_db)):
+    """Create an account. If the request carries the token of an anonymous session,
+    that session becomes the account, so progress made before signing up is kept."""
+    email = auth.normalize_email(body.email)
+    if not auth.valid_email(email):
+        raise ApiError(422, "invalid_email", "Enter a valid email address.")
+    if db.scalar(select(User).where(User.email == email)):
+        raise ApiError(409, "email_taken", "An account with this email already exists. Sign in instead.")
+    user = None
+    header = request.headers.get("authorization", "")
+    if header.lower().startswith("bearer "):
+        current = db.scalar(select(User).where(User.token == header.split(" ", 1)[1].strip()))
+        if current and current.email is None:
+            user = current  # keep the progress of the anonymous session
+    if user is None:
+        user = User(id=str(uuid.uuid4()), token=secrets.token_urlsafe(32), variant=random.choice(AB_VARIANTS),
+                    display_name=body.display_name or email.split("@")[0])
+        db.add(user)
+    user.email = email
+    user.password_hash = auth.hash_password(body.password)
+    user.is_admin = email in auth.ADMIN_EMAILS
+    user.last_login_at = datetime.now(timezone.utc)
+    if body.display_name:
+        user.display_name = body.display_name
+    db.flush()
+    log_event(db, user, "account_created", admin=user.is_admin)
+    db.commit()
+    return s.AccountOut(user_id=user.id, token=user.token, variant=user.variant, email=user.email,
+                        display_name=user.display_name, is_admin=user.is_admin)
+
+
+@app.post("/auth/login", response_model=s.AccountOut)
+def login(body: s.LoginIn, db: Session = Depends(get_db)):
+    email = auth.normalize_email(body.email)
+    if auth.too_many_failures(email):
+        raise ApiError(429, "too_many_attempts", "Too many attempts. Wait a few minutes and try again.")
+    user = db.scalar(select(User).where(User.email == email))
+    if not user or not auth.verify_password(body.password, user.password_hash):
+        auth.record_failure(email)
+        raise ApiError(401, "wrong_credentials", "The email or password is wrong.")  # same message either way
+    user.is_admin = email in auth.ADMIN_EMAILS  # follows ADMIN_EMAILS if it changes
+    user.last_login_at = datetime.now(timezone.utc)
+    log_event(db, user, "logged_in")
+    db.commit()
+    return s.AccountOut(user_id=user.id, token=user.token, variant=user.variant, email=user.email,
+                        display_name=user.display_name, is_admin=user.is_admin)
+
+
+@app.get("/me", response_model=s.AccountOut)
+def me(user: User = Depends(current_user)):
+    return s.AccountOut(user_id=user.id, token=user.token, variant=user.variant, email=user.email,
+                        display_name=user.display_name, is_admin=user.is_admin)
 
 
 @app.post("/me/profile")

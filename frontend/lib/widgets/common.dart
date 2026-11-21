@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../data/app_state.dart';
 import '../data/sfx.dart';
+import '../screens/shell.dart' show AppShell;
 
 // Palette from the Figma frames (docs/design/Lightmode.pdf and Darkmode.pdf):
 // greens on white in light mode, greens on near-black in dark mode.
@@ -53,7 +54,12 @@ Color riskColor(int risk) => [
 
 /// Web on a wide screen (desktop browser): use the whole window. Phones and
 /// narrow windows keep the phone layout.
-bool isWideWeb(BuildContext context) => kIsWeb && MediaQuery.sizeOf(context).width >= 900;
+bool isWideWeb(BuildContext context) {
+  // Wide layout (wheel on the left, tabs in the top bar): large windows, and
+  // any landscape screen at least 560 px wide (phones turned sideways).
+  final size = MediaQuery.sizeOf(context);
+  return size.width >= 900 || (size.width > size.height && size.width >= 560);
+}
 
 /// Centres a page in a readable column on wide web; no change on phones.
 class PageWidth extends StatelessWidget {
@@ -62,7 +68,10 @@ class PageWidth extends StatelessWidget {
   PageWidth({super.key, required this.child, this.max = 860});
   @override
   Widget build(BuildContext context) =>
-      isWideWeb(context) ? Center(child: ConstrainedBox(constraints: BoxConstraints(maxWidth: max), child: child)) : child;
+      MediaQuery.sizeOf(context).width > max
+          // The page colour fills the whole window (no white bands); content stays readable.
+          ? ColoredBox(color: kBg, child: Center(child: ConstrainedBox(constraints: BoxConstraints(maxWidth: max), child: child)))
+          : child;
 }
 
 /// Top header shown on every main screen: current level with progress to the
@@ -84,7 +93,11 @@ class StatsBar extends StatelessWidget implements PreferredSizeWidget {
     final lvl = s.level, next = s.nextLevel;
     final frac = next == null ? 1.0 : (s.xp - lvl.minXp) / (next.minXp - lvl.minXp);
     final initial = s.profile.name.isEmpty ? '?' : s.profile.name[0].toUpperCase();
-    final canPop = GoRouter.of(context).canPop();
+    // Ask this page's own navigator, not the router: an open sheet or dialog made the router
+    // report "can go back" on top-level tabs, and tapping the arrow then threw an error.
+    final nav = Navigator.of(context);
+    // Same rule as Flutter's AppBar: only pages pushed on top of another page get a back arrow.
+    final canPop = ModalRoute.of(context)?.impliesAppBarDismissal ?? false;
     return AppBar(
       toolbarHeight: _row,
       automaticallyImplyLeading: false,
@@ -108,13 +121,22 @@ class StatsBar extends StatelessWidget implements PreferredSizeWidget {
       ]),
       title: Center(child: ConstrainedBox(
         // Same width and position on every page on wide screens.
-        constraints: BoxConstraints(maxWidth: 1000),
+        constraints: BoxConstraints(maxWidth: 1400),
         child: Row(children: [
         if (canPop) ...[
-          IconButton(icon: Icon(Icons.arrow_back), tooltip: 'Back', onPressed: () => GoRouter.of(context).pop()),
+          IconButton(icon: Icon(Icons.arrow_back), tooltip: 'Back', onPressed: () => nav.maybePop()),
           SizedBox(width: 2),
         ],
+        if (isWideWeb(context)) ...[
+          _TopNav(),
+          SizedBox(width: 12),
+        ],
         Expanded(
+          child: Semantics(
+          container: true,
+          button: true,
+          excludeSemantics: true,
+          label: '${lvl.name}, ${s.xp} Scales, ${s.streak} day streak. ${next == null ? 'Top level' : '${next.minXp - s.xp} Scales to ${next.name}'}. Open progress',
           child: GestureDetector(
           onTap: () => GoRouter.of(context).go('/progress'),
           child: Container(
@@ -157,11 +179,14 @@ class StatsBar extends StatelessWidget implements PreferredSizeWidget {
             ]),
           ),
           ),
+          ),
         ),
         SizedBox(width: 12),
         Semantics(
+          container: true, // its own node: otherwise merged into the header and unreachable for screen readers
           button: true,
           label: 'Settings',
+          excludeSemantics: true, // say "Settings", not the initial on the avatar
           child: GestureDetector(
             onTap: () => showSettingsSheet(context),
             child: Container(
@@ -194,10 +219,56 @@ class StatsBar extends StatelessWidget implements PreferredSizeWidget {
   }
 }
 
+/// Wide screens: the four tabs, in the top bar between the level card and the avatar.
+class _TopNav extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    final path = GoRouterState.of(context).uri.path;
+    return Row(mainAxisSize: MainAxisSize.min, children: [
+      for (final t in AppShell.tabs)
+        Builder(builder: (context) {
+          final on = path.startsWith(t.$1);
+          return Padding(
+            padding: EdgeInsets.symmetric(horizontal: 2),
+            child: Semantics(
+              container: true,
+              button: true,
+              selected: on,
+              label: t.$4,
+              excludeSemantics: true,
+              child: Material(
+                color: on ? kSurface : Colors.transparent,
+                shape: StadiumBorder(side: BorderSide(color: on ? kWheelRim : Colors.transparent, width: 2)),
+                child: InkWell(
+                  customBorder: StadiumBorder(),
+                  onTap: on
+                      ? null
+                      : () {
+                          Sfx.tap();
+                          GoRouter.of(context).go(t.$1);
+                        },
+                  child: Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                    child: Row(mainAxisSize: MainAxisSize.min, children: [
+                      Icon(on ? t.$3 : t.$2, size: 20, color: on ? kPrimaryText : kInk),
+                      SizedBox(width: 6),
+                      Text(t.$4, style: TextStyle(fontSize: 14, fontWeight: on ? FontWeight.w800 : FontWeight.w600, color: on ? kPrimaryText : kInk)),
+                    ]),
+                  ),
+                ),
+              ),
+            ),
+          );
+        }),
+    ]);
+  }
+}
+
 /// Settings, opened from the avatar: appearance, accessibility, daily goal.
 void showSettingsSheet(BuildContext context) {
   showModalBottomSheet(
     context: context,
+    useRootNavigator: true, // above the tabs, so it never changes what the tab page thinks it can do
     isScrollControlled: true,
     constraints: BoxConstraints(maxWidth: 560), // a sheet, not a full-width banner, on wide screens
     // The sheet paints its own background (below) so it follows a theme switch
@@ -271,8 +342,62 @@ void showSettingsSheet(BuildContext context) {
               onSelectionChanged: (v) => s.setThemeMode(v.first),
             ),
             SizedBox(height: 12),
-            SwitchListTile(contentPadding: EdgeInsets.zero, title: Text('Sound effects'), value: s.soundOn, onChanged: s.setSound),
-            SwitchListTile(contentPadding: EdgeInsets.zero, title: Text('Larger text'), value: s.largeText, onChanged: s.setLargeText),
+            // Sound effects: on by default; turning them on plays a short preview.
+            Container(
+              padding: EdgeInsets.fromLTRB(12, 10, 8, 10),
+              decoration: BoxDecoration(
+                gradient: s.soundOn ? LinearGradient(colors: [kPrimarySoft, kSurface]) : null,
+                color: s.soundOn ? null : kSurface,
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: s.soundOn ? kWheelRim : kLine, width: s.soundOn ? 2 : 1),
+              ),
+              child: Row(children: [
+                AnimatedContainer(
+                  duration: Duration(milliseconds: 200),
+                  width: 40, height: 40,
+                  decoration: BoxDecoration(shape: BoxShape.circle, color: s.soundOn ? kPrimary : kLine),
+                  child: Icon(s.soundOn ? Icons.volume_up_rounded : Icons.volume_off_rounded, color: s.soundOn ? Colors.white : kFaint, size: 22),
+                ),
+                SizedBox(width: 12),
+                Expanded(
+                  child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                    Text('Sound effects', style: TextStyle(fontWeight: FontWeight.w700, color: kInk)),
+                    Text(s.soundOn ? 'Ticks, answer chimes and badge fanfares' : 'Off: the app stays silent',
+                        style: TextStyle(fontSize: 12, color: kMuted)),
+                  ]),
+                ),
+                if (s.soundOn)
+                  IconButton(tooltip: 'Play a sample', icon: Icon(Icons.play_circle_outline, color: kPrimaryText), onPressed: Sfx.correct),
+                Switch(
+                  value: s.soundOn,
+                  onChanged: (v) {
+                    s.setSound(v);
+                    if (v) Sfx.correct();
+                  },
+                ),
+              ]),
+            ),
+            SizedBox(height: 8),
+            Row(children: [
+              Text('Text size', style: TextStyle(color: kInk, fontSize: 16)),
+              Spacer(),
+              Text('${(s.textScale * 100).round()}%', style: TextStyle(color: kMuted, fontWeight: FontWeight.w700)),
+            ]),
+            Row(children: [
+              Text('A', style: TextStyle(fontSize: 13, color: kMuted)),
+              Expanded(
+                child: Slider(
+                  value: s.textScale,
+                  min: 1.0,
+                  max: 1.6,
+                  divisions: 6,
+                  label: '${(s.textScale * 100).round()}%',
+                  semanticFormatterCallback: (v) => 'Text size ${(v * 100).round()} percent',
+                  onChanged: s.setTextScale,
+                ),
+              ),
+              Text('A', style: TextStyle(fontSize: 22, color: kMuted)),
+            ]),
             SwitchListTile(contentPadding: EdgeInsets.zero, title: Text('List instead of the wheel'), value: s.listView, onChanged: s.setListView),
             SizedBox(height: 8),
             Text('Daily goal (Scales)', style: TextStyle(fontWeight: FontWeight.w700, color: kInk)),
@@ -413,26 +538,23 @@ class _EyesPainter extends CustomPainter {
 
 /// Placeholder for the future mascot, so we can see how much space it takes.
 /// A dashed outline with a simple face; swap the inside for the real artwork.
+/// The CrocoCash mascot (assets/mascot, drawn by docs/mascot/make_mascot.py).
+/// Poses: wave (hello), teach (explaining), think, cheer (success), oops (mistake), read.
 class MascotPlaceholder extends StatelessWidget {
   final double size;
   final String? say; // optional speech bubble
-  MascotPlaceholder({super.key, this.size = 64, this.say});
+  final String pose;
+  MascotPlaceholder({super.key, this.size = 64, this.say, this.pose = 'wave'});
+
+  static const poses = ['wave', 'teach', 'think', 'cheer', 'oops', 'read'];
 
   @override
   Widget build(BuildContext context) {
     final face = Semantics(
-      label: 'Mascot placeholder',
-      child: CustomPaint(
-        painter: _DashedRRect(kWheelRim),
-        child: Container(
-          width: size, height: size,
-          decoration: BoxDecoration(color: kPrimarySoft, borderRadius: BorderRadius.circular(size * 0.3)),
-          child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-            Icon(Icons.cruelty_free_outlined, size: size * 0.5, color: kPrimaryText),
-            if (size >= 56) Text('mascot', style: TextStyle(fontSize: (size * 0.13).clamp(8, 13).toDouble(), color: kMuted)),
-          ]),
-        ),
-      ),
+      label: 'CrocoCash mascot',
+      image: true,
+      child: Image.asset('assets/mascot/${poses.contains(pose) ? pose : 'wave'}.png',
+          width: size, height: size, fit: BoxFit.contain, filterQuality: FilterQuality.medium),
     );
     if (say == null) return face;
     return Row(crossAxisAlignment: CrossAxisAlignment.center, children: [
@@ -507,7 +629,7 @@ class TutorBubble extends StatelessWidget {
         border: kTutorBorder,
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           Row(children: [
-            MascotPlaceholder(size: 36),
+            MascotPlaceholder(size: 40, pose: 'teach'),
             SizedBox(width: 8),
             Text('AI tutor', style: TextStyle(fontWeight: FontWeight.w700, color: kPrimaryText)),
             Spacer(),

@@ -229,7 +229,32 @@ class AppState extends ChangeNotifier {
   List<Map<String, dynamic>> skills = [];
   bool skillsLoading = false;
   String? skillsError;
-  String selectedPanel = 'SAFETY';
+  /// The topic on the wheel: Foundations at first, then the last one visited
+  /// (saved on the device). After sign-up the survey picks it (startFromSurvey).
+  String selectedPanel = 'FOUNDATIONS';
+  String? recommendedSkill; // the mission the survey suggests starting with
+
+  /// A simple first-path rule from the survey until the backend's onboarding
+  /// router (backend/ml/router) is wired: experience and goal pick the topic,
+  /// and the first open mission in it is highlighted.
+  void startFromSurvey() {
+    final p = profile;
+    final panel = switch (p.experience) {
+      'Quite a lot' => 'PORTFOLIO',
+      'A little' => p.goal == 'Retirement' ? 'PORTFOLIO' : 'INSTRUMENTS',
+      _ => p.goal == 'A first habit' || p.goal == 'Not sure yet' ? 'FOUNDATIONS' : 'SAFETY',
+    };
+    selectedPanel = panel;
+    recommendedSkill = null;
+    _savePanel();
+    notifyListeners();
+  }
+
+  Future<void> _savePanel() async {
+    try {
+      (await SharedPreferences.getInstance()).setString('wheel_panel', selectedPanel);
+    } catch (_) {}
+  }
 
   Future<void> loadSkills() async {
     skillsLoading = true;
@@ -237,7 +262,11 @@ class AppState extends ChangeNotifier {
     notifyListeners();
     try {
       skills = await api.skills(profile.name);
-      if (!panels.contains(selectedPanel) && panels.isNotEmpty) selectedPanel = startPanel ?? panels.first;
+      try {
+        final saved = (await SharedPreferences.getInstance()).getString('wheel_panel');
+        if (saved != null && panels.contains(saved)) selectedPanel = saved;
+      } catch (_) {}
+      if (!panels.contains(selectedPanel) && panels.isNotEmpty) selectedPanel = panels.first;
     } catch (e) {
       skillsError = '$e';
     } finally {
@@ -285,6 +314,7 @@ class AppState extends ChangeNotifier {
   void selectPanel(String p, {bool bySpin = true}) {
     if (p == selectedPanel && (!bySpin || wheelSpun)) return;
     selectedPanel = p;
+    _savePanel();
     if (bySpin) wheelSpun = true;
     notifyListeners();
   }
@@ -292,9 +322,10 @@ class AppState extends ChangeNotifier {
   // ---- Badges: earning one queues it, and the shell shows a dialog.
   /// Confidence vs correctness: one point per finished mission run, with the
   /// average "How sure are you?" answer (1-5) and the average score (0-1).
-  final List<(String, double, double)> calibration = [];
-  void addCalibration(String title, double confidence, double score) {
-    calibration.add((title, confidence, score));
+  /// (mission title, average confidence 1-5, average score 0-1, skill id to reopen)
+  final List<(String, double, double, String?)> calibration = [];
+  void addCalibration(String title, double confidence, double score, {String? skill}) {
+    calibration.add((title, confidence, score, skill));
     notifyListeners();
   }
 
@@ -324,7 +355,8 @@ class AppState extends ChangeNotifier {
   (int correct, int total, int earned)? lastMission; // for the result screen
   int streak = 0;
   bool dailyAnswered = false;
-  bool largeText = false;
+  double textScale = 1.0; // 1.0 to 1.6, set with the slider in settings
+  bool get largeText => textScale > 1.0;
   bool listView = false;
   bool coachSeen = false;
   String themeMode = 'system'; // system | light | dark
@@ -339,6 +371,7 @@ class AppState extends ChangeNotifier {
     bands = Map<String, dynamic>.from(bench['score_bands']);
     notifyListeners();
     await loadConversations();
+    await restoreAccount();
   }
 
   Level get level => levels.lastWhere((l) => xp >= l.minXp);
@@ -427,7 +460,7 @@ class AppState extends ChangeNotifier {
 
   void earnBadge(String id) { badges.add(id); notifyListeners(); }
   void setDailyGoal(int v) { dailyGoal = v; notifyListeners(); }
-  void setLargeText(bool v) { largeText = v; notifyListeners(); }
+  void setTextScale(double v) { textScale = v.clamp(1.0, 1.6); notifyListeners(); }
   bool soundOn = true;
   void setSound(bool v) { soundOn = v; Sfx.enabled = v; notifyListeners(); }
   void setListView(bool v) { listView = v; notifyListeners(); }
@@ -440,19 +473,25 @@ class AppState extends ChangeNotifier {
     loadConversations();
   }
 
-  /// Admin emails (build setting ADMIN_EMAILS, comma separated). Signing in
-  /// with one shows the admin panel. Demo only: the backend must check this too.
-  static const adminEmails = String.fromEnvironment('ADMIN_EMAILS', defaultValue: 'admin@crococash.xyz');
+  /// The signed-in account. Admin rights come from the server (ADMIN_EMAILS there).
   String? email;
   bool isAdmin = false;
   bool guest = false;
 
-  void signInWithEmail(String e) {
-    email = e.toLowerCase();
-    isAdmin = adminEmails.split(',').map((x) => x.trim().toLowerCase()).contains(email);
+  void useAccount(Map<String, dynamic> a) {
+    email = a['email'] as String?;
+    isAdmin = a['is_admin'] == true;
     guest = false;
     signInMethod = 'email';
-    signIn(e.split('@').first);
+    signIn((a['display_name'] as String?) ?? (email ?? 'You').split('@').first);
+  }
+
+  /// On start: if this device still has an account session, restore it.
+  Future<void> restoreAccount() async {
+    try {
+      final a = await api.account(profile.name);
+      if (a != null) useAccount(a);
+    } catch (_) {}
   }
 
   void signInAsGuest() {

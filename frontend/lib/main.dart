@@ -19,7 +19,6 @@ import 'screens/signin_screen.dart';
 import 'screens/skills_screen.dart';
 import 'screens/skill_screen.dart';
 import 'screens/task_screen.dart';
-import 'package:flutter/foundation.dart' show kIsWeb;
 import 'widgets/common.dart' show appDark, BadgeWatcher, PageWidth;
 import 'data/sfx.dart';
 
@@ -63,7 +62,7 @@ final _router = GoRouter(
     GoRoute(path: '/skills', builder: (_, __) => PageWidth(child: SkillsScreen())),
     GoRoute(path: '/tutor-chat', builder: (_, __) => PageWidth(child: TutorScreen(fromQuestion: true))),
     GoRoute(path: '/admin', builder: (_, __) => PageWidth(max: 1100, child: AdminScreen())),
-    GoRoute(path: '/skill/:id', builder: (_, s) => PageWidth(child: SkillScreen(nodeId: s.pathParameters['id']!))),
+    GoRoute(path: '/skill/:id', builder: (_, s) => PageWidth(max: 1100, child: SkillScreen(nodeId: s.pathParameters['id']!))),
     GoRoute(path: '/skill-run', builder: (_, s) => PageWidth(child: TaskRunScreen(run: s.extra as TaskRun))),
     GoRoute(path: '/time-machine', builder: (_, __) => PageWidth(child: TimeMachineScreen())),
   ],
@@ -135,18 +134,15 @@ class FinanceQuestApp extends StatelessWidget {
           if (d != appDark) WidgetsBinding.instance.addPostFrameCallback((_) => state.notify());
         }
         final mq = MediaQuery.of(context);
-        final scale = mq.textScaler.scale(1) * (state.largeText ? 1.3 : 1.0);
+        final scale = mq.textScaler.scale(1) * state.textScale;
         return MediaQuery(
           data: mq.copyWith(textScaler: TextScaler.linear(scale.clamp(1.0, 2.0))),
-          // Wide web uses the whole window; elsewhere a phone-width column.
-          child: kIsWeb && mq.size.width >= 900
-              ? BadgeWatcher(navigatorKey: rootNavigatorKey, child: child ?? SizedBox())
-              : Center(
-                  child: ConstrainedBox(
-                    constraints: BoxConstraints(maxWidth: 480),
-                    child: BadgeWatcher(navigatorKey: rootNavigatorKey, child: child ?? SizedBox()),
-                  ),
-                ),
+          // The app fills every window width (phones, tablets, landscape, desktop);
+          // pages keep their text readable with PageWidth instead of a fixed column.
+          child: Listener(
+            onPointerDown: (_) => Sfx.armed = true, // sounds start after the first tap
+            child: BadgeWatcher(navigatorKey: rootNavigatorKey, child: child ?? SizedBox()),
+          ),
         );
       },
     );

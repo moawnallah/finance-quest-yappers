@@ -163,3 +163,32 @@ def test_tutor_stream_falls_back_when_no_model(client, auth, monkeypatch):
     r = client.post("/tutor/stream", headers=auth, json={"message": "Why?", "context": {"explanation": "Stored text."}})
     lines = [_json.loads(l) for l in r.text.splitlines() if l.strip()]
     assert lines[-1]["t"] == "done" and lines[-1]["fallback"] is True and lines[-1]["text"] == "Stored text."
+
+
+def test_accounts_register_login_and_admin(client):
+    """Email accounts: passwords stored only as scrypt hashes; login checks them; admins by email."""
+    from app.db import SessionLocal
+    from app.models import User
+    # an anonymous session that later signs up keeps its id (and so its progress)
+    anon = client.post("/auth/session", json={"display_name": "Zofia"}).json()
+    r = client.post("/auth/register", headers={"Authorization": f"Bearer {anon['token']}"},
+                    json={"email": "Zofia@Example.com", "password": "correct horse 1"})
+    assert r.status_code == 201 and r.json()["user_id"] == anon["user_id"] and r.json()["email"] == "zofia@example.com"
+    assert r.json()["is_admin"] is False
+    with SessionLocal() as db:
+        u = db.get(User, anon["user_id"])
+        assert u.password_hash.startswith("scrypt$") and "correct horse 1" not in u.password_hash
+    assert client.post("/auth/register", json={"email": "zofia@example.com", "password": "another pass"}).status_code == 409
+    assert client.post("/auth/register", json={"email": "not-an-email", "password": "long enough"}).status_code == 422
+    assert client.post("/auth/register", json={"email": "a@b.co", "password": "short"}).status_code == 422
+    ok = client.post("/auth/login", json={"email": "ZOFIA@example.com", "password": "correct horse 1"})
+    assert ok.status_code == 200 and ok.json()["token"] == anon["token"]
+    bad = client.post("/auth/login", json={"email": "zofia@example.com", "password": "wrong"})
+    nobody = client.post("/auth/login", json={"email": "nobody@example.com", "password": "wrong"})
+    assert bad.status_code == nobody.status_code == 401 and bad.json()["error"]["message"] == nobody.json()["error"]["message"]
+    # admin accounts can open admin endpoints with their own token
+    adm = client.post("/auth/register", json={"email": "admin@crocoash.xyz", "password": "admin pass 123"}).json()
+    assert adm["is_admin"] is True
+    assert client.get("/admin/summary", headers={"Authorization": f"Bearer {adm['token']}"}).status_code == 200
+    assert client.get("/admin/summary", headers={"Authorization": f"Bearer {anon['token']}"}).status_code == 403
+    assert client.get("/me", headers={"Authorization": f"Bearer {adm['token']}"}).json()["email"] == "admin@crocoash.xyz"

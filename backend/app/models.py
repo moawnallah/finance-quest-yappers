@@ -98,8 +98,15 @@ class User(Base):
     display_name: Mapped[str] = mapped_column(String(80))
     variant: Mapped[str] = mapped_column(String(4))
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
+    # Accounts (app/auth.py). Anonymous sessions have no email or password.
+    email: Mapped[str | None] = mapped_column(String(254), unique=True, index=True, nullable=True)  # stored lower case
+    password_hash: Mapped[str | None] = mapped_column(String(255), nullable=True)  # scrypt, never the password
+    is_admin: Mapped[bool] = mapped_column(Boolean, default=False)
+    last_login_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     profile: Mapped["Profile | None"] = relationship(back_populates="user", uselist=False)
 
+
+    __table_args__ = (Index("ix_users_created_at", "created_at"),)
 
 class Profile(Base):
     __tablename__ = "profiles"
@@ -122,6 +129,8 @@ class Answer(Base):
     is_correct: Mapped[bool | None] = mapped_column(Boolean, nullable=True)  # null for behaviour/reflection
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
 
+
+    __table_args__ = (Index("ix_answers_user_created", "user_id", "created_at"),)
 
 class NodeProgress(Base):
     __tablename__ = "node_progress"
@@ -161,6 +170,8 @@ class Event(Base):
     payload: Mapped[dict] = mapped_column(JSON, default=dict)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
 
+
+    __table_args__ = (Index("ix_events_created_at", "created_at"),)
 
 class Attempt(Base):
     """One submission to the task engines (docs/task_engines.md, "Attempt record").

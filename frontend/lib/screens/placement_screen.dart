@@ -105,7 +105,7 @@ class _PlacementScreenState extends State<PlacementScreen> {
     return Scaffold(
       appBar: AppBar(title: Text(widget.retest ? 'Your progress' : 'Your starting point')),
       body: ListView(padding: EdgeInsets.all(20), children: [
-        Center(child: MascotPlaceholder(size: 80)),
+        Center(child: MascotPlaceholder(size: 110, pose: 'cheer')),
         SizedBox(height: 8),
         Center(child: Text('$score of $total', style: TextStyle(fontSize: 48, fontWeight: FontWeight.w800, color: kPrimaryText))),
         if (widget.retest && before != null)

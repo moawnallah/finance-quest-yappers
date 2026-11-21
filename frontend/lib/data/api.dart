@@ -52,6 +52,35 @@ class Api {
     }();
   }
 
+  /// Create an account (POST /auth/register). Sends the current anonymous
+  /// session, so progress made before signing up is kept.
+  Future<Map<String, dynamic>> register(String email, String password, {String? displayName}) async {
+    final prefs = await SharedPreferences.getInstance();
+    final r = Map<String, dynamic>.from(await _send('POST', '/auth/register',
+        body: {'email': email, 'password': password, if (displayName != null) 'display_name': displayName},
+        token: _token ?? prefs.getString(_tokenKey)));
+    await _useToken(r['token'] as String);
+    return r;
+  }
+
+  /// Sign in (POST /auth/login); the account's token replaces the anonymous one.
+  Future<Map<String, dynamic>> login(String email, String password) async {
+    final r = Map<String, dynamic>.from(await _send('POST', '/auth/login', body: {'email': email, 'password': password}));
+    await _useToken(r['token'] as String);
+    return r;
+  }
+
+  /// The signed-in account (GET /me), or null for an anonymous session.
+  Future<Map<String, dynamic>?> account(String name) async {
+    final r = Map<String, dynamic>.from(await _authed('GET', '/me', name));
+    return r['email'] == null ? null : r;
+  }
+
+  Future<void> _useToken(String t) async {
+    _token = t;
+    (await SharedPreferences.getInstance()).setString(_tokenKey, t);
+  }
+
   /// Forget the session (sign-out), so the next call starts a new one.
   Future<void> reset() async {
     _token = null;
@@ -94,8 +123,9 @@ class Api {
 
   /// Admin monitoring (GET /admin/...). The key travels in the X-Admin-Key
   /// header only, never in the URL.
-  Future<Map<String, dynamic>> admin(String path, String key) async =>
-      Map<String, dynamic>.from(await _send('GET', '/admin/$path', adminKey: key));
+  /// With [key] null, the signed-in admin account's own token is used.
+  Future<Map<String, dynamic>> admin(String path, String? key) async =>
+      Map<String, dynamic>.from(key == null ? await _authed('GET', '/admin/$path', 'Admin') : await _send('GET', '/admin/$path', adminKey: key));
 
   /// The AI tutor (POST /tutor, docs/tutor_agent.md section 5). Returns the
   /// tutor's text. Throws when the backend has no tutor yet; the app then
@@ -103,6 +133,7 @@ class Api {
   Future<({String text, String? mermaid})> tutor(String name,
       {required String mode, required String message, Map<String, dynamic>? context, List<Map<String, String>> history = const []}) async {
     final r = Map<String, dynamic>.from(await _authed('POST', '/tutor', name, body: {'mode': mode, 'message': message, 'context': context, 'history': history}));
+    if (r['fallback'] == true) throw ApiException(503, 'tutor_unavailable', (r['text'] as String?) ?? '');
     return (text: (r['text'] as String?) ?? '', mermaid: r['mermaid'] as String?);
   }
 
@@ -113,6 +144,7 @@ class Api {
       List<Map<String, String>> history = const [], required void Function(String) onDelta}) async {
     final token = await _session(name);
     String? text, mermaid;
+    var fallback = false;
     await postStream(
       '$baseUrl/tutor/stream',
       {'Content-Type': 'application/json', 'Authorization': 'Bearer $token'},
@@ -123,10 +155,12 @@ class Api {
         if (m['t'] == 'done') {
           text = m['text'] as String?;
           mermaid = m['mermaid'] as String?;
+          fallback = m['fallback'] == true;
         }
       },
     );
     if (text == null) throw ApiException(0, 'stream', 'The reply stopped early.');
+    if (fallback) throw ApiException(503, 'tutor_unavailable', text!);
     return (text: text!, mermaid: mermaid);
   }
 

@@ -25,7 +25,17 @@ def current_user(authorization: str | None = Header(default=None), db: Session =
     return user
 
 
-def require_admin(x_admin_key: str | None = Header(default=None), key: str | None = None) -> None:
+def require_admin(x_admin_key: str | None = Header(default=None), key: str | None = None,
+                  authorization: str | None = Header(default=None), db: Session = Depends(get_db)) -> None:
+    """Admin endpoints: the ADMIN_KEY (header 'X-Admin-Key' or '?key='), or the token of a signed-in admin account."""
+    if authorization and authorization.lower().startswith("bearer "):
+        u = db.scalar(select(User).where(User.token == authorization.split(" ", 1)[1].strip()))
+        if u is not None and u.is_admin:
+            return
+    _require_admin_key(x_admin_key, key)
+
+
+def _require_admin_key(x_admin_key: str | None, key: str | None) -> None:
     """Admin endpoints need the ADMIN_KEY, as header 'X-Admin-Key' or query '?key=' (handy in a browser)."""
     given = x_admin_key or key or ""
     if not ADMIN_KEY or not hmac.compare_digest(given, ADMIN_KEY):

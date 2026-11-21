@@ -195,7 +195,9 @@ extension on _WheelScreenState {
             child: Column(children: [
               SizedBox(height: _WheelScreenState.headerH),
               Expanded(
-                child: LayoutBuilder(builder: (context, tc) => SingleChildScrollView(
+                child: s.skillsIn(panel).isEmpty
+                    ? Center(child: _Tree(key: ValueKey(panel), panel: panel))
+                    : LayoutBuilder(builder: (context, tc) => SingleChildScrollView(child: SingleChildScrollView(
                   scrollDirection: Axis.horizontal,
                   child: ConstrainedBox(
                     constraints: BoxConstraints(minWidth: tc.maxWidth),
@@ -214,7 +216,7 @@ extension on _WheelScreenState {
                       ),
                     ),
                   ),
-                )),
+                ))),
               ),
             ]),
           ),
@@ -365,7 +367,9 @@ class _Tree extends StatelessWidget {
   Widget _horizontal(BuildContext context, AppState s, List<Map<String, dynamic>> ks, Map<int, List<Map<String, dynamic>>> rows,
       int maxDepth, List<String> Function(Map<String, dynamic>) inPanel) {
     const colW = 210.0, lead = 120.0;
-    final h = math.max(height ?? 400, 260.0);
+    // At least ~125 px per mission in a column, so short (landscape) screens never overlap; the area scrolls.
+    final perCol = rows.values.map((l) => l.length).fold(1, math.max);
+    final h = math.max(height ?? 400, perCol * 160.0 + 40);
     final w = lead + maxDepth * colW + 140;
     final pos = <String, Offset>{};
     for (final MapEntry(key: c, value: list) in rows.entries) {
@@ -662,7 +666,7 @@ class _SpinWheelState extends State<_SpinWheel> with SingleTickerProviderStateMi
                   child: Row(mainAxisSize: MainAxisSize.min, children: [
                     Icon(Icons.swipe, size: 16, color: Colors.white),
                     SizedBox(width: 6),
-                    Text(left ? 'Swipe up or down to spin' : 'Swipe to spin', style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w700)),
+                    Text(left ? 'Swipe to spin' : 'Swipe to spin', style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w700)),
                   ]),
                 ),
               ),

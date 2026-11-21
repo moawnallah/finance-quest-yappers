@@ -200,33 +200,65 @@ class _StatusPanel extends StatelessWidget {
   }
 }
 
-class _LessonCard extends StatelessWidget {
+/// A learn objective: only the heading until tapped, then the full card.
+class _LessonCard extends StatefulWidget {
   final Map<String, dynamic> card;
   _LessonCard({required this.card});
+  @override
+  State<_LessonCard> createState() => _LessonCardState();
+}
+
+class _LessonCardState extends State<_LessonCard> {
+  bool open = false;
 
   @override
   Widget build(BuildContext context) {
+    final card = widget.card;
     final links = (card['links'] as List? ?? []).cast<Map<String, dynamic>>();
-    return Panel(
-      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Text(card['title'] as String, style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800)),
-        SizedBox(height: 6),
-        Text(card['body'] as String, style: TextStyle(color: kBody, height: 1.4)),
-        if (card['example'] != null) ...[
-          SizedBox(height: 10),
-          Container(
-            width: double.infinity,
-            padding: EdgeInsets.all(10),
-            decoration: BoxDecoration(color: kPrimarySoft, borderRadius: BorderRadius.circular(10)),
-            child: Text('Example: ${card['example']}', style: TextStyle(color: kBody, fontSize: 13, height: 1.35)),
-          ),
-        ],
-        for (final l in links) ...[
-          SizedBox(height: 6),
-          Text('Source: ${l['title']}${l['publisher'] == null ? '' : ' (${l['publisher']})'}',
-              style: TextStyle(fontSize: 11, color: kMuted)),
-        ],
-      ]),
+    return Semantics(
+      button: true,
+      expanded: open,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(16),
+        onTap: () => setState(() => open = !open),
+        child: Panel(
+          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Row(children: [
+              Expanded(child: Text(card['title'] as String, style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: kInk))),
+              AnimatedRotation(
+                turns: open ? 0.5 : 0,
+                duration: Duration(milliseconds: 200),
+                child: Icon(Icons.expand_more, color: kMuted),
+              ),
+            ]),
+            AnimatedSize(
+              duration: Duration(milliseconds: 220),
+              curve: Curves.easeOutCubic,
+              alignment: Alignment.topCenter,
+              child: !open
+                  ? SizedBox(width: double.infinity)
+                  : Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                      SizedBox(height: 6),
+                      Text(card['body'] as String, style: TextStyle(color: kBody, height: 1.4)),
+                      if (card['example'] != null) ...[
+                        SizedBox(height: 10),
+                        Container(
+                          width: double.infinity,
+                          padding: EdgeInsets.all(10),
+                          decoration: BoxDecoration(color: kPrimarySoft, borderRadius: BorderRadius.circular(10)),
+                          child: Text('Example: ${card['example']}', style: TextStyle(color: kBody, fontSize: 13, height: 1.35)),
+                        ),
+                      ],
+                      for (final l in links) ...[
+                        SizedBox(height: 6),
+                        Text('Source: ${l['title']}${l['publisher'] == null ? '' : ' (${l['publisher']})'}',
+                            style: TextStyle(fontSize: 11, color: kMuted)),
+                      ],
+                    ]),
+            ),
+          ]),
+        ),
+      ),
     );
   }
 }

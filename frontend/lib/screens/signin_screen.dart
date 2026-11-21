@@ -32,7 +32,7 @@ class _SignInScreenState extends State<SignInScreen> {
     return Scaffold(
       appBar: AppBar(title: Text('Save your progress')),
       body: ListView(padding: EdgeInsets.all(20), children: [
-        Center(child: MascotPlaceholder(size: 84)),
+        Center(child: MascotPlaceholder(size: 110, pose: 'wave')),
         SizedBox(height: 16),
         Text('Sign in to keep your Scales, streak and roadmap on every device.',
             textAlign: TextAlign.center, style: TextStyle(fontSize: 16, color: kBody, height: 1.4)),

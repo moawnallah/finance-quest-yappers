@@ -19,6 +19,26 @@ class SessionOut(BaseModel):
     variant: str = Field(description="A/B test group, 'A' or 'B'. See GET /meta → ab_variants.")
 
 
+class RegisterIn(BaseModel):
+    email: str = Field(min_length=3, max_length=254)
+    password: str = Field(min_length=8, max_length=128, description="At least 8 characters.")
+    display_name: str | None = Field(default=None, max_length=80)
+
+
+class LoginIn(BaseModel):
+    email: str = Field(min_length=3, max_length=254)
+    password: str = Field(min_length=1, max_length=128)
+
+
+class AccountOut(BaseModel):
+    user_id: str
+    token: str = Field(description="Send on every request as 'Authorization: Bearer <token>'.")
+    variant: str
+    email: str | None
+    display_name: str
+    is_admin: bool
+
+
 class ProfileIn(BaseModel):
     age_group: Literal["18-29", "30-49", "50+"] = Field(description="Onboarding question 1: age band.")
     goal: Literal["habit", "kids", "retire"] = Field(description="Onboarding question 2: main goal. Decides which wheel slices are highlighted.")
