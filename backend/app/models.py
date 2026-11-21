@@ -193,3 +193,52 @@ class Attempt(Base):
         CheckConstraint("confidence IS NULL OR confidence BETWEEN 1 AND 5", name="ck_attempt_confidence"),
         CheckConstraint("clarity_rating IS NULL OR clarity_rating BETWEEN 1 AND 5", name="ck_attempt_clarity"),
     )
+
+
+# ---------- monitoring (docs/tutor_agent.md, sections 5 and 6) ----------
+
+class LlmEvent(Base):
+    """One tutor or router call to a language model. Personal data is masked
+    before the text is stored (prompt_masked, answer_masked); the admin panel
+    shows pseudonymous user ids only."""
+    __tablename__ = "llm_events"
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    ts: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now, index=True)
+    user_id: Mapped[str | None] = mapped_column(ForeignKey("users.id", ondelete="SET NULL"), nullable=True, index=True)
+    screen_id: Mapped[str | None] = mapped_column(String(60), nullable=True)
+    task_id: Mapped[str | None] = mapped_column(String(40), nullable=True)
+    node: Mapped[str | None] = mapped_column(String(10), nullable=True, index=True)
+    mode: Mapped[str | None] = mapped_column(String(30), nullable=True)        # explain_concept | hint | explain_result | ...
+    intent: Mapped[str | None] = mapped_column(String(30), nullable=True, index=True)  # e.g. advice_request, injection
+    model_role: Mapped[str | None] = mapped_column(String(30), nullable=True)  # tutor_small | router | tutor_cloud
+    model: Mapped[str | None] = mapped_column(String(80), nullable=True)
+    prompt_version: Mapped[str | None] = mapped_column(String(30), nullable=True)
+    latency_ms: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    tokens_in: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    tokens_out: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    checks_failed: Mapped[list] = mapped_column(JSON, default=list)
+    fallback_used: Mapped[bool] = mapped_column(Boolean, default=False)
+    hint_level: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    user_rating: Mapped[int | None] = mapped_column(Integer, nullable=True)    # +1 / -1
+    flagged_for_review: Mapped[bool] = mapped_column(Boolean, default=False, index=True)
+    prompt_masked: Mapped[str | None] = mapped_column(Text, nullable=True)     # what the user asked, personal data masked
+    answer_masked: Mapped[str | None] = mapped_column(Text, nullable=True)     # what the tutor answered, masked
+
+
+class RecoEvent(Base):
+    """One onboarding-router or recommender event (docs/tutor_agent.md, section 6)."""
+    __tablename__ = "reco_events"
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    ts: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now, index=True)
+    user_id: Mapped[str | None] = mapped_column(ForeignKey("users.id", ondelete="SET NULL"), nullable=True, index=True)
+    router_version: Mapped[str | None] = mapped_column(String(30), nullable=True)
+    event_type: Mapped[str] = mapped_column(String(40), index=True)  # path_issued | test_out | first_item | ...
+    node: Mapped[str | None] = mapped_column(String(10), nullable=True)
+    predicted_m: Mapped[float | None] = mapped_column(Float, nullable=True)
+    observed: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    need: Mapped[float | None] = mapped_column(Float, nullable=True)
+    overconfidence_term: Mapped[float | None] = mapped_column(Float, nullable=True)
+    interest_term: Mapped[float | None] = mapped_column(Float, nullable=True)
+    priority: Mapped[float | None] = mapped_column(Float, nullable=True)
+    reason_term: Mapped[str | None] = mapped_column(String(60), nullable=True)
+    path: Mapped[list | None] = mapped_column(JSON, nullable=True)
