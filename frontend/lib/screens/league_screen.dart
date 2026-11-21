@@ -95,7 +95,7 @@ class _LeagueScreenState extends State<LeagueScreen> {
             color: kPrimarySoft,
             border: kPrimarySoft,
             child: Row(children: [
-              ScaleIcon(size: 26),
+              MascotPlaceholder(size: 40, pose: myRank < 3 ? 'cheer' : 'point'),
               SizedBox(width: 10),
               Expanded(
                 child: Text('You are #${myRank + 1} of ${rows.length} in the $mine league, with ${s.xp} Scales',
@@ -116,7 +116,7 @@ class _LeagueScreenState extends State<LeagueScreen> {
               final slice = rows.isEmpty ? <(String, int, bool)>[] : rows.sublist(start, (start + perPage).clamp(0, rows.length));
               return ListView(padding: EdgeInsets.symmetric(horizontal: 20), children: [
                 if (rows.isEmpty)
-                  Padding(padding: EdgeInsets.all(24), child: Center(child: Text('No learners in this league yet.', style: TextStyle(color: kMuted)))),
+                  Padding(padding: EdgeInsets.all(24), child: Center(child: KyleCallout(text: 'No learners in this league yet. Keep learning and you could be the first!', pose: 'wave', size: 170))),
                 for (final (i, r) in slice.indexed) _Row(rank: start + i + 1, name: r.$3 ? '${r.$1} (you)' : r.$1, scales: r.$2, me: r.$3),
               ]);
             },

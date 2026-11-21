@@ -23,7 +23,8 @@ class ProgressScreen extends StatelessWidget {
       body: PageWidth(max: 1000, child: ListView(padding: EdgeInsets.fromLTRB(20, 16, 20, 20), children: [
         // Today's goal, in words and a bar.
         Panel(
-          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          child: Row(crossAxisAlignment: CrossAxisAlignment.center, children: [
+          Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
             Row(children: [
               Text('Today', style: TextStyle(fontWeight: FontWeight.w700, color: kMuted)),
               Spacer(),
@@ -47,6 +48,9 @@ class ProgressScreen extends StatelessWidget {
             SizedBox(height: 6),
             Text(reached ? 'Daily goal reached. Nice work.' : '${goal - today} more Scales to reach today\'s goal.',
                 style: TextStyle(color: kBody)),
+          ])),
+          SizedBox(width: 12),
+          MascotPlaceholder(size: 150, pose: reached ? 'cheer' : 'point', headOnPhone: true),
           ]),
         ),
         SizedBox(height: 12),

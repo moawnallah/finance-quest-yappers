@@ -195,7 +195,8 @@ extension on _WheelScreenState {
             child: Column(children: [
               SizedBox(height: _WheelScreenState.headerH),
               Expanded(
-                child: s.skillsIn(panel).isEmpty
+                child: Stack(children: [
+                  Positioned.fill(child: s.skillsIn(panel).isEmpty
                     ? Center(child: _Tree(key: ValueKey(panel), panel: panel))
                     : LayoutBuilder(builder: (context, tc) => SingleChildScrollView(child: SingleChildScrollView(
                   scrollDirection: Axis.horizontal,
@@ -216,7 +217,20 @@ extension on _WheelScreenState {
                       ),
                     ),
                   ),
-                ))),
+                )))),
+                  // Kyle points the way on large screens, in the roadmap's empty corner.
+                  if (MediaQuery.sizeOf(context).height >= 700)
+                    Positioned(
+                      right: 28,
+                      bottom: 12,
+                      child: IgnorePointer(
+                        child: KyleCallout(
+                          size: 190,
+                          text: s.skillsIn(panel).isEmpty ? 'This topic is coming soon. Spin the wheel to pick another one!' : 'Tap a glowing mission to start learning.',
+                        ),
+                      ),
+                    ),
+                ]),
               ),
             ]),
           ),

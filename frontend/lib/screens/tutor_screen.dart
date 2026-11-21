@@ -403,6 +403,8 @@ class _TutorScreenState extends State<TutorScreen> {
               ]),
             ),
           for (final m in conv.messages) _bubble(m),
+          if (conv.messages.length == 1 && !conv.messages.first.mine)
+            Padding(padding: EdgeInsets.only(top: 12), child: Center(child: MascotPlaceholder(size: 230, pose: 'point'))),
           if (typing) _bubble(TutorMessage(false, '...')),
         ]),
       ),

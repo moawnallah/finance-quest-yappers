@@ -169,7 +169,7 @@ class _WelcomeState extends State<_Welcome> {
                 Spacer(),
 Row(crossAxisAlignment: CrossAxisAlignment.end, children: [
                   Expanded(child: Text('Invest with confidence.', style: GoogleFonts.lora(fontSize: 32, fontWeight: FontWeight.w700, color: kInk, height: 1.1))),
-                  MascotPlaceholder(size: 150, pose: 'wave'),
+                  MascotPlaceholder(size: 170, pose: 'point'),
                 ]),
                 SizedBox(height: 8),
                 Text('Short, practical lessons on investment types, for every stage of life.',

@@ -93,10 +93,15 @@ class _SkillScreenState extends State<SkillScreen> {
           final cards = (node['cards'] as List).cast<Map<String, dynamic>>();
           final title = node['title'] as String;
           return ListView(padding: EdgeInsets.fromLTRB(20, 8, 20, 32), children: [
-            Text(panelName(node['panel'] as String).toUpperCase(),
-                style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, letterSpacing: .6, color: kPrimaryText)),
-            SizedBox(height: 4),
-            Text(title, style: TextStyle(fontSize: 26, fontWeight: FontWeight.w800, height: 1.2)),
+            Row(crossAxisAlignment: CrossAxisAlignment.end, children: [
+              Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                Text(panelName(node['panel'] as String).toUpperCase(),
+                    style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, letterSpacing: .6, color: kPrimaryText)),
+                SizedBox(height: 4),
+                Text(title, style: TextStyle(fontSize: 26, fontWeight: FontWeight.w800, height: 1.2)),
+              ])),
+              MascotPlaceholder(size: 150, pose: st['done'] == true ? 'cheer' : 'point', headOnPhone: true),
+            ]),
             SizedBox(height: 16),
             _StatusPanel(status: st, hasMedium: medium.isNotEmpty),
             SizedBox(height: 14),

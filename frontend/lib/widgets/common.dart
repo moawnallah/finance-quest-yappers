@@ -538,30 +538,51 @@ class _EyesPainter extends CustomPainter {
 
 /// Placeholder for the future mascot, so we can see how much space it takes.
 /// A dashed outline with a simple face; swap the inside for the real artwork.
-/// The CrocoCash mascot: Kyle, drawn by Paulina (docs/mascot/original).
-/// Large sizes show the full figure, small ones his head; the white-shirt art
-/// is used in light mode and the dark-shirt art in dark mode.
-/// New poses: add assets/mascot/kyle/<pose>_light.png and <pose>_dark.png,
-/// then list the pose in [kylePoses]; until then every pose shows the main art.
+/// The CrocoCash mascot, Kyle (assets/mascot/kyle, originals in docs/mascot/original).
+/// Paulina's hand-drawn Kyle (pointing) is the default; the AI-made poses are used only
+/// where the gesture means something: wave (hello), cheer/thumbs (well done) and
+/// think/oops (a mistake, or "let's think it over"). Small sizes show Paulina's head.
+/// The white-shirt art is used in light mode and the dark-shirt art in dark mode.
 class MascotPlaceholder extends StatelessWidget {
-  final double size;
+  final double size; // height of the figure; under 90 it is the round head avatar
   final String? say; // optional speech bubble
-  final String pose; // wave | teach | think | cheer | oops | read
-  MascotPlaceholder({super.key, this.size = 64, this.say, this.pose = 'wave'});
+  final String pose; // point | teach | read | wave | cheer | thumbs | think | oops
+  final bool headOnPhone; // on narrow screens show the head avatar instead of the figure
+  MascotPlaceholder({super.key, this.size = 64, this.say, this.pose = 'point', this.headOnPhone = false});
 
-  static const kylePoses = <String>{}; // poses Paulina has drawn so far
+  static const _ai = {'wave': 'wave', 'hello': 'wave', 'cheer': 'thumbs', 'thumbs': 'thumbs', 'oops': 'think', 'think': 'think'};
+  static const _files = ['point_light.webp', 'point_dark.webp', 'wave_light.webp', 'wave_dark.webp', 'thumbs_light.webp',
+      'thumbs_dark.webp', 'think_dark.webp', 'head_light.png', 'head_dark.png'];
+
+  static String fileFor(String pose, bool dark) {
+    final t = dark ? 'dark' : 'light';
+    final ai = _ai[pose];
+    if (ai == null) return 'point_$t.webp';
+    if (ai == 'think') return 'think_dark.webp'; // drawn in the dark shirt only; reads well on both themes
+    return '${ai}_$t.webp';
+  }
+
+  /// Decode every pose once at start, so Kyle never pops in late.
+  static void precache(BuildContext context) {
+    for (final f in _files) {
+      precacheImage(AssetImage('assets/mascot/kyle/$f'), context);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    final theme = appDark ? 'dark' : 'light';
-    final small = size < 90;
-    final file = small ? 'head_$theme' : (kylePoses.contains(pose) ? '${pose}_$theme' : 'full_$theme');
-    final img = Image.asset('assets/mascot/kyle/$file.png',
-        width: small ? size : size * 0.85, height: small ? size : size, fit: BoxFit.contain, filterQuality: FilterQuality.medium);
+    final phone = MediaQuery.sizeOf(context).width < 600;
+    final asHead = size < 90 || (headOnPhone && phone);
+    final h = asHead ? (size < 90 ? size : 56.0) : (phone ? size * 0.82 : size);
+    final img = asHead
+        ? Image.asset('assets/mascot/kyle/head_${appDark ? 'dark' : 'light'}.png',
+            width: h, height: h, fit: BoxFit.contain, filterQuality: FilterQuality.medium)
+        : Image.asset('assets/mascot/kyle/${fileFor(pose, appDark)}',
+            height: h, width: h * 0.78, fit: BoxFit.contain, filterQuality: FilterQuality.medium);
     final face = Semantics(
       label: 'Kyle, the CrocoCash mascot',
       image: true,
-      child: small ? ClipOval(child: ColoredBox(color: kPrimarySoft, child: img)) : img,
+      child: asHead ? ClipOval(child: ColoredBox(color: kPrimarySoft, child: img)) : img,
     );
     if (say == null) return face;
     return Row(crossAxisAlignment: CrossAxisAlignment.center, children: [
@@ -581,6 +602,32 @@ class MascotPlaceholder extends StatelessWidget {
           child: Text(say!, style: TextStyle(fontSize: 13, color: kBody, height: 1.3)),
         ),
       ),
+    ]);
+  }
+}
+
+/// Kyle with a short line of speech. Wide screens: the bubble sits above the full figure.
+/// Phones: his round head avatar with the bubble beside it, so it never crowds the page.
+class KyleCallout extends StatelessWidget {
+  final String text;
+  final String pose;
+  final double size;
+  KyleCallout({super.key, required this.text, this.pose = 'point', this.size = 200});
+
+  @override
+  Widget build(BuildContext context) {
+    if (MediaQuery.sizeOf(context).width < 600) return MascotPlaceholder(size: 44, say: text);
+    return Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.center, children: [
+      ConstrainedBox(
+        constraints: BoxConstraints(maxWidth: size * 1.2),
+        child: Container(
+          padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          decoration: BoxDecoration(color: kSurface, borderRadius: BorderRadius.circular(14), border: Border.all(color: kBorder)),
+          child: Text(text, textAlign: TextAlign.center, style: TextStyle(fontSize: 13, color: kBody, height: 1.3)),
+        ),
+      ),
+      SizedBox(height: 4),
+      MascotPlaceholder(size: size, pose: pose),
     ]);
   }
 }
@@ -726,6 +773,16 @@ class BadgeWatcher extends StatefulWidget {
 
 class _BadgeWatcherState extends State<BadgeWatcher> {
   bool _showing = false;
+  bool _cached = false;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (!_cached) {
+      _cached = true;
+      MascotPlaceholder.precache(context);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -744,7 +801,10 @@ class _BadgeWatcherState extends State<BadgeWatcher> {
             builder: (d) => AlertDialog(
               title: Text('Badge earned', textAlign: TextAlign.center),
               content: Column(mainAxisSize: MainAxisSize.min, children: [
-                BadgeMedal(id: id, size: 84),
+                Row(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.end, children: [
+                  MascotPlaceholder(size: 150, pose: 'cheer'),
+                  BadgeMedal(id: id, size: 84),
+                ]),
                 SizedBox(height: 14),
                 Text(b.title, style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: kInk)),
                 SizedBox(height: 4),
