@@ -209,7 +209,7 @@ class _Horizon extends StatelessWidget {
         Text('When will you need this money?', style: TextStyle(fontSize: 26, fontWeight: FontWeight.w800)),
         SizedBox(height: 32),
         Center(child: Text('$years years', style: TextStyle(fontSize: 44, fontWeight: FontWeight.w800, color: kPrimary))),
-        Slider(value: years.toDouble(), min: 1, max: 40, divisions: 39, label: '$years', onChanged: (v) => onChanged(v.round())),
+        Slider(value: years.toDouble(), min: 1, max: 40, divisions: 39, onChanged: (v) => onChanged(v.round())),
         Text('Your horizon shapes every mission and replay. Longer horizons can ride out bigger drops.',
             style: TextStyle(color: kMuted, height: 1.4)),
       ]);
