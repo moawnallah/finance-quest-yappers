@@ -184,6 +184,395 @@
       }
     },
     {
+      "node": "F1",
+      "panel": "FOUNDATIONS",
+      "title": "Budget and cash flow",
+      "after": [],
+      "status": "draft",
+      "live": false,
+      "cards": [],
+      "items": [
+        {
+          "id": "f1.e1",
+          "node": "F1",
+          "level": "easy",
+          "kind": "numeric",
+          "content_version": 1,
+          "check": true,
+          "scored": true,
+          "difficulty": 0.0,
+          "question": {
+            "kind": "numeric",
+            "q": "Net pay is 6,500 PLN a month. Rent 2,200, food 1,400, bills 600, transport 400 and a loan instalment 500. What is left each month?",
+            "unit": "PLN",
+            "input": {
+              "min": 0,
+              "max": 5000,
+              "step": 50
+            },
+            "confidence": {
+              "min": 1,
+              "max": 5
+            }
+          },
+          "reveal": {
+            "answer": 1400,
+            "unit": "PLN",
+            "tolerance": {
+              "kind": "absolute",
+              "band": 50
+            },
+            "why": "6,500 - (2,200 + 1,400 + 600 + 400 + 500) = 6,500 - 5,100 = 1,400 PLN.",
+            "sources": []
+          },
+          "meta": {
+            "secrets": {
+              "strings": [],
+              "numbers": [
+                1400
+              ]
+            }
+          }
+        },
+        {
+          "id": "f1.e2",
+          "node": "F1",
+          "level": "easy",
+          "kind": "numeric",
+          "content_version": 1,
+          "check": true,
+          "scored": true,
+          "difficulty": 0.0,
+          "question": {
+            "kind": "numeric",
+            "q": "Car insurance costs 1,800 PLN once a year. How much should you put aside each month so it is not a surprise?",
+            "unit": "PLN",
+            "input": {
+              "min": 0,
+              "max": 500,
+              "step": 10
+            },
+            "confidence": {
+              "min": 1,
+              "max": 5
+            }
+          },
+          "reveal": {
+            "answer": 150,
+            "unit": "PLN",
+            "tolerance": {
+              "kind": "absolute",
+              "band": 10
+            },
+            "why": "1,800 / 12 = 150 PLN a month. Spreading yearly costs over the months keeps the budget honest.",
+            "sources": []
+          },
+          "meta": {
+            "secrets": {
+              "strings": [],
+              "numbers": [
+                150
+              ]
+            }
+          }
+        },
+        {
+          "id": "f1.e3",
+          "node": "F1",
+          "level": "easy",
+          "kind": "single",
+          "content_version": 1,
+          "check": false,
+          "scored": true,
+          "difficulty": 0.0,
+          "question": {
+            "kind": "single",
+            "q": "Which of these is a fixed monthly cost?",
+            "options": [
+              "Rent",
+              "Eating out",
+              "A weekend trip"
+            ],
+            "confidence": {
+              "min": 1,
+              "max": 5
+            }
+          },
+          "reveal": {
+            "answer": 0,
+            "why": "Rent is the same every month. Eating out and trips change, so they are variable costs.",
+            "sources": []
+          },
+          "meta": {
+            "secrets": {
+              "strings": [
+                "Rent"
+              ],
+              "numbers": []
+            }
+          }
+        }
+      ],
+      "meta": {
+        "content_file": "F1.yaml",
+        "author": "draft by Claude (AI), 2026-11-20",
+        "reviewer": null,
+        "checked": {}
+      }
+    },
+    {
+      "node": "F2",
+      "panel": "FOUNDATIONS",
+      "title": "Inflation and real value",
+      "after": [
+        "F1"
+      ],
+      "status": "draft",
+      "live": false,
+      "cards": [],
+      "items": [
+        {
+          "id": "f2.e1",
+          "node": "F2",
+          "level": "easy",
+          "kind": "numeric",
+          "content_version": 1,
+          "check": true,
+          "scored": true,
+          "difficulty": 0.0,
+          "question": {
+            "kind": "numeric",
+            "q": "Prices rise 10% in a year. A shopping basket cost 200 PLN. What does the same basket cost a year later?",
+            "unit": "PLN",
+            "input": {
+              "min": 150,
+              "max": 300,
+              "step": 1
+            },
+            "confidence": {
+              "min": 1,
+              "max": 5
+            }
+          },
+          "reveal": {
+            "answer": 220,
+            "unit": "PLN",
+            "tolerance": {
+              "kind": "absolute",
+              "band": 2
+            },
+            "why": "200 x 1.10 = 220 PLN.",
+            "sources": []
+          },
+          "meta": {
+            "secrets": {
+              "strings": [],
+              "numbers": [
+                220
+              ]
+            }
+          }
+        },
+        {
+          "id": "f2.e2",
+          "node": "F2",
+          "level": "easy",
+          "kind": "single",
+          "content_version": 1,
+          "check": true,
+          "scored": true,
+          "difficulty": 0.0,
+          "question": {
+            "kind": "single",
+            "q": "A savings account pays 2% a year and prices rise 5%. After a year, what can your money buy?",
+            "options": [
+              "More than today",
+              "Exactly the same as today",
+              "Less than today"
+            ],
+            "confidence": {
+              "min": 1,
+              "max": 5
+            }
+          },
+          "reveal": {
+            "answer": 2,
+            "why": "Your balance grows 2%, but prices grow 5%, so the same money buys about 3% less.",
+            "sources": []
+          },
+          "meta": {
+            "secrets": {
+              "strings": [
+                "Less than today"
+              ],
+              "numbers": []
+            }
+          }
+        },
+        {
+          "id": "f2.e3",
+          "node": "F2",
+          "level": "easy",
+          "kind": "true_false",
+          "content_version": 1,
+          "check": false,
+          "scored": true,
+          "difficulty": 0.0,
+          "question": {
+            "kind": "true_false",
+            "q": "If the balance on your account grows, your buying power always grows too.",
+            "confidence": {
+              "min": 1,
+              "max": 5
+            }
+          },
+          "reveal": {
+            "answer": false,
+            "why": "Not if prices rise faster than your balance. What counts is what the money buys.",
+            "sources": []
+          },
+          "meta": {
+            "secrets": {
+              "strings": [],
+              "numbers": []
+            }
+          }
+        }
+      ],
+      "meta": {
+        "content_file": "F2.yaml",
+        "author": "draft by Claude (AI), 2026-11-20",
+        "reviewer": null,
+        "checked": {}
+      }
+    },
+    {
+      "node": "F3",
+      "panel": "FOUNDATIONS",
+      "title": "Compound interest",
+      "after": [
+        "F1"
+      ],
+      "status": "draft",
+      "live": false,
+      "cards": [],
+      "items": [
+        {
+          "id": "f3.e1",
+          "node": "F3",
+          "level": "easy",
+          "kind": "numeric",
+          "content_version": 1,
+          "check": true,
+          "scored": true,
+          "difficulty": 0.0,
+          "question": {
+            "kind": "numeric",
+            "q": "You put 1,000 PLN in an account that pays 10% a year, and the interest is added each year. How much is there after 2 years?",
+            "unit": "PLN",
+            "input": {
+              "min": 1000,
+              "max": 1500,
+              "step": 5
+            },
+            "confidence": {
+              "min": 1,
+              "max": 5
+            }
+          },
+          "reveal": {
+            "answer": 1210,
+            "unit": "PLN",
+            "tolerance": {
+              "kind": "absolute",
+              "band": 5
+            },
+            "why": "Year 1: 1,000 + 100 = 1,100. Year 2: 1,100 + 110 = 1,210. The second year's interest is earned on the first year's interest too.",
+            "sources": []
+          },
+          "meta": {
+            "secrets": {
+              "strings": [],
+              "numbers": [
+                1210
+              ]
+            }
+          }
+        },
+        {
+          "id": "f3.e2",
+          "node": "F3",
+          "level": "easy",
+          "kind": "single",
+          "content_version": 1,
+          "check": true,
+          "scored": true,
+          "difficulty": 0.0,
+          "question": {
+            "kind": "single",
+            "q": "Two accounts both pay 5% a year on 1,000 PLN for 10 years. One adds the interest to the balance each year, the other pays it out. Which ends with more in total?",
+            "options": [
+              "The one that adds interest to the balance",
+              "Both end the same",
+              "The one that pays it out"
+            ],
+            "confidence": {
+              "min": 1,
+              "max": 5
+            }
+          },
+          "reveal": {
+            "answer": 0,
+            "why": "When interest stays in the account, it earns interest itself: about 1,629 PLN vs 1,500 PLN after 10 years.",
+            "sources": []
+          },
+          "meta": {
+            "secrets": {
+              "strings": [
+                "The one that adds interest to the balance"
+              ],
+              "numbers": []
+            }
+          }
+        },
+        {
+          "id": "f3.e3",
+          "node": "F3",
+          "level": "easy",
+          "kind": "true_false",
+          "content_version": 1,
+          "check": false,
+          "scored": true,
+          "difficulty": 0.0,
+          "question": {
+            "kind": "true_false",
+            "q": "With compound interest, starting five years earlier can matter more than a slightly higher rate.",
+            "confidence": {
+              "min": 1,
+              "max": 5
+            }
+          },
+          "reveal": {
+            "answer": true,
+            "why": "Time multiplies the effect: every extra year adds interest on all the interest earned so far.",
+            "sources": []
+          },
+          "meta": {
+            "secrets": {
+              "strings": [],
+              "numbers": []
+            }
+          }
+        }
+      ],
+      "meta": {
+        "content_file": "F3.yaml",
+        "author": "draft by Claude (AI), 2026-11-20",
+        "reviewer": null,
+        "checked": {}
+      }
+    },
+    {
       "node": "I1",
       "panel": "INSTRUMENTS",
       "title": "Risk as a spread of outcomes",
@@ -1523,12 +1912,6 @@
               "title": "Gwarantowanie depozytów",
               "publisher": "Bankowy Fundusz Gwarancyjny (BFG)",
               "url": "https://www.bfg.pl/gwarantowanie-depozytow/"
-            },
-            {
-              "id": "cfpb_emergency_fund",
-              "title": "An essential guide to building an emergency fund",
-              "publisher": "Consumer Financial Protection Bureau (US)",
-              "url": "https://www.consumerfinance.gov/an-essential-guide-to-building-an-emergency-fund/"
             }
           ]
         },
@@ -1675,6 +2058,139 @@
           "s1.c3": "EUR 100,000 per depositor per bank, joint accounts counted by share: bfg_limit. Domestic banks and credit unions covered: bfg_guarantee. 'Safe, accessible': CFPB.",
           "s1.c4": "EB525 vol. C Poland, Q8, weighted: no savings 19.8% + under 1 month 10.5% = 30.3%; age 18-24: 20.4% + 21.5% = 41.9% (unweighted n = 98, margin about 10 points)."
         }
+      }
+    },
+    {
+      "node": "S4",
+      "panel": "SAFETY",
+      "title": "Goals and horizon",
+      "after": [
+        "F3"
+      ],
+      "status": "draft",
+      "live": false,
+      "cards": [],
+      "items": [
+        {
+          "id": "s4.e1",
+          "node": "S4",
+          "level": "easy",
+          "kind": "numeric",
+          "content_version": 1,
+          "check": true,
+          "scored": true,
+          "difficulty": 0.0,
+          "question": {
+            "kind": "numeric",
+            "q": "You want 12,000 PLN for a car deposit in 2 years. Ignoring interest, how much do you need to save each month?",
+            "unit": "PLN",
+            "input": {
+              "min": 0,
+              "max": 2000,
+              "step": 10
+            },
+            "confidence": {
+              "min": 1,
+              "max": 5
+            }
+          },
+          "reveal": {
+            "answer": 500,
+            "unit": "PLN",
+            "tolerance": {
+              "kind": "absolute",
+              "band": 10
+            },
+            "why": "12,000 / 24 months = 500 PLN a month.",
+            "sources": []
+          },
+          "meta": {
+            "secrets": {
+              "strings": [],
+              "numbers": [
+                500
+              ]
+            }
+          }
+        },
+        {
+          "id": "s4.e2",
+          "node": "S4",
+          "level": "easy",
+          "kind": "single",
+          "content_version": 1,
+          "check": true,
+          "scored": true,
+          "difficulty": 0.0,
+          "question": {
+            "kind": "single",
+            "q": "Which of these is a goal you can plan for?",
+            "options": [
+              "Save more money",
+              "Have 12,000 PLN for a car deposit by June 2028",
+              "Be better with money"
+            ],
+            "confidence": {
+              "min": 1,
+              "max": 5
+            }
+          },
+          "reveal": {
+            "answer": 1,
+            "why": "A plannable goal has an amount and a date, so you can work out the monthly saving and the right mix.",
+            "sources": []
+          },
+          "meta": {
+            "secrets": {
+              "strings": [
+                "Have 12,000 PLN for a car deposit by June 2028"
+              ],
+              "numbers": []
+            }
+          }
+        },
+        {
+          "id": "s4.e3",
+          "node": "S4",
+          "level": "easy",
+          "kind": "single",
+          "content_version": 1,
+          "check": false,
+          "scored": true,
+          "difficulty": 0.0,
+          "question": {
+            "kind": "single",
+            "q": "Money for a goal one year away: which fits best?",
+            "options": [
+              "A bank deposit or short-term bonds",
+              "Shares of one company",
+              "A 10-year bond you may need to sell early"
+            ],
+            "confidence": {
+              "min": 1,
+              "max": 5
+            }
+          },
+          "reveal": {
+            "answer": 0,
+            "why": "A goal one year away cannot wait for a recovery after a bad year in shares, and cashing in a 10-year savings bond early costs a fee.",
+            "sources": []
+          },
+          "meta": {
+            "secrets": {
+              "strings": [
+                "A bank deposit or short-term bonds"
+              ],
+              "numbers": []
+            }
+          }
+        }
+      ],
+      "meta": {
+        "content_file": "S4.yaml",
+        "author": "draft by Claude (AI), 2026-11-20",
+        "reviewer": null,
+        "checked": {}
       }
     }
   ]

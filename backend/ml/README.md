@@ -21,7 +21,8 @@ tutor/llm.py        LiteLLMClient: roles -> models from config/llm.yaml, refusal
 config/llm.yaml     roles -> models, ${ENV} values
 prompts/tutor_small/tutor-v1.md
 tests/              checks, context guard, pipeline fallbacks, ingest rules, role refusals
-eval/               (next) 20-prompt model choice set, red-team set
+eval/               20-prompt model choice set, red-team set, runner
+router/             onboarding router: tree.yaml, benchmarks.yaml (EB525 PL), router.py (docs/onboarding_router.md)
 ```
 
 ```bash

@@ -1,0 +1,34 @@
+# Items only so far: they feed the prerequisite tests of I2 and D3 and the router's test-out for F2.
+node: F2
+panel: FOUNDATIONS
+title: "Inflation and real value"
+after: [F1]
+author: "draft by Claude (AI), 2026-11-20"
+reviewer: null
+status: draft
+
+items:
+  - id: f2.e1
+    kind: numeric
+    q: "Prices rise 10% in a year. A shopping basket cost 200 PLN. What does the same basket cost a year later?"
+    answer: 220
+    unit: PLN
+    tolerance: {kind: absolute, band: 2}
+    input: {min: 150, max: 300, step: 1}
+    why: "200 x 1.10 = 220 PLN."
+    check: true
+  - id: f2.e2
+    kind: single
+    q: "A savings account pays 2% a year and prices rise 5%. After a year, what can your money buy?"
+    options:
+      - "More than today"
+      - "Exactly the same as today"
+      - "Less than today"
+    answer: 2
+    why: "Your balance grows 2%, but prices grow 5%, so the same money buys about 3% less."
+    check: true
+  - id: f2.e3
+    kind: true_false
+    q: "If the balance on your account grows, your buying power always grows too."
+    answer: false
+    why: "Not if prices rise faster than your balance. What counts is what the money buys."

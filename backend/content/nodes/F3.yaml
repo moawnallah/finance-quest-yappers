@@ -1,0 +1,34 @@
+# Items only so far: they feed the prerequisite tests of F4, S4, I1, I5, L1 and the router's test-out for F3.
+node: F3
+panel: FOUNDATIONS
+title: "Compound interest"
+after: [F1]
+author: "draft by Claude (AI), 2026-11-20"
+reviewer: null
+status: draft
+
+items:
+  - id: f3.e1
+    kind: numeric
+    q: "You put 1,000 PLN in an account that pays 10% a year, and the interest is added each year. How much is there after 2 years?"
+    answer: 1210
+    unit: PLN
+    tolerance: {kind: absolute, band: 5}
+    input: {min: 1000, max: 1500, step: 5}
+    why: "Year 1: 1,000 + 100 = 1,100. Year 2: 1,100 + 110 = 1,210. The second year's interest is earned on the first year's interest too."
+    check: true
+  - id: f3.e2
+    kind: single
+    q: "Two accounts both pay 5% a year on 1,000 PLN for 10 years. One adds the interest to the balance each year, the other pays it out. Which ends with more in total?"
+    options:
+      - "The one that adds interest to the balance"
+      - "Both end the same"
+      - "The one that pays it out"
+    answer: 0
+    why: "When interest stays in the account, it earns interest itself: about 1,629 PLN vs 1,500 PLN after 10 years."
+    check: true
+  - id: f3.e3
+    kind: true_false
+    q: "With compound interest, starting five years earlier can matter more than a slightly higher rate."
+    answer: true
+    why: "Time multiplies the effect: every extra year adds interest on all the interest earned so far."

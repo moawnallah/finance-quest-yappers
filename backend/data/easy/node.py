@@ -280,7 +280,10 @@ def easy_done(prerequisite_scores: list[float], item_scores: list[float]) -> boo
     return bool(item_scores) and sum(item_scores) / len(item_scores) >= PASS_AVERAGE
 
 
-def node_done(easy_part_done: bool, medium_scores: list[float]) -> bool:
+def node_done(easy_part_done: bool, medium_scores: list[float], test_out_scores: list[float] = ()) -> bool:
     """Spec, "Node completion": the easy part is done and one medium task scored at least 0.6.
+    A passed test-out (the "challenge") completes the whole node on its own (decided 2026-11-21).
     Hard tasks are optional for completion."""
+    if prerequisite_passed(list(test_out_scores)):
+        return True
     return easy_part_done and any(s >= MEDIUM_PASS for s in medium_scores)

@@ -1,0 +1,38 @@
+# Items only so far: they feed the prerequisite tests of P2 and L1 and the router's test-out for S4.
+node: S4
+panel: SAFETY
+title: "Goals and horizon"
+after: [F3]
+author: "draft by Claude (AI), 2026-11-20"
+reviewer: null
+status: draft
+
+items:
+  - id: s4.e1
+    kind: numeric
+    q: "You want 12,000 PLN for a car deposit in 2 years. Ignoring interest, how much do you need to save each month?"
+    answer: 500
+    unit: PLN
+    tolerance: {kind: absolute, band: 10}
+    input: {min: 0, max: 2000, step: 10}
+    why: "12,000 / 24 months = 500 PLN a month."
+    check: true
+  - id: s4.e2
+    kind: single
+    q: "Which of these is a goal you can plan for?"
+    options:
+      - "Save more money"
+      - "Have 12,000 PLN for a car deposit by June 2028"
+      - "Be better with money"
+    answer: 1
+    why: "A plannable goal has an amount and a date, so you can work out the monthly saving and the right mix."
+    check: true
+  - id: s4.e3
+    kind: single
+    q: "Money for a goal one year away: which fits best?"
+    options:
+      - "A bank deposit or short-term bonds"
+      - "Shares of one company"
+      - "A 10-year bond you may need to sell early"
+    answer: 0
+    why: "A goal one year away cannot wait for a recovery after a bad year in shares, and cashing in a 10-year savings bond early costs a fee."
