@@ -204,13 +204,244 @@ The question never contains:
 
 A test checks this.
 
+## Next version: harder situations (design 2026-11-21, not built)
+
+**Why.** Measured 2026-11-21: in S1, "save 1,000, invest the rest" (2
+blocks, no condition) is accepted with 91 points; in P4, "rebalance every
+month" scores 100. The situations are too simple to need a thought-out rule.
+
+**Decided 2026-11-21** (Mateusz builds it; Yurii agreed):
+- the tests keep their kinds: two obligatory checks, optional scenarios,
+  200 futures. The situation gets more variables and real uncertainty, and
+  combines concepts from the node and the nodes before it;
+- the hard task moves from S1 to a capstone on P1, the last node of the
+  young-adult path. S1 comes first on that path, so a user there has
+  learned only F1;
+- P4 gets 19% tax on realised gains, switched on for that task only.
+
+### Where the new parts live
+
+Three layers:
+1. **Core:** the month loop (`sim/household.py`) and the block language
+   (`hard/dsl.py`, `hard/blockly.py`). Each new mechanism is an optional
+   field that is off by default.
+2. **Task file:** the story and numbers, and which mechanisms are on.
+3. **Regression baseline:** before any change, s1.h1 and p4.h1 as they are
+   today are copied to `data/tests/fixtures`. After every step they must
+   give the same points, growth index and bot results.
+
+A layer outside the engine would not work: fees, bills and tax happen
+inside the month, between the policy and the returns, where a wrapper
+cannot reach.
+
+| Mechanism | Task field or block | Used by | Changes |
+|---|---|---|---|
+| Own variables | blocks `set_var`, `change_var`, `my_var` | both | dsl, blockly |
+| `if` without "otherwise" | block `if` | both | dsl, blockly |
+| Divide, "but at least" | `math` ops `/`, `max` | both | dsl |
+| Typed number in every slot | Blockly shadow block | both | blockly |
+| Buy or sell one asset | blocks `invest_in`, `sell` with an asset dropdown | both | household, dsl |
+| Irregular income | `household.income_extra: [min, max]`, drawn each month | p1.h1 | household |
+| Yearly bills and a bills pot | `household.bills: [{name, amount, month, every}]`, block `save_to_pot` | p1.h1 | household |
+| Card minimum payment | `household.card_min_payment` (share of the debt, paid first) | p1.h1 | household |
+| Fee on selling one asset | `household.sell_fee: {asset: x}` | p1.h1 (the bond) | household |
+| Minimum fee per trade | `household.trade_fee_min` | p4.h1 | household |
+| Moving target mix | `household.glide: {asset, from, to}` (straight line over the months) | p4.h1 | household |
+| Tax on realised gains | `household.tax_on_gains` | p4.h1 | household |
+| Unknown timing in a test | `obligatory[].variants`: several overrides; all must pass | both | task |
+| Card checks with starting debt | check `no_new_card_debt`: the card balance never goes up | p1.h1 | task |
+| Weight checks with a moving target | check `weight_near_target: {asset, below, above}` | p4.h1 | task |
+
+The value `month` is left out of both tasks. A rule must react to what
+happens, not to a test month it can read in the brief.
+
+### Own variables (Scratch's "Make a variable")
+
+Scratch is built on Blockly, so the app uses Blockly's own variable
+category: a "Make a variable" button, then "set [x] to ( )", "change [x]
+by ( )", and [x] as a value.
+- Numbers only. A variable starts at 0 and keeps its value from month to
+  month. That is what makes it useful: "months since my last bonus",
+  "money put aside for tax".
+- At most 3 per program. Names use letters, digits and `_`, up to 20
+  characters, and cannot reuse a built-in value name.
+- The converter maps `variables_set`, `math_change` and `variables_get` to
+  `{"block": "set_var", "name": "x", "value": <number>}`, `change_var` and
+  `my_var`. Still interpreted, never run as code.
+- Dividing by 0 gives 0; the help text says so.
+
+**Typing inside blocks.** Every number slot holds a typed number, like
+Scratch's white oval. You overwrite it by typing, or by dropping a value, a
+calculation or your own variable on it.
+
+### Tax on realised gains (P4 only)
+
+Two kinds of number, kept only when `tax_on_gains` is set:
+- **one cost basis per asset:** what was paid for the units still held;
+- **one accumulator:** the gain realised this year.
+
+The rules:
+- Buying adds the money to the asset's cost basis.
+- Selling X of an asset worth V with cost basis B:
+  - the gain is X − B·X/V;
+  - the cost basis falls by B·X/V;
+  - the gain goes into the accumulator.
+
+  Rebalancing counts as selling; the fee lowers the gain.
+- Every 12th month the tax is `tax_on_gains` × max(accumulator, 0). It is
+  paid from cash, then the buffer, then the card, and the accumulator goes
+  back to 0.
+- The program can read `tax_due_this_year`.
+
+**Why no array.** An array of purchases (one entry per buy) is only needed
+to sell the oldest units first (FIFO). One number per asset is enough for
+the average price.
+
+**Simplifications** (listed in `assumptions`):
+- average price, not FIFO. Polish rules match a sale to the oldest
+  purchase; check this before quoting it;
+- tax at year end, not in April;
+- losses do not carry over to the next year;
+- no IKE/IKZE.
+
+### p1.h1 capstone: "Ania's first two years" (F1, S1, I1, I2, I4, P1)
+
+**Situation:** Ania, 27, over 24 months:
+- base pay 5,800 PLN, plus 0-1,500 PLN of freelance work, unknown until
+  the month starts;
+- essentials 4,800 PLN;
+- a buffer of 4,000 PLN at 4%;
+- card debt of 3,000 PLN at 20%, minimum payment 3% a month;
+- yearly bills: car insurance 1,800 PLN in month 9 and a holiday 2,500 PLN
+  in month 14, each every 12 months.
+
+| Where money can go | Concept | Engine |
+|---|---|---|
+| Buffer (ready at once, 4%) | S1 | as today |
+| Bills pot (for the known bills) | F1 | new |
+| Inflation-indexed savings bond: inflation plus a margin; 1% fee if sold early | I2: money that is locked, so a poor home for the buffer | `sell_fee` |
+| Broad share fund | I4 | `fictional` market, beta 1 |
+| One company, fictional "CrocoTech" | I4, I1: same average return, wider spread, rare crashes, so a lower typical result | `fictional` market, beta 1.3, events |
+| The mix of all of these | P1 | `invest_in` |
+
+**Obligatory** (same kinds as s1.h1):
+1. A 2-month job loss starting in month 4, 8, 13 or 19 (all four must
+   pass): the card balance never goes up.
+2. A normal 24 months: at least 12,000 PLN invested.
+
+**Optional** (with probabilities, scored on card use as in s1.h1):
+- CrocoTech loses 60%;
+- an inflation jump (the bond does best);
+- a share crash in year 2;
+- a car repair of 3,000 PLN;
+- a 4-month job loss;
+- a month with a large bonus.
+
+**Values the program can read:** `cash`, `income`, `costs`,
+`buffer_months`, `pot`, `next_bill`, `months_to_next_bill`, `card_debt`,
+`invested`, `weight` of an asset, `employed`, plus own variables.
+
+**Reference rule** (draft, about 20 blocks):
+1. If the buffer covers less than 1 month, fill it.
+2. Otherwise, if there is card debt, pay it off.
+3. Put next_bill ÷ months_to_next_bill into the bills pot.
+4. Fill the buffer to 3 months.
+5. Invest the rest: most in the fund, some in the bond, little or nothing
+   in CrocoTech.
+
+**Must fail or lose:**
+- "save 1,000, invest the rest": the bills drain the buffer, and the
+  job-loss test fails;
+- "buffer only": the investing test fails;
+- "everything in CrocoTech" is accepted but has a lower growth index. It
+  is a bot on the scatter.
+
+**Limits:** 40 blocks, depth 5.
+
+**Switching over.** s1.h1 stays live until p1.h1 passes its golden checks.
+Then:
+- S1 keeps its cards and easy items;
+- s1.h1 becomes the regression fixture;
+- the API tests move to p1.h1.
+
+**Open:** P1 is also on the investor path (I4 → I5 → P1 → P4), so
+investors meet the capstone too. Either keep it, or make p1.h1 optional on
+that path.
+
+### p4.h1 v2: "Marek over ten years" (P4, P2, P1, I5, I4)
+
+**Situation:**
+- 120 months for the tests and the futures;
+- 100,000 PLN in 60/40, plus 1,000 PLN a month;
+- the goal is 10 years away, so the share target falls from 60% to 40% in
+  a straight line (P2);
+- costs: a trade fee of 0.29%, at least 5 PLN per trade (I5), and 19% tax
+  on realised gains;
+- new money can go to either asset (`invest_in`);
+- market: `fictional` until the real series is in (`bootstrap` after),
+  with a regime where shares and bonds fall together (P1, 2022).
+
+**Obligatory** (same kinds; the bounds follow the moving target):
+1. A long rally: shares stay within 10 points of the month's target.
+2. A crash starting in month 6, 40 or 100 (all must pass): shares never
+   fall more than 20 points below the target. This rules out panic
+   selling.
+
+**Optional:**
+- shares and bonds fall together;
+- a crash in year 9, close to the goal;
+- a long sideways market, where fees add up;
+- a fast rally.
+
+**Values:** `cash`, `shares_weight`, `target_shares`, `drift`, `drawdown`,
+`months_since_rebalance`, `years_to_goal`, `tax_due_this_year`, plus own
+variables.
+
+**Reference rule** (draft):
+1. Put new money into the asset below its target.
+2. Rebalance only if the drift is more than 5 points and the money to move
+   is above 1,000 PLN.
+
+**Must fail or lose:**
+- "never rebalance" and "keep 60/40 forever" fail the rally test;
+- "rebalance every month" is accepted but pays fees and tax every month.
+  The build checks that its growth index is below the reference's, so the
+  lesson stays true when numbers change.
+
+### Blocks to choose from
+
+| Toolbox category | Blocks | p1.h1 | p4.h1 |
+|---|---|---|---|
+| Rules | `if`, `if_else` | 2 | 2 |
+| Conditions | `compare` (is less than, is more than), `and`, `or`, `not` | 4 | 4 |
+| Numbers | typed number, value (dropdown), calculation (plus, minus, times, divided by, but at most, but at least) | 3 | 3 |
+| My variables | set, change, the variable | 3 | 3 |
+| Money moves | p1.h1: `save_to_buffer`, `save_to_pot`, `pay_debt`, `invest_in` [asset], `sell` [asset]. p4.h1: `invest_in` [asset], `sell` [asset], `rebalance` | 5 | 3 |
+| **Total block types** | | **17** | **15** |
+
+Today each task has 10. The dropdowns carry the choice: 11-12 values and 2-4
+assets per task. Five categories keep the toolbox short.
+
+### Build order and cut line
+
+| Step | What | Check |
+|---|---|---|
+| 1 | Freeze the regression baseline (s1.h1 and p4.h1 v1 as fixtures) | existing results unchanged |
+| 2 | Language: own variables, `if`, divide, "but at least", typed slots, `invest_in` and `sell` per asset | dsl and blockly tests; baseline unchanged |
+| 3 | p4.h1 v2: moving target, minimum fee, tax | golden checks; the every-month bot loses on growth |
+| 4 | p1.h1: irregular income, bills pot, card minimum, sale fee, test variants; then switch S1 → P1 | golden checks; the lazy rules fail as listed |
+
+Each step ends with all suites passing. If time runs out, the tasks from
+the last finished step stay live. Michał should hear about step 2 before he
+builds the hard-task screen: the variable category and the asset dropdowns
+change what Blockly shows.
+
 ## Not yet
 
 - **P4 on real data:** switch `world.market` to `replay` (2020) or
   `bootstrap` once the monthly series are in the store (market_sim.md).
-- **Tax on realised gains** (19%) when rebalancing outside IKE/IKZE. This
-  would make frequent rebalancing visibly costly; today P4 assumes an
-  IKE-like account.
+- **Tax on realised gains:** designed above for P4 only. Today P4 assumes
+  an IKE-like account.
 - **A JSON schema** for `output/hard_tasks.json`.
 - **API wiring** (Mohamed):
   - `Catalog.find` loads `hard.load_records`;
