@@ -1,0 +1,128 @@
+{
+ "p4.h1": {
+  "reference": {
+   "accepted": true,
+   "score": 100,
+   "futures": {
+    "n": 200,
+    "without_card_debt": 200,
+    "median_net_worth": 365923.53
+   },
+   "story_test": null,
+   "sha256_full": "1505ebd32ef9ce5d87c832adfbb957c35495a74e43a638e9e8c89d7394c718f3"
+  },
+  "bot: Never rebalances": {
+   "accepted": false,
+   "score": null,
+   "futures": null,
+   "story_test": "A long rally: shares +2% a month for 36 months; keep shares between 50% and 70%",
+   "sha256_full": "8dea5d1b65ba78a138eab2a8141e0977c261807fa3581262260c4142f3798816"
+  },
+  "bot: Rebalances every month": {
+   "accepted": true,
+   "score": 100,
+   "futures": {
+    "n": 200,
+    "without_card_debt": 200,
+    "median_net_worth": 366692.03
+   },
+   "story_test": null,
+   "sha256_full": "1e6f069dedd1597a6a385536af1ac719d0535e489fd8a49899046fe62f2a70cd"
+  },
+  "bot: Rebalances once a year": {
+   "accepted": true,
+   "score": 93,
+   "futures": {
+    "n": 200,
+    "without_card_debt": 200,
+    "median_net_worth": 365839.71
+   },
+   "story_test": null,
+   "sha256_full": "9d2fbc32962a2e9575675cc4d3e65ed281135ada1be327241d9474264deb5449"
+  },
+  "bot: Rebalances when 10 points off": {
+   "accepted": false,
+   "score": null,
+   "futures": null,
+   "story_test": "A long rally: shares +2% a month for 36 months; keep shares between 50% and 70%",
+   "sha256_full": "cda4d99e62bfec68d1a75fb0bb2f7a0ca340338dd6932602bc6a31332f8b61e0"
+  },
+  "known_bad: Never rebalance": {
+   "accepted": false,
+   "score": null,
+   "futures": null,
+   "story_test": "A long rally: shares +2% a month for 36 months; keep shares between 50% and 70%",
+   "sha256_full": "8dea5d1b65ba78a138eab2a8141e0977c261807fa3581262260c4142f3798816"
+  },
+  "known_bad: Panic seller": {
+   "accepted": false,
+   "score": null,
+   "futures": null,
+   "story_test": "A long rally: shares +2% a month for 36 months; keep shares between 50% and 70%",
+   "sha256_full": "7aea6237bc82769f9a12083df9acb96a9fc770f98f7f8a96dcd967ffdac7d4cd"
+  }
+ },
+ "s1.h1": {
+  "reference": {
+   "accepted": true,
+   "score": 97,
+   "futures": {
+    "n": 200,
+    "without_card_debt": 133,
+    "median_net_worth": 233442.05
+   },
+   "story_test": null,
+   "sha256_full": "16f4fac2317ec0d8a0fa2b149f2b8759bdd1b2b2ac878165ac86c5f17f80e282"
+  },
+  "bot: Invests everything": {
+   "accepted": false,
+   "score": null,
+   "futures": null,
+   "story_test": "Job loss in month 6, lasting 2 months: never use the card",
+   "sha256_full": "954d70b39dd2662430c3d30e42e2a76e8e319d714872a09a89e16457faffc9e7"
+  },
+  "bot: Buffer of 2 months, then invests": {
+   "accepted": true,
+   "score": 91,
+   "futures": {
+    "n": 200,
+    "without_card_debt": 90,
+    "median_net_worth": 226564.22
+   },
+   "story_test": null,
+   "sha256_full": "03a44bdcb84b7d857af668021adccb06696a95b6984c5d7a5a6cdee85d18b980"
+  },
+  "bot: Buffer of 6 months, then invests": {
+   "accepted": true,
+   "score": 100,
+   "futures": {
+    "n": 200,
+    "without_card_debt": 182,
+    "median_net_worth": 228810.33
+   },
+   "story_test": null,
+   "sha256_full": "047f115003188145770ecd4fe156ebb37fc4f5c6c9f5e72989ab83732b7d4de5"
+  },
+  "known_bad: Invest everything": {
+   "accepted": false,
+   "score": null,
+   "futures": null,
+   "story_test": "Job loss in month 6, lasting 2 months: never use the card",
+   "sha256_full": "954d70b39dd2662430c3d30e42e2a76e8e319d714872a09a89e16457faffc9e7"
+  },
+  "known_bad: Save everything": {
+   "accepted": false,
+   "score": null,
+   "futures": null,
+   "story_test": "A normal 24 months: at least 15,000 PLN invested",
+   "sha256_full": "3c9bbb6c343cdf72ce04e5693f4927d6a415fbfd5d5bcf71d5424cd9c1afaed5"
+  },
+  "known_bad: Spend everything": {
+   "accepted": false,
+   "score": null,
+   "futures": null,
+   "story_test": "Job loss in month 6, lasting 2 months: never use the card",
+   "sha256_full": "f84a53783dc3252026d01bc15a66c626cfe93a8eb4f59559987365340e040943"
+  }
+ }
+}

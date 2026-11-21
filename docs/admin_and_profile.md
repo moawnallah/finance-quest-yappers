@@ -10,7 +10,8 @@ Purpose: agree what the admin panel and the profile show, where each number
 comes from, and what we must log now so that a "what next" model can be
 trained later.
 
-Status: decisions taken 2026-11-21 (end of file); nothing built yet. The
+Status: decisions taken 2026-11-21 (end of file). Built on branch
+`admin-panel` (section "API (built)"). Screens are not built yet. The
 existing pieces are named where they exist:
 - Mo's tables: `users`, `profiles`, `attempts`, `events`,
   `benchmark_answers`, `user_badges`;
@@ -339,7 +340,107 @@ growth_index, percentiles), `activity` and `privacy`.
 - **The free-text fields** (feedback, tutor messages) are masked as in the
   tutor, and kept for 30 days.
 
-## The analytics module (to build after review)
+## Demo mode and the end of a path (built 2026-11-21)
+
+1. **Survey.** The survey stays for everyone, because the client profile
+   is valuable for stakeholders. There is no public skip button; the
+   presenter fills it in quickly for a persona.
+2. **Path.** See onboarding_router.md, "Demo mode": the recommended path,
+   or "not ready yet, choose one of the two" (`POST
+   /onboarding/choose-path`).
+3. **End-of-path check-in,** about 30 seconds (`POST /paths/finish`):
+   - "Do you think you made progress?" (yes / somewhat / no);
+   - confidence 1-5 in each area of the path;
+   - "What is your next goal?"
+4. **Thanks screen:** "Thank you for finishing the path. This is a demo,
+   and we are very happy you tested it: we hope you learned something you
+   can use. If you like, try the other path too."
+   - **Optional feedback:** one tap to rate, a comment if the user likes
+     (`POST /feedback` with `where: mission`, `kind: rating`). It is
+     optional because forced feedback gives poor answers; the check-in
+     already collects the structured data.
+   - **The other demo path** is offered.
+
+All of it is stored: the check-in in `path_checkins`; `path_chosen`,
+`path_finished` and `demo_match` in `reco_events`.
+
+## Client insights (aggregate, for stakeholders)
+
+`GET /admin/client-insights` gives an overview of our users that a bank
+could use to see which tools and education its customers need:
+- **profile:** age band, goal, horizon, buffer, products held;
+- **knowledge:** knowledge bands, and the share rating themselves high but
+  scoring 0-2;
+- **learning needs:**
+  - no buffer or under a month;
+  - consumer loan;
+  - wants to invest but holds nothing;
+  - crypto;
+  - retirement goal without a pension product;
+- **topics:** the most needed topics;
+- **paths:** ready vs not ready, and which demo path was chosen;
+- **after the path:** progress, next goal, confidence by area.
+
+**Privacy rules, built in:**
+- aggregates only; nothing is listed per person;
+- any group smaller than 5 people is hidden, and the threshold cannot be
+  set lower than 5;
+- the current consent text says "student project". Sharing data with a
+  bank, even aggregates under a bank's name, would need a consent text
+  that says so. Sharing individual profiles would need explicit consent
+  and a legal basis (GDPR profiling rules). Check with the Commerzbank
+  mentor before any pitch claim beyond "aggregate insights".
+
+## API (built 2026-11-21, branch `admin-panel`)
+
+Routes are in `backend/app/insights_api.py`; the numbers come from
+`backend/ml/analytics`. Admin routes need the `X-Admin-Key` header.
+
+| Route | For | Returns |
+|---|---|---|
+| `POST /onboarding` | survey screen | knowledge score, band, benchmarks, path, challenges, goal; stores the survey, the result and `reco_events` |
+| `GET /me/summary` | profile | path, goal, challenges, benchmarks, panels with node bands and done flags, calibration (gap, words, Brier, weekly, badge), hard results, activity |
+| `POST /events/node-opened` | every node open | logs `node` and `source` (`recommended`, `self_chosen`, `explore_wheel`, `tutor_link`, `end_of_path`) |
+| `POST /feedback` | "Report a problem", mission rating | stores the report; the text is masked |
+| `GET /study/consent`, `POST /study/join` | hallway test | consent text and version; a session under a random participant id (no name). `join` needs the facilitator's `X-Study-Key` (`STUDY_KEY`) or the admin key |
+| `POST /onboarding/choose-path` | "not ready yet" screen, "try the other path" | stores the pick, logs `path_chosen` |
+| `POST /paths/finish` | end of a path | stores the check-in; returns the thanks message, the optional feedback ask, the other path |
+| `GET /admin/client-insights` | stakeholders | aggregate client overview, groups under 5 hidden |
+| `GET /admin/overview` | view A | tiles and alerts (reports red, item flags amber, advice red) |
+| `GET /admin/items` | view B | item and task quality from first attempts; the hard panel (acceptance, most failed test, points histogram, growth, `duration_ms` p50/p95) |
+| `GET /admin/calibration` | view C | weekly confidence vs score overall and by age band; onboarding self-rating vs knowledge score |
+| `GET /admin/advice-watch` | view D | tutor overview with the advice alert (empty until the tutor writes `llm_events`) |
+| `GET /admin/reco-events` | view E | the latest router events |
+| `GET /admin/node-opened` | view I | clicks by source and the self-chosen share |
+| `GET /admin/feedback`, `PATCH /admin/feedback/{id}` | view G | reports with red alerts; status changes are logged |
+| `GET /admin/study`, `DELETE /admin/study/{participant_id}` | view H | paired before/after results; withdrawal deletes everything for that code |
+
+**Hard tasks in the task API:**
+- `GET /tasks/{id}` and `GET /skills/{node}` serve hard tasks, including
+  `question.blockly`.
+- `POST /tasks/{id}/attempts` accepts a Blockly workspace or a program.
+  It returns `accepted`, `points` and `growth_index`, with the test
+  results and story in `reveal.result`.
+- The attempt stores `points`, `growth_index`, `failed_test` and
+  `duration_ms`.
+
+**The challenge rule** is in `node_status`: a passed test-out completes the
+whole node.
+
+**Migration:** `7c1e5a9d2b40` adds the tables and the attempt fields. On
+Vercel the tables are created at start-up, as before.
+
+**Tests:** 8 in `backend/tests/test_insights.py` and 9 in
+`backend/ml/tests/test_analytics.py`.
+
+**Not built yet:**
+- the screens;
+- `POST /tutor` and its `llm_events` writer;
+- the end-of-path screen's `GET /me/next-steps`;
+- the first-attempt rule for completion in `node_status` (Mo's fix 2; the
+  admin metrics already use first attempts).
+
+## The analytics module (built 2026-11-21)
 
 | Function | Input rows | Output | Test |
 |---|---|---|---|

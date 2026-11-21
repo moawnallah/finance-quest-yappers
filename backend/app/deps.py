@@ -5,7 +5,7 @@ from fastapi import Depends, Header
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.config import ADMIN_KEY
+from app.config import ADMIN_KEY, STUDY_KEY
 from app.db import get_db
 from app.models import Event, User
 
@@ -40,6 +40,16 @@ def _require_admin_key(x_admin_key: str | None, key: str | None) -> None:
     given = x_admin_key or key or ""
     if not ADMIN_KEY or not hmac.compare_digest(given, ADMIN_KEY):
         raise ApiError(403, "forbidden", "Admin key required")
+
+
+def require_study_access(x_study_key: str | None = Header(default=None), x_admin_key: str | None = Header(default=None)) -> None:
+    """Starting a study session: the facilitator's STUDY_KEY (header 'X-Study-Key') or the ADMIN_KEY.
+    Without it anyone could create unlimited participants and skew the study results."""
+    if STUDY_KEY and x_study_key and hmac.compare_digest(x_study_key, STUDY_KEY):
+        return
+    if ADMIN_KEY and x_admin_key and hmac.compare_digest(x_admin_key, ADMIN_KEY):
+        return
+    raise ApiError(403, "forbidden", "Study key required")
 
 
 def log_event(db: Session, user: User | None, name: str, **payload) -> None:

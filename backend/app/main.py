@@ -21,6 +21,7 @@ from app.deps import ApiError, current_user, log_event, require_admin
 from app.models import (Answer, BenchmarkAnswer, BenchmarkQuestion, BenchmarkStat, Node, NodeProgress, Profile,
                         Question, Slice, User, UserBadge)
 from app import schemas as s
+from app.insights_api import router as insights_router
 from app.tasks_api import router as skills_router
 from app.admin import router as admin_router
 from app.tutor_api import router as tutor_router
@@ -30,6 +31,7 @@ app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], all
 app.include_router(skills_router)
 app.include_router(admin_router)
 app.include_router(tutor_router)
+app.include_router(insights_router)
 
 if ON_VERCEL and DATABASE_URL.startswith("sqlite:////tmp/"):
     # Serverless demo: a new instance starts with an empty /tmp, so build the schema and load the content.

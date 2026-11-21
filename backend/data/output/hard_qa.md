@@ -2,11 +2,5 @@
 
 | | id | reference and bots: resilience points / growth index |
 |---|---|---|
-| ⚠️ | p4.h1 | Reference solution: 100 / 100; Never rebalances: not accepted; Rebalances every month: 100 / 100.2; Rebalances once a year: 93 / 100.0; Rebalances when 10 points off: not accepted |
-| ⚠️ | s1.h1 | Reference solution: 97 / 100; Invests everything: not accepted; Buffer of 2 months, then invests: 91 / 97.1; Buffer of 6 months, then invests: 100 / 98.0 |
-
-## p4.h1 (P4.yaml)
-- ⚠️ no reviewer yet: the task must not go live
-
-## s1.h1 (S1.yaml)
-- ⚠️ no reviewer yet: the task must not go live
+| ✅ | p1.h1 | Reference solution: 95 / 100; Buffer of 3 months, then everything in the fund (no pot, card left to the minimum): 84 / 99.8; Like the reference, but everything in CrocoTech: 95 / 96.2; Like the reference, but everything in the bond: 95 / 94.1 |
+| ✅ | p4.h1 | Reference solution: 100 / 100; Rebalances every month: 100 / 97.4; Rebalances once a year: 76 / 99.1; New money always into shares, rebalance at 5 points: 100 / 98.7; Never rebalances: not accepted |

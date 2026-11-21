@@ -197,6 +197,10 @@ class Attempt(Base):
     hints_used: Mapped[int] = mapped_column(Integer, default=0)
     tutor_opened: Mapped[bool] = mapped_column(Boolean, default=False)
     clarity_rating: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    points: Mapped[int | None] = mapped_column(Integer, nullable=True)            # hard: 51-100 when accepted
+    growth_index: Mapped[float | None] = mapped_column(Float, nullable=True)      # hard: reference solution = 100
+    failed_test: Mapped[str | None] = mapped_column(String(200), nullable=True)   # hard: first failing obligatory test
+    duration_ms: Mapped[int | None] = mapped_column(Integer, nullable=True)       # engine time to score
     __table_args__ = (
         Index("ix_attempts_user_node", "user_id", "node_id"),
         CheckConstraint("level IN ('easy','medium','hard')", name="ck_attempt_level"),
@@ -251,5 +255,56 @@ class RecoEvent(Base):
     overconfidence_term: Mapped[float | None] = mapped_column(Float, nullable=True)
     interest_term: Mapped[float | None] = mapped_column(Float, nullable=True)
     priority: Mapped[float | None] = mapped_column(Float, nullable=True)
-    reason_term: Mapped[str | None] = mapped_column(String(60), nullable=True)
+    reason_term: Mapped[str | None] = mapped_column(String(200), nullable=True)
+    payload: Mapped[dict | None] = mapped_column(JSON, nullable=True)  # extra fields (demo_match, path_chosen, path_finished)
     path: Mapped[list | None] = mapped_column(JSON, nullable=True)
+
+
+# ---------- onboarding, monitoring, feedback, study (docs/admin_and_profile.md) ----------
+
+class Onboarding(Base):
+    """The survey and the router's result, latest per user (docs/onboarding_router.md)."""
+    __tablename__ = "onboarding"
+    user_id: Mapped[str] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), primary_key=True)
+    survey: Mapped[dict] = mapped_column(JSON)
+    result: Mapped[dict] = mapped_column(JSON)
+    router_version: Mapped[str] = mapped_column(String(20))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
+
+
+class Feedback(Base):
+    """'Report a problem' and post-mission feedback (docs/admin_and_profile.md, view G)."""
+    __tablename__ = "feedback"
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    user_id: Mapped[str | None] = mapped_column(ForeignKey("users.id", ondelete="SET NULL"), nullable=True, index=True)
+    ts: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
+    where: Mapped[str] = mapped_column(String(20))       # item | card | task | tutor_answer | screen | mission
+    target_id: Mapped[str] = mapped_column(String(60), index=True)
+    kind: Mapped[str] = mapped_column(String(20))        # wrong_fact | unclear | bug | idea | other | rating
+    rating: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    text: Mapped[str | None] = mapped_column(Text, nullable=True)
+    status: Mapped[str] = mapped_column(String(20), default="new")   # new | triaged | fixed | wont_fix
+    resolved_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    __table_args__ = (
+        CheckConstraint("status IN ('new','triaged','fixed','wont_fix')", name="ck_feedback_status"),
+        CheckConstraint("rating IS NULL OR rating BETWEEN 1 AND 5", name="ck_feedback_rating"),
+    )
+
+
+class Consent(Base):
+    """Study mode (hallway test): consent under a random participant id, no name or contact details."""
+    __tablename__ = "consents"
+    participant_id: Mapped[str] = mapped_column(String(12), primary_key=True)
+    user_id: Mapped[str] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), unique=True)
+    consent_version: Mapped[str] = mapped_column(String(20))
+    given_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
+
+
+class PathCheckin(Base):
+    """The end-of-path check-in: progress, confidence per area, next goal (docs/admin_and_profile.md)."""
+    __tablename__ = "path_checkins"
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    user_id: Mapped[str] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True)
+    path_id: Mapped[str] = mapped_column(String(30))
+    answers: Mapped[dict] = mapped_column(JSON)
+    ts: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)

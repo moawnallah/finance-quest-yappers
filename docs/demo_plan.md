@@ -34,6 +34,15 @@ told.
 | Hard task | S1: a buffer rule tested on 1,000 futures | P4: a rebalancing rule tested on crashes | Score 51-100 and histogram (one of the two, see M4) |
 | End | Confidence before and after | Calibration gap shrinks | Measurement |
 
+**Flow in the app** (built 2026-11-21, API only):
+1. Survey.
+2. The path, or "not ready yet, choose one of the two".
+3. The nodes.
+4. The end-of-path check-in.
+5. Thanks, with optional feedback and "try the other path".
+
+Details: docs/admin_and_profile.md, "Demo mode and the end of a path".
+
 ## Paths in detail
 
 ### A. Young adult
@@ -42,11 +51,11 @@ told.
 |---|---|---|---|
 | 1 | Survey | 12 answers (docs/onboarding_router.md) | router in code with tests (2026-11-21); survey screen and API wiring left |
 | 2 | F1 | 2-item test-out (prerequisite of S1) | items to write |
-| 3 | S1 Emergency fund | 4 cards; easy items; medium: a persona's 24-month balance, estimate the buffer in months; hard (if S1 is chosen) | cards draft; rest to do |
+| 3 | S1 Emergency fund | 4 cards; easy items; medium: a persona's 24-month balance, estimate the buffer in months; the hard task moved to the P1 capstone (2026-11-21) | cards draft; rest to do |
 | 4 | I1 Risk as a spread | 3 cards; easy; medium: histogram of yearly returns, estimate losing years and the worst year | cards draft |
-| 5 | I2 Deposits and bonds | 4 cards; easy; medium: day X early 2022 (choice + reasons) | cards draft |
+| 5 | I2 Deposits and bonds | 4 cards; easy; medium: day X early 2022 (choice + reasons) | cards draft; medium built on real data (i2.m1) |
 | 6 | I4 One stock vs an index | 2 cards; easy | cards draft |
-| 7 | P1 Diversification | 3 cards; easy; optional medium: estimate the 2008 result of a 50/50 mix | cards draft |
+| 7 | P1 Diversification | 3 cards; easy; optional medium: estimate the 2008 result of a 50/50 mix; **hard: capstone "Ania's first two years" (p1.h1: buffer, bills pot, card, fund vs bond vs one company), built 2026-11-21; optional on the investor path** | cards draft; hard draft |
 
 ### B. Self-directed investor
 
@@ -58,7 +67,7 @@ told.
 | 4 | I5 Funds and costs | 4 cards; easy; medium: two KIDs with 2% and 0.3% costs, estimate the difference after 20 years (calculator) | cards draft |
 | 5 | P1 | shared with path A | cards draft |
 | 6 | P2 Allocation by horizon | 3 cards; test-out (prerequisite of P4) | cards draft |
-| 7 | P4 Rebalancing in a crash | 3 cards; easy; medium: day X March 2020 on a real monthly index; **hard: "Marek's 60/40 rule" (engine and content done 2026-11-21, synthetic market until the data is in)** | cards and hard draft |
+| 7 | P4 Rebalancing in a crash | 3 cards; easy; medium: day X March 2020 on a real monthly index; **hard: "Marek over ten years" (p4.h1 v2: moving target, minimum fee, 19% tax; built 2026-11-21, fictional market until the data is in)** | cards and hard draft; medium built on real data (p4.m1) |
 
 ## Milestones
 

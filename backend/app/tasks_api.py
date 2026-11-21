@@ -2,6 +2,8 @@
 
 They sit beside the older wheel endpoints (/wheel, /nodes, /answers), which serve content/roadmap.json.
 Answers, truth values and box weights never leave this module before a submission."""
+import time
+
 from fastapi import APIRouter, Depends
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -9,7 +11,7 @@ from sqlalchemy.orm import Session
 from app import schemas as s
 from app.db import get_db
 from app.deps import ApiError, current_user, log_event
-from app.engines import AttemptError, Catalog, catalog, easy, localize, medium, node_status
+from app.engines import AttemptError, Catalog, catalog, easy, hard, localize, medium, node_status
 from app.models import Attempt, User
 
 router = APIRouter(tags=["skills"])
@@ -50,6 +52,7 @@ def skill_detail(node_id: str, lang: str = "en", user: User = Depends(current_us
     db.commit()
     return s.SkillDetail(node=easy.node_view(node, lang),
                          medium=[medium.question_view(t, lang) for t in cat.tasks_by_node.get(node_id, [])],
+                         hard=[hard.question_view(t, lang) for t in cat.hard_by_node.get(node_id, [])],
                          status=_status(db, cat, user.id, node_id))
 
 
@@ -81,7 +84,7 @@ def get_task(task_id: str, lang: str = "en", user: User = Depends(current_user))
     if not found:
         raise ApiError(404, "not_found", f"No task '{task_id}'")
     level, rec = found
-    view = easy.question_view(rec, lang) if level == "easy" else medium.question_view(rec, lang)
+    view = {"easy": easy.question_view, "medium": medium.question_view, "hard": hard.question_view}[level](rec, lang)
     return s.TaskOut(level=level, task=view)
 
 
@@ -104,24 +107,37 @@ def submit_attempt(task_id: str, body: s.AttemptIn, lang: str = "en",
         if task_id not in draw(cat.nodes, body.for_node, seed=user.id):
             raise ApiError(400, "invalid_context", f"'{task_id}' is not in your {body.context} for {body.for_node}")
         node_id = body.for_node
-    elif level == "easy" and body.reasons:
+    elif level in ("easy", "hard") and body.reasons:
         raise ApiError(400, "invalid_response", "reasons are only for medium tasks")
 
+    started = time.perf_counter()
     try:
         if level == "easy":
             result, reveal = easy.score(rec, body.response, body.confidence), easy.reveal_view(rec, lang)
-        else:
+        elif level == "medium":
             result = medium.score(rec, body.response, body.reasons or [], body.confidence)
             reveal = medium.reveal_view(rec, lang)
+        else:
+            if not isinstance(body.response, dict):
+                raise AttemptError("a hard task needs the Blockly workspace JSON or the program JSON")
+            result = hard.score(rec, body.response)
+            result.update(confidence=body.confidence, p=None if body.confidence is None else (body.confidence - 1) / 4,
+                          score_estimate=None, score_reasons=None)
+            reveal = {**hard.reveal_view(rec, lang),
+                      "result": {k: result.get(k) for k in ("obligatory", "optional", "story", "futures")}}
     except AttemptError as e:
         raise ApiError(400, "invalid_response", str(e)) from e
+    duration_ms = int((time.perf_counter() - started) * 1000)
+    failed = next((t["name"] for t in result.get("obligatory") or [] if not t["passed"]), None)
 
     was_done = _status(db, cat, user.id, node_id)["done"]
     attempt = Attempt(user_id=user.id, task_id=task_id, node_id=node_id, level=level,
                       context=body.context, content_version=result["content_version"], response=result["response"],
                       confidence=result["confidence"], p=result["p"], score_estimate=result["score_estimate"],
                       score_reasons=result["score_reasons"], score=result["score"], started_at=body.started_at,
-                      hints_used=body.hints_used, tutor_opened=body.tutor_opened, clarity_rating=body.clarity_rating)
+                      hints_used=body.hints_used, tutor_opened=body.tutor_opened, clarity_rating=body.clarity_rating,
+                      accepted=result.get("accepted"), points=result.get("points"),
+                      growth_index=result.get("growth_index"), failed_test=failed, duration_ms=duration_ms)
     db.add(attempt)
     db.flush()
     log_event(db, user, "attempt_submitted", task_id=task_id, level=level, context=body.context, score=result["score"])
@@ -134,4 +150,5 @@ def submit_attempt(task_id: str, body: s.AttemptIn, lang: str = "en",
     return s.AttemptOut(attempt_id=attempt.id, task_id=task_id, level=level, score=result["score"],
                         score_estimate=result["score_estimate"], score_reasons=result["score_reasons"],
                         confidence=result["confidence"], p=result["p"], reveal=reveal, status=status,
-                        node_completed=completed)
+                        node_completed=completed, accepted=result.get("accepted"), points=result.get("points"),
+                        growth_index=result.get("growth_index"))

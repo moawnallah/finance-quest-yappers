@@ -70,3 +70,193 @@ items:  # draft by Yurii (with Claude), 2026-11-20, based on the cards above
     answer: 0
     why: "Both fell about 18%. The ECB links the higher correlation to inflation and rising central-bank rates."
     sources: [ecb_fsr_2022_corr]
+
+hard:  # draft by Claude (AI), 2026-11-21. Engine: docs/hard_engine.md ("Next version": p1.h1 capstone)
+  # The young-adult path's capstone (S1, I1, I2, I4, P1; F1 before them). Optional on the investor path
+  # (router/demo_paths.yaml). Replaces s1.h1, which is kept as a frozen fixture in data/tests/fixtures/hard_baseline.
+  - id: p1.h1
+    level: hard
+    content_version: 1
+    author: "draft by Claude (AI), 2026-11-21"
+    reviewer: "Mateusz, 2026-11-21 (situation, tests and lessons approved)"
+    sources: [cfpb_emergency_fund, mf_bonds_edo, damodaran_histret]
+    brief: >-
+      Ania, 27, earns 5,800 PLN a month after tax, plus 0 to 1,500 PLN from
+      freelance work that she only knows about when the month starts. She
+      needs 4,800 PLN for essentials. She has a 4,000 PLN buffer and 3,000 PLN
+      of card debt at 20% a year; the card takes a 3% minimum payment every
+      month. Two bills come once a year: car insurance, 1,800 PLN, in month 9,
+      and a holiday, 2,500 PLN, in month 14. She can keep money in her buffer
+      or a bills pot, or invest it in a broad share fund, an inflation-indexed
+      savings bond (1% fee if sold early) or shares of one company, CrocoTech.
+      Write her monthly rule for 24 months. Two tests must pass: a 2-month job
+      loss, whenever it comes, never makes her borrow on the card, and she
+      invests at least 12,000 PLN. Then we test your rule against other
+      surprises.
+    assets: {fund: "a broad share fund", bond: "an inflation-indexed savings bond", crocotech: "CrocoTech shares"}
+    palette: [if, if_else, compare, and, or, not, math, number, set_var, change_var, my_var,
+              save_to_buffer, save_to_pot, pay_debt, invest_in, sell]
+    vars: [cash, income, costs, buffer_months, pot, next_bill, months_to_next_bill, card_debt, invested, employed]
+    limits: {max_blocks: 40, max_depth: 5}
+    starter_program: {every_month: []}
+    household:
+      income: 5800
+      costs: 4800
+      buffer: 4000
+      card_debt: 3000
+      card_min_payment: 0.03
+      buffer_rate: 0.04
+      card_rate: 0.20
+      invested: {fund: 0, bond: 0, crocotech: 0}
+      bills:
+        - {name: "Car insurance", amount: 1800, month: 9, every: 12}
+        - {name: "Holiday", amount: 2500, month: 14, every: 12}
+      sell_fee: {bond: 0.01}
+    world:
+      months: 24
+      income_extra: {min: 0, max: 1500, seed: 2026112104}
+      market:
+        kind: fictional
+        seed: 2026112105
+        regimes:
+          calm: {mean: 0.012, sd: 0.03}
+          stress: {mean: -0.025, sd: 0.06}
+          calm_to_stress: 0.06
+          stress_to_calm: 0.3
+        assets:
+          fund: {label: "Share fund", beta: 1.0, noise: 0.01}
+          bond: {label: "Indexed bond", alpha: 0.0035, beta: 0.0, noise: 0.001}
+          crocotech: {label: "CrocoTech", alpha: 0.0023, beta: 1.3, noise: 0.06}
+        events:
+          - {asset: crocotech, probability: 0.01, shock: -0.4, headline: "CrocoTech loses its biggest client"}
+    assumptions:
+      - "Freelance income is drawn at random for each month between 0 and 1,500 PLN; in a job-loss month there is no income at all."
+      - "The buffer pays 4% a year. Card debt costs 20% a year; the minimum payment, 3% of the debt, is taken first each month."
+      - "A yearly bill is paid from the bills pot first, then from the month's money, then the buffer, then the card."
+      - "Returns come from our fictional market. The bond pays about 0.35% a month (inflation plus a margin, illustrative) and costs 1% if sold early. CrocoTech has about the same average as the fund, but a much wider spread and rare large falls."
+      - "Money you do not assign in a month is spent."
+      - "The surprises and their likelihoods are illustrative, chosen for teaching."
+      - "After the tests, your rule also runs through 200 random 10-year futures: how often it never borrowed on the card, and how much it grew (median), compared with the reference solution = 100."
+    obligatory:
+      - name: "A 2-month job loss starting in month 5, 10, 15 or 20: never borrow on the card"
+        override: {}
+        variants:
+          - {job_loss: [[5, 2]]}
+          - {job_loss: [[10, 2]]}
+          - {job_loss: [[15, 2]]}
+          - {job_loss: [[20, 2]]}
+        check: {no_new_card_debt: true}
+      - {name: "A normal 24 months: at least 12,000 PLN invested", override: {}, check: {contributed_at_least: 12000}}
+    optional:
+      - {name: "Car repair, 3,000 PLN in month 7", probability: 0.25, override: {shocks: {7: 3000}}}
+      - {name: "Prices up 10% from month 8", probability: 0.20, override: {price_rise: [8, 0.10]}}
+      - {name: "Dentist, 1,500 PLN in month 16", probability: 0.15, override: {shocks: {16: 1500}}}
+      - {name: "Job loss in month 13, lasting 3 months, just before the holiday bill", probability: 0.15, override: {job_loss: [[13, 3]]}}
+      - {name: "Job loss in month 20, lasting 3 months, over the car insurance", probability: 0.10, override: {job_loss: [[20, 3]]}}
+      - {name: "Job loss in month 11, lasting 4 months", probability: 0.08, override: {job_loss: [[11, 4]]}}
+      - {name: "An early job loss: month 3, lasting 2 months", probability: 0.05, override: {job_loss: [[3, 2]]}}
+    futures: {n: 200, months: 120, seed: 17, job_loss_per_month: 0.01, job_loss_months: [2, 5], shock_per_month: 0.04, shock_amount: [1000, 4000]}
+    reference_program:
+      every_month:
+        - block: if_else
+          if: {block: compare, op: "<", left: {block: var, name: buffer_months}, right: {block: number, value: 2}}
+          then: [{block: save_to_buffer, amount: {block: var, name: cash}}]
+          else:
+            - block: save_to_pot
+              amount:
+                block: math
+                op: "/"
+                left: {block: math, op: "-", left: {block: var, name: next_bill}, right: {block: var, name: pot}}
+                right: {block: var, name: months_to_next_bill}
+            - block: if_else
+              if: {block: compare, op: ">", left: {block: var, name: card_debt}, right: {block: number, value: 0}}
+              then: [{block: pay_debt, amount: {block: var, name: cash}}]
+              else:
+                - block: if_else
+                  if: {block: compare, op: "<", left: {block: var, name: buffer_months}, right: {block: number, value: 3}}
+                  then: [{block: save_to_buffer, amount: {block: var, name: cash}}]
+                  else:
+                    - {block: invest_in, amount: {block: math, op: "*", left: {block: var, name: cash}, right: {block: number, value: 0.7}}, asset: fund}
+                    - {block: invest_in, amount: {block: var, name: cash}, asset: bond}
+    known_bad_programs:
+      - name: "Save 1,000, invest the rest"
+        fails: "A 2-month job loss starting in month 5, 10, 15 or 20: never borrow on the card"
+        program:
+          every_month:
+            - {block: save_to_buffer, amount: {block: number, value: 1000}}
+            - {block: invest_in, amount: {block: var, name: cash}, asset: fund}
+      - name: "Buffer of 2 months, no bills pot"
+        fails: "A 2-month job loss starting in month 5, 10, 15 or 20: never borrow on the card"
+        program:
+          every_month:
+            - block: if_else
+              if: {block: compare, op: "<", left: {block: var, name: buffer_months}, right: {block: number, value: 2}}
+              then: [{block: save_to_buffer, amount: {block: var, name: cash}}]
+              else: [{block: invest_in, amount: {block: var, name: cash}, asset: fund}]
+      - name: "Buffer only"
+        fails: "A normal 24 months: at least 12,000 PLN invested"
+        program: {every_month: [{block: save_to_buffer, amount: {block: var, name: cash}}]}
+      - name: "Invest everything"
+        fails: "A 2-month job loss starting in month 5, 10, 15 or 20: never borrow on the card"
+        program: {every_month: [{block: invest_in, amount: {block: var, name: cash}, asset: fund}]}
+    baseline_bots:
+      - name: "Buffer of 3 months, then everything in the fund (no pot, card left to the minimum)"
+        program:
+          every_month:
+            - block: if_else
+              if: {block: compare, op: "<", left: {block: var, name: buffer_months}, right: {block: number, value: 3}}
+              then: [{block: save_to_buffer, amount: {block: var, name: cash}}]
+              else: [{block: invest_in, amount: {block: var, name: cash}, asset: fund}]
+      - name: "Like the reference, but everything in CrocoTech"
+        program:
+          every_month:
+            - block: if_else
+              if: {block: compare, op: "<", left: {block: var, name: buffer_months}, right: {block: number, value: 2}}
+              then: [{block: save_to_buffer, amount: {block: var, name: cash}}]
+              else:
+                - block: save_to_pot
+                  amount:
+                    block: math
+                    op: "/"
+                    left: {block: math, op: "-", left: {block: var, name: next_bill}, right: {block: var, name: pot}}
+                    right: {block: var, name: months_to_next_bill}
+                - block: if_else
+                  if: {block: compare, op: ">", left: {block: var, name: card_debt}, right: {block: number, value: 0}}
+                  then: [{block: pay_debt, amount: {block: var, name: cash}}]
+                  else:
+                    - block: if_else
+                      if: {block: compare, op: "<", left: {block: var, name: buffer_months}, right: {block: number, value: 3}}
+                      then: [{block: save_to_buffer, amount: {block: var, name: cash}}]
+                      else: [{block: invest_in, amount: {block: var, name: cash}, asset: crocotech}]
+      - name: "Like the reference, but everything in the bond"
+        program:
+          every_month:
+            - block: if_else
+              if: {block: compare, op: "<", left: {block: var, name: buffer_months}, right: {block: number, value: 2}}
+              then: [{block: save_to_buffer, amount: {block: var, name: cash}}]
+              else:
+                - block: save_to_pot
+                  amount:
+                    block: math
+                    op: "/"
+                    left: {block: math, op: "-", left: {block: var, name: next_bill}, right: {block: var, name: pot}}
+                    right: {block: var, name: months_to_next_bill}
+                - block: if_else
+                  if: {block: compare, op: ">", left: {block: var, name: card_debt}, right: {block: number, value: 0}}
+                  then: [{block: pay_debt, amount: {block: var, name: cash}}]
+                  else:
+                    - block: if_else
+                      if: {block: compare, op: "<", left: {block: var, name: buffer_months}, right: {block: number, value: 3}}
+                      then: [{block: save_to_buffer, amount: {block: var, name: cash}}]
+                      else: [{block: invest_in, amount: {block: var, name: cash}, asset: bond}]
+    editorial: >-
+      The reference rule works in order. Until the buffer covers 2 months, all
+      spare money goes there, because a job loss can come early. After that,
+      it puts aside each month the part of the next yearly bill that is still
+      missing, so a bill never eats the buffer. Then it pays off the card,
+      because 20% a year beats any expected return. Then it fills the buffer
+      to 3 months, and only then invests: most in the broad fund, the rest in
+      the indexed bond. The bond's early-sale fee is why the buffer is not kept
+      there. CrocoTech has about the same average return as the fund but a far
+      wider spread, so its typical result is lower: one company is not a
+      diversified investment.

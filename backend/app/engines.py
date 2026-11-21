@@ -12,10 +12,11 @@ if str(DATA_DIR) not in sys.path:
     sys.path.insert(0, str(DATA_DIR))
 
 import easy  # noqa: E402
+import hard  # noqa: E402
 import medium  # noqa: E402
 from common import AttemptError, localize  # noqa: E402
 
-__all__ = ["AttemptError", "Catalog", "catalog", "localize", "node_status", "easy", "medium"]
+__all__ = ["AttemptError", "Catalog", "catalog", "localize", "node_status", "easy", "hard", "medium"]
 
 
 @dataclass
@@ -23,6 +24,7 @@ class Catalog:
     """What the API serves: compiled nodes, their easy items, and medium tasks."""
     nodes: dict[str, dict]
     tasks: dict[str, dict]
+    hard_tasks: dict[str, dict] = field(default_factory=dict)
     items: dict[str, dict] = field(init=False)
     tasks_by_node: dict[str, list[dict]] = field(init=False)
 
@@ -31,22 +33,29 @@ class Catalog:
         self.tasks_by_node = {}
         for t in self.tasks.values():
             self.tasks_by_node.setdefault(t["node"], []).append(t)
+        self.hard_by_node: dict[str, list[dict]] = {}
+        for t in self.hard_tasks.values():
+            self.hard_by_node.setdefault(t["node"], []).append(t)
 
     @classmethod
     def load(cls, serve_drafts: bool = SERVE_DRAFTS) -> "Catalog":
         nodes = easy.load_nodes(ENGINE_OUTPUT_DIR / "easy.json")
         tasks = medium.load_records(ENGINE_OUTPUT_DIR / "medium_tasks.json")
+        hard_path = ENGINE_OUTPUT_DIR / "hard_tasks.json"
+        hard_tasks = hard.load_records(hard_path) if hard_path.exists() else {}
         nodes = {k: v for k, v in nodes.items() if serve_drafts or v["live"]}
-        # A medium task is served only with its node, so completion always has a node to count toward.
-        return cls(nodes=nodes, tasks={k: v for k, v in tasks.items()
-                                       if (serve_drafts or v["live"]) and v["node"] in nodes})
+        # A task is served only with its node, so completion always has a node to count toward.
+        keep = lambda recs: {k: v for k, v in recs.items() if (serve_drafts or v["live"]) and v["node"] in nodes}
+        return cls(nodes=nodes, tasks=keep(tasks), hard_tasks=keep(hard_tasks))
 
     def find(self, task_id: str) -> tuple[str, dict] | None:
-        """('easy', item) or ('medium', task), or None."""
+        """('easy', item), ('medium', task) or ('hard', task), or None."""
         if task_id in self.items:
             return "easy", self.items[task_id]
         if task_id in self.tasks:
             return "medium", self.tasks[task_id]
+        if task_id in self.hard_tasks:
+            return "hard", self.hard_tasks[task_id]
         return None
 
 
@@ -77,7 +86,8 @@ def node_status(cat: Catalog, node_id: str, user_id: str, attempts) -> dict:
     attempts: the user's Attempt rows with this node_id, in submission order.
     Choices the spec leaves open:
     - unanswered scored items count as 0 in the 0.8 average;
-    - a passed test-out marks the easy part done, like a passed prerequisite test;
+    - a passed test-out (the challenge) completes the whole node (decided 2026-11-21);
+    - hard tasks are optional for completion;
     - a node with no medium task is done when its easy part is done.
     """
     node = cat.nodes[node_id]
@@ -96,7 +106,10 @@ def node_status(cat: Catalog, node_id: str, user_id: str, attempts) -> dict:
     tasks = cat.tasks_by_node.get(node_id, [])
     task_ids = {t["id"] for t in tasks}
     medium_scores = [a.score for a in attempts if a.task_id in task_ids and a.score is not None]
-    done = easy.node_done(easy_part, medium_scores) if tasks else easy_part
+    if easy.prerequisite_passed(out_scores):
+        done = True
+    else:
+        done = easy.node_done(easy_part, medium_scores) if tasks else easy_part
 
     return {
         "node": node_id,
