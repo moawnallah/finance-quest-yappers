@@ -93,11 +93,11 @@ class _SkillTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final st = skill['status'] as Map<String, dynamic>;
     final done = st['done'] == true;
-    final answered = st['items_answered'] as int, total = st['items_total'] as int;
+    final answered = (st['items_correct'] as int?) ?? 0, total = st['items_total'] as int;
     final medium = skill['medium_tasks'] as int;
     final parts = [
       '${skill['cards']} cards',
-      '$answered/$total questions',
+      '$answered/$total questions right',
       if (medium > 0) st['medium_passed'] == true ? 'chart task passed' : '$medium chart task${medium == 1 ? '' : 's'}',
     ];
     return Material(
@@ -143,6 +143,9 @@ class ErrorPanel extends StatelessWidget {
   final VoidCallback onRetry;
   ErrorPanel({super.key, required this.message, required this.onRetry});
 
+  // A missing mission or task cannot be fixed by retrying: offer the way back instead.
+  bool get _missing => RegExp(r'^No (skill node|task)|not.found', caseSensitive: false).hasMatch(message);
+
   @override
   Widget build(BuildContext context) => Padding(
         padding: EdgeInsets.all(20),
@@ -151,11 +154,13 @@ class ErrorPanel extends StatelessWidget {
             color: kWarnSoft,
             border: kWarnBorder,
             child: Column(mainAxisSize: MainAxisSize.min, children: [
-              Icon(Icons.cloud_off, color: kWarnIcon, size: 32),
+              Icon(_missing ? Icons.search_off : Icons.cloud_off, color: kWarnIcon, size: 32),
               SizedBox(height: 8),
               Text(message, textAlign: TextAlign.center, style: TextStyle(color: kWarnText)),
               SizedBox(height: 12),
-              FilledButton(onPressed: onRetry, child: Text('Try again')),
+              _missing
+                  ? FilledButton.icon(onPressed: () => context.go('/wheel'), icon: Icon(Icons.arrow_back), label: Text('Back to the map'))
+                  : FilledButton(onPressed: onRetry, child: Text('Try again')),
             ]),
           ),
         ),

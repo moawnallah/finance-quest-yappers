@@ -117,6 +117,7 @@ def node_status(cat: Catalog, node_id: str, user_id: str, attempts) -> dict:
         "medium_passed": easy.node_done(True, medium_scores),
         "done": done,
         "items_answered": answered,
+        "items_correct": sum(1 for x in item_scores if x >= 1.0),
         "items_total": len(scored),
         "item_average": round(sum(item_scores) / len(item_scores), 4) if item_scores else None,
         "prerequisite": {"items": pre_ids, "passed": easy.prerequisite_passed(pre_scores)},

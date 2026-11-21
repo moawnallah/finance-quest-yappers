@@ -115,7 +115,7 @@ class _SkillScreenState extends State<SkillScreen> {
               _ActionTile(
                 icon: Icons.quiz_outlined,
                 title: '${items.length} questions',
-                subtitle: '${st['items_answered']} of ${st['items_total']} scored questions answered',
+                subtitle: '${st['items_correct'] ?? 0} of ${st['items_total']} scored questions right',
                 onTap: () => _run(TaskRun(title: title, taskIds: [for (final i in items) i['id'] as String])),
               ),
             for (final t in medium)

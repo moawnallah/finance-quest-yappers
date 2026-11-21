@@ -338,7 +338,7 @@ class _Step extends StatelessWidget {
                       ],
                       if (live && (step['total'] ?? 0) > 0) ...[
                         SizedBox(height: 4),
-                        Text('${step['answered']} of ${step['total']} questions answered', style: TextStyle(fontSize: 12, color: kMuted)),
+                        Text('${step['correct'] ?? 0} of ${step['total']} questions right', style: TextStyle(fontSize: 12, color: kMuted)),
                       ],
                     ])),
                     Icon(live ? Icons.chevron_right : Icons.schedule, color: kMuted),

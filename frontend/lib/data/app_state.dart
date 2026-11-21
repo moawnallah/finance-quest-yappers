@@ -36,7 +36,7 @@ final levels = [Level('Beginner', 0), Level('Intermediate', 300), Level('Expert'
 const riskNames = ['Calm', 'Steady', 'Balanced', 'Bumpy', 'Wild'];
 String riskName(int r) => riskNames[(r - 1).clamp(0, 4)];
 
-/// How Scales (the CrocoCash points) are earned. One points type, given only
+/// How Emeralds (the CrocoCash points) are earned. One points type, given only
 /// for a clear action or result.
 class Rewards {
   static const correctAnswer = 10;
@@ -55,12 +55,14 @@ class BadgeDef {
 final badgeDefs = [
   BadgeDef('first_steps', 'First mission', 'Finish your first mission'),
   BadgeDef('placement', 'Quick check', 'Finish the quick check'),
-  BadgeDef('goal', 'Daily goal', 'Reach your daily Scales goal'),
+  BadgeDef('goal', 'Daily goal', 'Reach your daily Emeralds goal'),
 ];
 
 /// Skills-tree panels in their teaching order (docs/skills_tree.md). The wheel
 /// shows the panels that have skills.
 const panelOrder = ['FOUNDATIONS', 'SAFETY', 'INSTRUMENTS', 'PORTFOLIO', 'DECISIONS', 'LONG HORIZON', 'PROTECTION'];
+/// The backend's tree writes LONG_HORIZON; the wheel uses the spaced name. Compare through this.
+String panelKey(dynamic p) => '${p ?? ''}'.replaceAll('_', ' ');
 const panelLabels = {
   'FOUNDATIONS': 'Foundations',
   'SAFETY': 'Safety',
@@ -279,20 +281,22 @@ class AppState extends ChangeNotifier {
   /// All seven skills-tree panels, always shown on the wheel; the ones without
   /// published skills yet appear as "coming soon".
   List<String> get panels => skills.isEmpty ? [] : panelOrder;
-  bool panelReady(String p) => skills.any((k) => k['panel'] == p);
-  List<Map<String, dynamic>> skillsIn(String panel) => [for (final k in skills) if (k['panel'] == panel) k];
+  bool panelReady(String p) => skills.any((k) => panelKey(k['panel']) == p);
+  List<Map<String, dynamic>> skillsIn(String panel) => [for (final k in skills) if (panelKey(k['panel']) == panel) k];
   Map<String, dynamic>? skillById(String id) => skills.where((k) => k['id'] == id).firstOrNull;
 
   Map<String, dynamic> _st(Map<String, dynamic> k) => Map<String, dynamic>.from(k['status'] ?? {});
   bool skillDone(Map<String, dynamic> k) => _st(k)['done'] == true;
   int skillAnswered(Map<String, dynamic> k) => ((_st(k)['items_answered'] as num?) ?? 0).toInt();
   int skillTotal(Map<String, dynamic> k) => ((_st(k)['items_total'] as num?) ?? 0).toInt();
+  /// Questions whose latest answer is right: a wrong answer or a failed check does not move progress.
+  int skillCorrect(Map<String, dynamic> k) => ((_st(k)['items_correct'] as num?) ?? 0).toInt();
 
-  /// 0..1: done = 1, otherwise scored questions answered / all scored questions.
+  /// 0..1: done = 1, otherwise scored questions answered right / all scored questions.
   double skillProgress(Map<String, dynamic> k) {
     if (skillDone(k)) return 1;
     final total = skillTotal(k);
-    return total == 0 ? 0 : (skillAnswered(k) / total).clamp(0, 1).toDouble();
+    return total == 0 ? 0 : (skillCorrect(k) / total).clamp(0, 1).toDouble();
   }
 
   /// Prerequisites that exist in the loaded tree (others are not published yet).
@@ -465,7 +469,7 @@ class AppState extends ChangeNotifier {
   }
 
   List<Map<String, dynamic>> plannedIn(String panel) =>
-      [for (final n in roadmapNodes) if (n['panel'] == panel && n['live'] != true) n];
+      [for (final n in roadmapNodes) if (panelKey(n['panel']) == panel && n['live'] != true) n];
 
   /// The starting survey + quick check, in the backend router's format (backend/app/insights_api.py SurveyIn).
   /// [sure]: "How sure are you?" (1-5) per quick-check item; the router uses it for overconfidence.
@@ -589,7 +593,7 @@ class AppState extends ChangeNotifier {
     email = null;
     signInMethod = null;
     profile.name = 'You';
-    xp = 0; // the next account brings its own Scales from the server
+    xp = 0; // the next account brings its own Emeralds from the server
     xpToday = 0;
     api.reset();
     notifyListeners();

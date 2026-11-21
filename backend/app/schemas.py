@@ -209,6 +209,7 @@ class SkillStatus(BaseModel):
     medium_passed: bool = Field(description="At least one medium task scored 0.6 or more.")
     done: bool = Field(description="Node complete: easy part done and a medium task passed. A node without medium tasks is done when its easy part is.")
     items_answered: int = Field(description="Scored easy items answered at least once.")
+    items_correct: int = Field(0, description="Scored easy items whose latest answer is right (what the progress shows).")
     items_total: int = Field(description="Scored easy items in the node (reflections excluded).")
     item_average: float | None = Field(description="Average of the latest score per scored item, unanswered = 0.")
     prerequisite: DrawnTest = Field(description="The prerequisite test for this node (check items from its 'after' nodes).")
