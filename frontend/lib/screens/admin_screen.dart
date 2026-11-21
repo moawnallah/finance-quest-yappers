@@ -1,6 +1,9 @@
-// Admin panel: read-only monitoring of the backend (docs/tutor_agent.md,
-// section 6). Tabs: Overview, Tutor calls (the masked prompts users write and
-// the tutor's answers), Recommender, Event log. Users appear as pseudonymous
+// Admin panel: monitoring of the backend (docs/tutor_agent.md section 6,
+// docs/admin_and_profile.md). Tabs: Overview, Alerts, Questions (item quality),
+// Confidence (how sure vs how right), Advice watch, Feedback (reports, with a
+// status you can change), Insights (aggregate clients, clicks, A/B), Study,
+// Tutor calls (the masked prompts users write and the tutor's answers),
+// Recommender, Event log. Users appear as pseudonymous
 // ids only. The admin key is typed here, kept in memory, and sent as the
 // X-Admin-Key header.
 
@@ -30,6 +33,15 @@ class _AdminScreenState extends State<AdminScreen> {
       api.admin('llm-events?limit=100${_flaggedOnly ? '&flagged=true' : ''}', _key),
       api.admin('reco-events?limit=100', _key),
       api.admin('events?limit=100${_eventName != null ? '&name=${Uri.encodeQueryComponent(_eventName!)}' : ''}', _key),
+      api.admin('overview', _key),
+      api.admin('items', _key),
+      api.admin('calibration', _key),
+      api.admin('advice-watch', _key),
+      api.admin('feedback', _key),
+      api.admin('client-insights', _key),
+      api.admin('node-opened', _key),
+      api.admin('ab-results', _key),
+      api.admin('study', _key),
     ]);
   }
 
@@ -38,7 +50,7 @@ class _AdminScreenState extends State<AdminScreen> {
   @override
   void initState() {
     super.initState();
-    if (_key != null) _data = _load();
+    if (_key != null || context.read<AppState>().isAdmin) _data = _load();
   }
 
   @override
@@ -46,7 +58,7 @@ class _AdminScreenState extends State<AdminScreen> {
     final account = context.watch<AppState>().isAdmin;
     if (_key == null && !account) return _keyGate();
     return DefaultTabController(
-      length: 4,
+      length: 11,
       child: Scaffold(
         appBar: AppBar(
           title: Text('Admin panel'),
@@ -54,7 +66,8 @@ class _AdminScreenState extends State<AdminScreen> {
             IconButton(tooltip: 'Refresh', icon: Icon(Icons.refresh), onPressed: _refresh),
             IconButton(tooltip: 'Forget key', icon: Icon(Icons.logout), onPressed: () => setState(() { _key = null; _data = null; })),
           ],
-          bottom: TabBar(isScrollable: true, tabs: [Tab(text: 'Overview'), Tab(text: 'Tutor calls'), Tab(text: 'Recommender'), Tab(text: 'Event log')]),
+          bottom: TabBar(isScrollable: true, tabs: [Tab(text: 'Overview'), Tab(text: 'Alerts'), Tab(text: 'Questions'), Tab(text: 'Confidence'), Tab(text: 'Advice watch'),
+              Tab(text: 'Feedback'), Tab(text: 'Insights'), Tab(text: 'Study'), Tab(text: 'Tutor calls'), Tab(text: 'Recommender'), Tab(text: 'Event log')]),
         ),
         body: FutureBuilder<List<Map<String, dynamic>>>(
           future: _data,
@@ -67,9 +80,16 @@ class _AdminScreenState extends State<AdminScreen> {
                 FilledButton(onPressed: _refresh, child: Text('Try again')),
               ]);
             }
-            final [summary, llm, reco, events] = snap.data!;
+            final [summary, llm, reco, events, overview, items, calibration, advice, feedback, insights, clicks, ab, study] = snap.data!;
             return TabBarView(children: [
               _overview(summary),
+              _alerts(overview),
+              _items(items),
+              _calibration(calibration),
+              _advice(advice),
+              _feedback(feedback),
+              _insights(insights, clicks, ab),
+              _study(study),
               _llm((llm['items'] as List).cast<Map<String, dynamic>>()),
               _reco((reco['items'] as List).cast<Map<String, dynamic>>()),
               _events(events),
@@ -287,6 +307,256 @@ class _AdminScreenState extends State<AdminScreen> {
       ),
     ]);
   }
+
+  // ------------------------------------------------------------ insights views (Mateusz's admin API)
+
+  String _pct(Object? v) => v == null ? '-' : '${((v as num) * 100).round()}%';
+  String _num(Object? v, [int digits = 2]) => v == null ? '-' : (v is int ? '$v' : (v as num).toStringAsFixed(digits));
+
+  Widget _grid(List<Widget> tiles) => LayoutBuilder(builder: (context, c) => GridView.count(
+        crossAxisCount: c.maxWidth > 900 ? 4 : 2,
+        shrinkWrap: true,
+        physics: NeverScrollableScrollPhysics(),
+        mainAxisSpacing: 10,
+        crossAxisSpacing: 10,
+        childAspectRatio: c.maxWidth > 900 ? 2.4 : 1.9,
+        children: tiles,
+      ));
+
+  Widget _h(String text, [String? sub]) => Padding(
+        padding: EdgeInsets.only(top: 18, bottom: 8),
+        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Text(text, style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: kInk)),
+          if (sub != null) Text(sub, style: TextStyle(fontSize: 12, color: kMuted)),
+        ]),
+      );
+
+  /// A scrollable table: header row plus rows of cells.
+  Widget _table(List<String> head, List<List<String>> rows) => rows.isEmpty
+      ? Padding(padding: EdgeInsets.all(12), child: Text('No data yet.', style: TextStyle(color: kMuted)))
+      : SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: DataTable(
+            headingRowHeight: 38,
+            dataRowMinHeight: 34,
+            dataRowMaxHeight: 40,
+            columnSpacing: 22,
+            headingTextStyle: TextStyle(fontWeight: FontWeight.w700, color: kMuted, fontSize: 12),
+            columns: [for (final h in head) DataColumn(label: Text(h))],
+            rows: [for (final r in rows) DataRow(cells: [for (final c in r) DataCell(Text(c, style: TextStyle(color: kInk, fontSize: 13)))])],
+          ),
+        );
+
+  /// Key-value view for nested aggregate data (client insights, study metrics).
+  Widget _kv(Object? v, [int depth = 0]) {
+    if (v is Map) {
+      return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        for (final e in v.entries)
+          if (e.value is Map || e.value is List)
+            Padding(
+              padding: EdgeInsets.only(left: depth * 14.0, top: 6),
+              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                Text('${e.key}'.replaceAll('_', ' '), style: TextStyle(fontWeight: FontWeight.w700, color: kInk)),
+                _kv(e.value, depth + 1),
+              ]),
+            )
+          else
+            Padding(
+              padding: EdgeInsets.only(left: depth * 14.0, top: 3),
+              child: Text('${'${e.key}'.replaceAll('_', ' ')}: ${e.value ?? '-'}', style: TextStyle(color: kBody)),
+            ),
+      ]);
+    }
+    if (v is List) {
+      if (v.isEmpty) return Padding(padding: EdgeInsets.only(left: depth * 14.0), child: Text('none', style: TextStyle(color: kMuted)));
+      return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [for (final x in v.take(20)) _kv(x is Map || x is List ? x : {'·': x}, depth)]);
+    }
+    return Text('$v', style: TextStyle(color: kBody));
+  }
+
+  Widget _alerts(Map<String, dynamic> o) {
+    final alerts = (o['alerts'] as List).cast<Map<String, dynamic>>();
+    return ListView(padding: EdgeInsets.all(16), children: [
+      _grid([
+        _stat('Users', o['users']),
+        _stat('Answers (24 h)', o['attempts_last_24h']),
+        _stat('Finished the survey', o['onboarded']),
+        _stat('Open reports', o['open_reports'], tone: (o['open_reports'] ?? 0) > 0 ? kWarnIcon : null),
+        _stat('Tutor answers', o['tutor_answers']),
+        _stat('Tutor fallback rate', _pct(o['tutor_fallback_rate'])),
+      ]),
+      _h('Alerts', 'Red first: tutor advice, then reports and questions to check.'),
+      if (alerts.isEmpty) Text('No alerts.', style: TextStyle(color: kMuted)),
+      for (final a in alerts)
+        Container(
+          margin: EdgeInsets.only(bottom: 8),
+          padding: EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: kSurface,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: a['level'] == 'red' ? kRed : kWarnBorder),
+          ),
+          child: Wrap(spacing: 8, runSpacing: 6, crossAxisAlignment: WrapCrossAlignment.center, children: [
+            _chip('${a['kind']}', tone: a['level'] == 'red' ? kRed : kWarnIcon),
+            Text('${a['target_id'] ?? a['message'] ?? ''}', style: TextStyle(fontWeight: FontWeight.w700, color: kInk)),
+            for (final f in (a['flags'] as List? ?? [])) _chip('$f'.replaceAll('_', ' ')),
+          ]),
+        ),
+    ]);
+  }
+
+  Widget _items(Map<String, dynamic> d) {
+    final items = (d['items'] as List).cast<Map<String, dynamic>>();
+    final hard = (d['hard'] as List).cast<Map<String, dynamic>>();
+    return ListView(padding: EdgeInsets.all(16), children: [
+      _h('Questions', 'From first attempts. Low success, a big confidence gap or low discrimination mean the question needs a look.'),
+      _table(['Question', 'Skill', 'Level', 'Answers', 'Right', 'Sure (1-5)', 'Gap', 'Discrimination', 'Median time', 'Used a hint'], [
+        for (final i in items)
+          ['${i['task_id']}', '${i['node']}', '${i['level']}', '${i['n']}', _pct(i['success']), _num(i['mean_confidence'], 1),
+            _num(i['calibration_gap']), _num(i['discrimination']), i['median_time_s'] == null ? '-' : '${_num(i['median_time_s'], 0)} s', _pct(i['hint_share'])],
+      ]),
+      _h('Hard tasks', 'Accepted programs, points and the first failing test.'),
+      if (hard.isEmpty) Text('No hard-task attempts yet.', style: TextStyle(color: kMuted)) else _kv(hard),
+    ]);
+  }
+
+  Widget _calibration(Map<String, dynamic> d) {
+    final series = Map<String, dynamic>.from(d['series'] as Map);
+    final all = (series['all'] as List? ?? []).cast<Map<String, dynamic>>();
+    final groups = Map<String, dynamic>.from(series['groups'] as Map? ?? {});
+    List<List<String>> rows(List<Map<String, dynamic>> r) =>
+        [for (final w in r) ['${w['week']}', '${w['n']}', _num(w['mean_confidence']), _num(w['mean_score']), _num(w['gap']), _num(w['brier'], 3)]];
+    const head = ['Week', 'Answers', 'How sure (0-1)', 'How right (0-1)', 'Gap', 'Brier'];
+    return ListView(padding: EdgeInsets.all(16), children: [
+      _h('How sure vs how right', 'A positive gap means learners are more confident than correct. Lower Brier is better.'),
+      _table(head, rows(all)),
+      for (final g in groups.entries) ...[
+        _h('Age group: ${g.key}'),
+        _table(head, rows((g.value as List).cast<Map<String, dynamic>>())),
+      ],
+      _h('Survey self-rating vs knowledge score'),
+      _table(['Self-rating', 'Knowledge score'], [
+        for (final r in (d['onboarding_self_rating'] as List).cast<Map<String, dynamic>>()) ['${r['self_rating'] ?? 'not given'}', '${r['knowledge_score']}'],
+      ]),
+    ]);
+  }
+
+  Widget _advice(Map<String, dynamic> d) {
+    if ((d['n'] ?? 0) == 0) return _empty('No tutor answers yet.');
+    final alert = Map<String, dynamic>.from(d['advice_alert'] as Map? ?? {});
+    return ListView(padding: EdgeInsets.all(16), children: [
+      Panel(
+        color: alert['on'] == true ? kRedSoft : kGreenSoft,
+        border: alert['on'] == true ? kRed : kGreen,
+        child: Text(
+          alert['on'] == true
+              ? 'Advice alert ON: ${alert['failing']} of ${alert['last_hour']} answers in the last hour failed the no-advice checks.'
+              : 'No advice alert: ${alert['failing'] ?? 0} of ${alert['last_hour'] ?? 0} answers in the last hour failed the checks.',
+          style: TextStyle(fontWeight: FontWeight.w700, color: kInk),
+        ),
+      ),
+      SizedBox(height: 12),
+      _grid([
+        _stat('Tutor answers', d['n']),
+        _stat('Fallback rate', _pct(d['fallback_rate'])),
+        _stat('Flagged for review', d['flagged'], tone: (d['flagged'] ?? 0) > 0 ? kRed : null),
+        _stat('Latency p50', d['latency_ms_p50'] == null ? '-' : '${d['latency_ms_p50']} ms'),
+        _stat('Latency p95', d['latency_ms_p95'] == null ? '-' : '${d['latency_ms_p95']} ms'),
+      ]),
+      _h('What people asked'),
+      Wrap(spacing: 6, runSpacing: 6, children: [for (final e in (d['intents'] as Map? ?? {}).entries) _chip('${e.key}: ${e.value}', tone: e.key == 'advice_request' || e.key == 'injection' ? kRed : null)]),
+      _h('Checks that failed'),
+      (d['checks_failed'] as Map? ?? {}).isEmpty
+          ? Text('None.', style: TextStyle(color: kMuted))
+          : Wrap(spacing: 6, runSpacing: 6, children: [for (final e in (d['checks_failed'] as Map).entries) _chip('${e.key}: ${e.value}', tone: kRed)]),
+      _h('Models'),
+      Wrap(spacing: 6, runSpacing: 6, children: [for (final e in (d['models'] as Map? ?? {}).entries) _chip('${e.key}: ${e.value}')]),
+    ]);
+  }
+
+  Future<void> _setStatus(int id, String status) async {
+    try {
+      await context.read<AppState>().api.adminWrite('PATCH', 'feedback/$id', {'status': status}, _key);
+      _refresh();
+    } catch (e) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Couldn't change the status: $e")));
+    }
+  }
+
+  Widget _feedback(Map<String, dynamic> d) {
+    final reports = (d['reports'] as List).cast<Map<String, dynamic>>();
+    final alerts = (d['alerts'] as List).cast<Map<String, dynamic>>();
+    return ListView(padding: EdgeInsets.all(16), children: [
+      if (alerts.isNotEmpty) ...[
+        _h('Alerts'),
+        for (final a in alerts) Padding(padding: EdgeInsets.only(bottom: 6), child: _kv(a)),
+      ],
+      _h('Reports', '"Report a problem" and ratings from learners. Text is masked before it is stored.'),
+      if (reports.isEmpty) Text('No reports yet.', style: TextStyle(color: kMuted)),
+      for (final r in reports)
+        Container(
+          margin: EdgeInsets.only(bottom: 8),
+          padding: EdgeInsets.all(12),
+          decoration: BoxDecoration(color: kSurface, borderRadius: BorderRadius.circular(12), border: Border.all(color: kLine)),
+          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Wrap(spacing: 8, runSpacing: 6, crossAxisAlignment: WrapCrossAlignment.center, children: [
+              _chip('${r['kind']}'.replaceAll('_', ' '), tone: r['kind'] == 'wrong_fact' || r['kind'] == 'bug' ? kRed : null),
+              Text('${r['where']} · ${r['target_id']}', style: TextStyle(fontWeight: FontWeight.w700, color: kInk)),
+              if (r['rating'] != null) _chip('${r['rating']}/5'),
+              Text('${r['ts']}'.split('.').first.replaceAll('T', ' '), style: TextStyle(fontSize: 12, color: kMuted)),
+            ]),
+            if (r['text'] != null) Padding(padding: EdgeInsets.only(top: 6), child: Text('${r['text']}', style: TextStyle(color: kBody))),
+            SizedBox(height: 6),
+            Row(children: [
+              Text('Status: ', style: TextStyle(color: kMuted)),
+              DropdownButton<String>(
+                value: r['status'] as String,
+                underline: SizedBox(),
+                items: [for (final st in ['new', 'triaged', 'fixed', 'wont_fix']) DropdownMenuItem(value: st, child: Text(st.replaceAll('_', ' ')))],
+                onChanged: (v) {
+                  if (v != null && v != r['status']) _setStatus(r['id'] as int, v);
+                },
+              ),
+            ]),
+          ]),
+        ),
+    ]);
+  }
+
+  Widget _insights(Map<String, dynamic> ci, Map<String, dynamic> clicks, Map<String, dynamic> ab) {
+    final rest = Map<String, dynamic>.from(ci)..remove('note')..remove('users');
+    return ListView(padding: EdgeInsets.all(16), children: [
+      _h('Client insights', '${ci['note'] ?? ''}'),
+      _grid([_stat('Learners in the insights', ci['users'])]),
+      if (rest.isEmpty)
+        Padding(padding: EdgeInsets.only(top: 8), child: Text('Groups appear once each has at least 5 learners (privacy).', style: TextStyle(color: kMuted)))
+      else
+        Panel(child: _kv(rest)),
+      _h('Where learners open missions', 'Self-chosen clicks feed the next-step model.'),
+      _grid([
+        _stat('Missions opened', clicks['total']),
+        _stat('Self-chosen share', _pct(clicks['self_chosen_share'])),
+      ]),
+      SizedBox(height: 8),
+      Wrap(spacing: 6, runSpacing: 6, children: [for (final e in (clicks['by_source'] as Map? ?? {}).entries) _chip('${e.key}'.replaceAll('_', ' ') + ': ${e.value}')]),
+      _h('A/B variants'),
+      _table(['Variant', 'Users', 'Quiz before', 'Quiz after', 'Confidence before', 'Confidence after', 'Chose "hold"'], [
+        for (final e in ab.entries)
+          if (e.value is Map)
+            ['${e.key}', '${e.value['users']}', _num(e.value['benchmark_before_avg']), _num(e.value['benchmark_after_avg']),
+              _num(e.value['confidence_before_avg']), _num(e.value['confidence_after_avg']), _pct(e.value['hold_share'])],
+      ]),
+    ]);
+  }
+
+  Widget _study(Map<String, dynamic> d) => ListView(padding: EdgeInsets.all(16), children: [
+        _h('Hallway study', '${d['note'] ?? ''}'),
+        _grid([_stat('Participants', d['participants'])]),
+        SizedBox(height: 10),
+        (d['metrics'] as Map? ?? {}).isEmpty
+            ? Text('Results appear after participants finish the before and after checks.', style: TextStyle(color: kMuted))
+            : Panel(child: _kv(d['metrics'])),
+      ]);
 
   Widget _chip(String text, {Color? tone}) => Container(
         padding: EdgeInsets.symmetric(horizontal: 8, vertical: 3),

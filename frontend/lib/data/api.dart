@@ -127,6 +127,12 @@ class Api {
   Future<Map<String, dynamic>> admin(String path, String? key) async =>
       Map<String, dynamic>.from(key == null ? await _authed('GET', '/admin/$path', 'Admin') : await _send('GET', '/admin/$path', adminKey: key));
 
+  /// Admin changes (PATCH /admin/feedback/{id}, ...), with the key or the admin account's token.
+  Future<Map<String, dynamic>> adminWrite(String method, String path, Object? body, String? key) async =>
+      Map<String, dynamic>.from(key == null
+          ? await _authed(method, '/admin/$path', 'Admin', body: body)
+          : await _send(method, '/admin/$path', body: body, adminKey: key));
+
   /// The AI tutor (POST /tutor, docs/tutor_agent.md section 5). Returns the
   /// tutor's text. Throws when the backend has no tutor yet; the app then
   /// answers from the stored explanation.
