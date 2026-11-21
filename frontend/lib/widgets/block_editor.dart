@@ -3,6 +3,7 @@
 //   - drag a block from the palette onto a slot (between lines, inside an if) or onto a gap (___);
 //   - tap a slot or a gap to select it, then tap a block in the palette.
 // Placed blocks can be dragged to another slot, and removed with their x.
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'common.dart';
@@ -95,6 +96,14 @@ class BlockEditor extends StatefulWidget {
   @override
   State<BlockEditor> createState() => BlockEditorState();
 }
+
+/// On touch screens an immediate drag would steal the scroll gesture: drag starts with a long press
+/// there (a tap still places a block). With a mouse, dragging starts at once.
+bool get _touch => defaultTargetPlatform == TargetPlatform.android || defaultTargetPlatform == TargetPlatform.iOS;
+
+Widget _draggable({required Object data, required Widget feedback, required Widget childWhenDragging, required Widget child}) => _touch
+    ? LongPressDraggable<Object>(data: data, feedback: feedback, childWhenDragging: childWhenDragging, child: child)
+    : Draggable<Object>(data: data, feedback: feedback, childWhenDragging: childWhenDragging, child: child);
 
 class BlockEditorState extends State<BlockEditor> {
   Object? _target; // a Slot, or a Stmt whose condition gap is selected
@@ -241,7 +250,7 @@ class BlockEditorState extends State<BlockEditor> {
           button: true,
           label: '${p.tip}\n${p.label}',
           excludeSemantics: true,
-          child: Draggable<Object>(
+          child: _draggable(
             data: p,
             feedback: Material(color: Colors.transparent, child: _chipOf(p.label, p.color)),
             childWhenDragging: Opacity(opacity: .4, child: _chipOf(p.label, p.color)),
@@ -413,7 +422,7 @@ class BlockEditorState extends State<BlockEditor> {
         ),
       ]),
     );
-    final draggable = Draggable<Object>(
+    final draggable = _draggable(
       data: s,
       feedback: Material(color: Colors.transparent, child: Opacity(opacity: .85, child: head)),
       childWhenDragging: Opacity(opacity: .3, child: head),
