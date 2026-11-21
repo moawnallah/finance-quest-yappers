@@ -59,6 +59,13 @@ class _HardTaskScreenState extends State<HardTaskScreen> with SingleTickerProvid
     if (go != true && mounted) context.pop();
   }
 
+  @override
+  void dispose() {
+    _code.dispose();
+    _tabs.dispose();
+    super.dispose();
+  }
+
   Future<void> _load() async {
     final s = context.read<AppState>();
     try {

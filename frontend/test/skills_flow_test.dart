@@ -55,7 +55,8 @@ void main() {
     await pump(tester, SkillsScreen());
     expect(find.textContaining('skills complete'), findsOneWidget);
     expect(find.text('What moves a price'), findsOneWidget);
-    expect(calls, containsAll(['POST /auth/session', 'GET /skills']));
+    expect(calls, containsAll(['GET /skills']));
+    expect(calls, isNot(contains('POST /auth/session'))); // guests are stateless: no server session
   });
 
   // "How sure are you?": the 4 (Sure) step of the one-line picker.
