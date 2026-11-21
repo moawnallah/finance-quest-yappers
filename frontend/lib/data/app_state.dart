@@ -371,6 +371,7 @@ class AppState extends ChangeNotifier {
     bands = Map<String, dynamic>.from(bench['score_bands']);
     notifyListeners();
     await loadConversations();
+    await restoreAccount();
   }
 
   Level get level => levels.lastWhere((l) => xp >= l.minXp);
@@ -472,19 +473,25 @@ class AppState extends ChangeNotifier {
     loadConversations();
   }
 
-  /// Admin emails (build setting ADMIN_EMAILS, comma separated). Signing in
-  /// with one shows the admin panel. Demo only: the backend must check this too.
-  static const adminEmails = String.fromEnvironment('ADMIN_EMAILS', defaultValue: 'admin@crocoash.xyz,admin@crococash.xyz');
+  /// The signed-in account. Admin rights come from the server (ADMIN_EMAILS there).
   String? email;
   bool isAdmin = false;
   bool guest = false;
 
-  void signInWithEmail(String e) {
-    email = e.toLowerCase();
-    isAdmin = adminEmails.split(',').map((x) => x.trim().toLowerCase()).contains(email);
+  void useAccount(Map<String, dynamic> a) {
+    email = a['email'] as String?;
+    isAdmin = a['is_admin'] == true;
     guest = false;
     signInMethod = 'email';
-    signIn(e.split('@').first);
+    signIn((a['display_name'] as String?) ?? (email ?? 'You').split('@').first);
+  }
+
+  /// On start: if this device still has an account session, restore it.
+  Future<void> restoreAccount() async {
+    try {
+      final a = await api.account(profile.name);
+      if (a != null) useAccount(a);
+    } catch (_) {}
   }
 
   void signInAsGuest() {

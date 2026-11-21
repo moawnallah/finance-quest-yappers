@@ -8,12 +8,15 @@ import 'package:audioplayers/audioplayers.dart';
 
 class Sfx {
   static bool enabled = true;
+  /// Browsers only allow sound after the user has interacted with the page;
+  /// set on the first tap or key press (main.dart).
+  static bool armed = false;
   static final List<AudioPlayer> _ticks = [];
   static int _next = 0;
   static DateTime _lastTick = DateTime(2000);
 
   static Future<void> _play(String name, {double volume = 0.6}) async {
-    if (!enabled) return;
+    if (!enabled || !armed) return;
     try {
       final p = AudioPlayer()..setReleaseMode(ReleaseMode.release);
       await p.play(AssetSource('sfx/$name.wav'), volume: volume);
@@ -24,7 +27,7 @@ class Sfx {
 
   /// The wheel ticks: a few reused players so fast spins stay in time.
   static Future<void> tick() async {
-    if (!enabled) return;
+    if (!enabled || !armed) return;
     final now = DateTime.now();
     if (now.difference(_lastTick).inMilliseconds < 45) return; // no machine-gun ticks
     _lastTick = now;

@@ -98,6 +98,11 @@ class User(Base):
     display_name: Mapped[str] = mapped_column(String(80))
     variant: Mapped[str] = mapped_column(String(4))
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
+    # Accounts (app/auth.py). Anonymous sessions have no email or password.
+    email: Mapped[str | None] = mapped_column(String(254), unique=True, index=True, nullable=True)  # stored lower case
+    password_hash: Mapped[str | None] = mapped_column(String(255), nullable=True)  # scrypt, never the password
+    is_admin: Mapped[bool] = mapped_column(Boolean, default=False)
+    last_login_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     profile: Mapped["Profile | None"] = relationship(back_populates="user", uselist=False)
 
 

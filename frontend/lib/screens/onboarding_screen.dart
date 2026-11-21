@@ -7,6 +7,7 @@ import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import 'signin_screen.dart' show googleSignInDemo;
+import '../data/api.dart' show ApiException;
 import '../data/app_state.dart';
 import '../widgets/common.dart';
 
@@ -104,6 +105,8 @@ class _WelcomeState extends State<_Welcome> {
   final _email = TextEditingController();
   final _password = TextEditingController();
   bool _hide = true;
+  bool _create = false; // false = sign in, true = create an account
+  bool _busy = false;
   String? _error;
 
   @override
@@ -113,14 +116,28 @@ class _WelcomeState extends State<_Welcome> {
     super.dispose();
   }
 
-  void _signIn() {
+  Future<void> _signIn() async {
     final email = _email.text.trim();
-    final ok = RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$').hasMatch(email);
-    if (!ok) return setState(() => _error = 'Enter a valid email address.');
-    if (_password.text.length < 6) return setState(() => _error = 'The password needs at least 6 characters.');
-    setState(() => _error = null);
-    context.read<AppState>().signInWithEmail(email);
-    widget.onStart();
+    if (!RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$').hasMatch(email)) return setState(() => _error = 'Enter a valid email address.');
+    if (_create && _password.text.length < 8) return setState(() => _error = 'Use at least 8 characters for the password.');
+    if (_password.text.isEmpty) return setState(() => _error = 'Enter your password.');
+    setState(() {
+      _error = null;
+      _busy = true;
+    });
+    final s = context.read<AppState>();
+    try {
+      final a = _create ? await s.api.register(email, _password.text) : await s.api.login(email, _password.text);
+      s.useAccount(a);
+      _password.clear();
+      widget.onStart();
+    } on ApiException catch (e) {
+      setState(() => _error = e.message);
+    } catch (_) {
+      setState(() => _error = 'Could not reach the server. Try again.');
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
   }
 
   InputDecoration _field(String label, IconData icon, {Widget? suffix}) => InputDecoration(
@@ -168,7 +185,7 @@ class _WelcomeState extends State<_Welcome> {
                 TextField(
                   controller: _password,
                   obscureText: _hide,
-                  autofillHints: [AutofillHints.password],
+                  autofillHints: [_create ? AutofillHints.newPassword : AutofillHints.password],
                   onSubmitted: (_) => _signIn(),
                   decoration: _field('Password', Icons.lock_outline,
                       suffix: IconButton(
@@ -182,7 +199,17 @@ class _WelcomeState extends State<_Welcome> {
                   Text(_error!, style: TextStyle(color: kRed, fontSize: 13)),
                 ],
                 SizedBox(height: 12),
-                FilledButton(onPressed: _signIn, child: Text('Sign in')),
+                FilledButton(
+                  onPressed: _busy ? null : _signIn,
+                  child: Text(_busy ? 'Please wait...' : _create ? 'Create account' : 'Sign in'),
+                ),
+                TextButton(
+                  onPressed: () => setState(() {
+                    _create = !_create;
+                    _error = null;
+                  }),
+                  child: Text(_create ? 'Already have an account? Sign in' : 'No account yet? Create one'),
+                ),
                 SizedBox(height: 14),
                 Row(children: [
                   Expanded(child: Divider(color: kLine)),

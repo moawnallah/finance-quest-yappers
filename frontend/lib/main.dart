@@ -139,7 +139,10 @@ class FinanceQuestApp extends StatelessWidget {
           data: mq.copyWith(textScaler: TextScaler.linear(scale.clamp(1.0, 2.0))),
           // The app fills every window width (phones, tablets, landscape, desktop);
           // pages keep their text readable with PageWidth instead of a fixed column.
-          child: BadgeWatcher(navigatorKey: rootNavigatorKey, child: child ?? SizedBox()),
+          child: Listener(
+            onPointerDown: (_) => Sfx.armed = true, // sounds start after the first tap
+            child: BadgeWatcher(navigatorKey: rootNavigatorKey, child: child ?? SizedBox()),
+          ),
         );
       },
     );

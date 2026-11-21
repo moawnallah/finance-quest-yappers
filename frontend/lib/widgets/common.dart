@@ -88,7 +88,11 @@ class StatsBar extends StatelessWidget implements PreferredSizeWidget {
     final lvl = s.level, next = s.nextLevel;
     final frac = next == null ? 1.0 : (s.xp - lvl.minXp) / (next.minXp - lvl.minXp);
     final initial = s.profile.name.isEmpty ? '?' : s.profile.name[0].toUpperCase();
-    final canPop = GoRouter.of(context).canPop();
+    // Ask this page's own navigator, not the router: an open sheet or dialog made the router
+    // report "can go back" on top-level tabs, and tapping the arrow then threw an error.
+    final nav = Navigator.of(context);
+    // Same rule as Flutter's AppBar: only pages pushed on top of another page get a back arrow.
+    final canPop = ModalRoute.of(context)?.impliesAppBarDismissal ?? false;
     return AppBar(
       toolbarHeight: _row,
       automaticallyImplyLeading: false,
@@ -115,7 +119,7 @@ class StatsBar extends StatelessWidget implements PreferredSizeWidget {
         constraints: BoxConstraints(maxWidth: 1400),
         child: Row(children: [
         if (canPop) ...[
-          IconButton(icon: Icon(Icons.arrow_back), tooltip: 'Back', onPressed: () => GoRouter.of(context).pop()),
+          IconButton(icon: Icon(Icons.arrow_back), tooltip: 'Back', onPressed: () => nav.maybePop()),
           SizedBox(width: 2),
         ],
         Expanded(
@@ -259,6 +263,7 @@ class _TopNav extends StatelessWidget {
 void showSettingsSheet(BuildContext context) {
   showModalBottomSheet(
     context: context,
+    useRootNavigator: true, // above the tabs, so it never changes what the tab page thinks it can do
     isScrollControlled: true,
     constraints: BoxConstraints(maxWidth: 560), // a sheet, not a full-width banner, on wide screens
     // The sheet paints its own background (below) so it follows a theme switch
