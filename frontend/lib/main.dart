@@ -9,6 +9,8 @@ import 'data/app_state.dart';
 import 'screens/onboarding_screen.dart';
 import 'screens/wheel_screen.dart';
 import 'screens/time_machine_screen.dart';
+import 'screens/path_screen.dart';
+import 'screens/hard_task_screen.dart';
 import 'screens/placement_screen.dart';
 import 'screens/progress_screen.dart';
 import 'screens/shell.dart';
@@ -42,6 +44,14 @@ void main() {
 /// Root navigator, so the badge pop-up can open from anywhere.
 final rootNavigatorKey = GlobalKey<NavigatorState>();
 
+CustomTransitionPage<void> _fade(GoRouterState st, Widget child) => CustomTransitionPage<void>(
+      key: st.pageKey,
+      child: child,
+      transitionDuration: Duration(milliseconds: 220),
+      reverseTransitionDuration: Duration(milliseconds: 150),
+      transitionsBuilder: (_, a, __, c) => FadeTransition(opacity: CurvedAnimation(parent: a, curve: Curves.easeOut), child: c),
+    );
+
 final _router = GoRouter(
   navigatorKey: rootNavigatorKey,
   observers: [_SfxObserver()],
@@ -50,15 +60,23 @@ final _router = GoRouter(
     GoRoute(path: '/', builder: (_, __) => PageWidth(max: 460, child: OnboardingScreen())),
     GoRoute(path: '/signin', builder: (_, __) => PageWidth(max: 460, child: SignInScreen())),
     GoRoute(path: '/placement', builder: (_, st) => PageWidth(child: PlacementScreen(retest: st.uri.queryParameters['retest'] == '1'))),
+    // Tabs. Each page fades in through its own page transition: cross-fading the shell's child
+    // (its navigator) put one GlobalKey in two places, which left Explore wired to a stale state
+    // after switching tabs (the wheel turned but the roadmap stayed on the old topic).
     ShellRoute(
       builder: (context, state, child) => AppShell(location: state.uri.path, child: child),
       routes: [
-        GoRoute(path: '/wheel', builder: (_, __) => WheelScreen()),
-        GoRoute(path: '/tutor', builder: (_, __) => TutorScreen()),
-        GoRoute(path: '/progress', builder: (_, __) => ProgressScreen()),
-        GoRoute(path: '/league', builder: (_, __) => LeagueScreen()),
+        GoRoute(path: '/wheel', pageBuilder: (_, st) => _fade(st, WheelScreen())),
+        GoRoute(path: '/path', pageBuilder: (_, st) => _fade(st, PathScreen())),
+        GoRoute(path: '/progress', pageBuilder: (_, st) => _fade(st, ProgressScreen())),
+        GoRoute(path: '/league', pageBuilder: (_, st) => _fade(st, LeagueScreen())),
       ],
     ),
+    // The tutor opens from the round button at the bottom right, over any tab.
+    GoRoute(path: '/tutor', builder: (_, __) => TutorScreen()),
+    GoRoute(path: '/survey', builder: (_, __) => PageWidth(max: 460, child: OnboardingScreen(startAtSurvey: true))),
+    GoRoute(path: '/coming-later', builder: (_, s) => PageWidth(child: ComingLaterScreen(nodeId: s.uri.queryParameters['node'] ?? ''))),
+    GoRoute(path: '/hard/:id', builder: (_, s) => HardTaskScreen(taskId: s.pathParameters['id']!)),
     GoRoute(path: '/skills', builder: (_, __) => PageWidth(child: SkillsScreen())),
     GoRoute(path: '/tutor-chat', builder: (_, __) => PageWidth(child: TutorScreen(fromQuestion: true))),
     GoRoute(path: '/admin', builder: (_, __) => PageWidth(max: 1100, child: AdminScreen())),

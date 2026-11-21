@@ -81,6 +81,7 @@ class _SkillScreenState extends State<SkillScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: Text('Mission')),
+      floatingActionButton: TutorFab(),
       body: FutureBuilder<Map<String, dynamic>>(
         future: future,
         builder: (context, snap) {
@@ -88,6 +89,7 @@ class _SkillScreenState extends State<SkillScreen> {
           if (snap.hasError) return ErrorPanel(message: '${snap.error}', onRetry: _reload);
           final node = snap.data!['node'] as Map<String, dynamic>;
           final medium = (snap.data!['medium'] as List).cast<Map<String, dynamic>>();
+          final hardTasks = (snap.data!['hard'] as List? ?? []).cast<Map<String, dynamic>>();
           final st = snap.data!['status'] as Map<String, dynamic>;
           final items = (node['items'] as List).cast<Map<String, dynamic>>();
           final cards = (node['cards'] as List).cast<Map<String, dynamic>>();
@@ -137,6 +139,13 @@ class _SkillScreenState extends State<SkillScreen> {
                 title: 'Day X: what happened next?',
                 subtitle: _firstLine(t['brief'] as String),
                 onTap: () => _run(TaskRun(title: 'Chart task', taskIds: [t['id'] as String])),
+              ),
+            for (final t in hardTasks)
+              _ActionTile(
+                icon: Icons.code_rounded,
+                title: 'Hard task: write your plan (experimental)',
+                subtitle: _firstLine('${t['brief'] ?? ''}'),
+                onTap: () => context.push('/hard/${t['id']}'),
               ),
             SizedBox(height: 16),
             if (stepsTask != null)

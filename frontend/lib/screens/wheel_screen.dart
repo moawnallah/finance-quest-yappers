@@ -122,6 +122,15 @@ class _WheelScreenState extends State<WheelScreen> {
                         child: _Tree(key: ValueKey(panel), panel: panel),
                       ),
                     ),
+                    if (s.skillsIn(panel).isNotEmpty && s.plannedIn(panel).isNotEmpty)
+                      Padding(padding: EdgeInsets.fromLTRB(16, 0, 16, 8), child: _PlannedStrip(panel: panel)),
+                    Padding(
+                      padding: EdgeInsets.fromLTRB(16, 0, 16, 6),
+                      child: MascotPlaceholder(
+                        size: 44,
+                        say: s.skillsIn(panel).isEmpty ? 'These missions are coming later. Tap one to see where it fits.' : 'Tap a glowing mission to start learning.',
+                      ),
+                    ),
                     Container(
                       height: wheelH,
                       decoration: BoxDecoration(
@@ -189,14 +198,19 @@ extension on _WheelScreenState {
         child: _SpinWheel(key: ValueKey('left${s.panels.join()}'), panels: s.panels, left: true),
       ),
       Expanded(
-        child: LayoutBuilder(builder: (context, rc) => Stack(children: [
+        child: LayoutBuilder(builder: (context, rc) {
+          // Kyle stands in the roadmap's corner; the roadmap keeps clear of him.
+          final kyle = (rc.maxHeight * 0.44).clamp(160.0, 340.0);
+          final showKyle = rc.maxHeight >= 380 && rc.maxWidth >= 560;
+          final kyleW = showKyle ? kyle * 0.78 + 40 : 0.0;
+          return Stack(children: [
           NotificationListener<ScrollNotification>(
             onNotification: _onScroll,
             child: Column(children: [
               SizedBox(height: _WheelScreenState.headerH),
               Expanded(
                 child: Stack(children: [
-                  Positioned.fill(child: s.skillsIn(panel).isEmpty
+                  Positioned(left: 0, top: 0, bottom: 0, right: kyleW, child: s.skillsIn(panel).isEmpty
                     ? Center(child: _Tree(key: ValueKey(panel), panel: panel))
                     : LayoutBuilder(builder: (context, tc) => SingleChildScrollView(child: SingleChildScrollView(
                   scrollDirection: Axis.horizontal,
@@ -218,15 +232,18 @@ extension on _WheelScreenState {
                     ),
                   ),
                 )))),
-                  // Kyle points the way on large screens, in the roadmap's empty corner.
-                  if (MediaQuery.sizeOf(context).height >= 700)
+                  // Coming-later topics of this panel, in their own colour.
+                  if (s.skillsIn(panel).isNotEmpty && s.plannedIn(panel).isNotEmpty)
+                    Positioned(left: 16, right: kyleW, bottom: 10, child: _PlannedStrip(panel: panel)),
+                  // Kyle points the way, sized to the window.
+                  if (showKyle)
                     Positioned(
-                      right: 28,
-                      bottom: 12,
+                      right: 16,
+                      bottom: 8,
                       child: IgnorePointer(
                         child: KyleCallout(
-                          size: 190,
-                          text: s.skillsIn(panel).isEmpty ? 'This topic is coming soon. Spin the wheel to pick another one!' : 'Tap a glowing mission to start learning.',
+                          size: kyle,
+                          text: s.skillsIn(panel).isEmpty ? 'These missions are coming later. Tap one to see where it fits.' : 'Tap a glowing mission to start learning.',
                         ),
                       ),
                     ),
@@ -250,7 +267,8 @@ extension on _WheelScreenState {
               ),
             ),
           ),
-        ])),
+        ]);
+        }),
       ),
     ]);
   }
@@ -276,7 +294,7 @@ class _RoadmapHeader extends StatelessWidget {
             Text(panelLabels[panel] ?? panel, style: _lora(fontSize: 24, fontWeight: FontWeight.w700, color: kInk, height: 1.1)),
             SizedBox(height: 2),
             Text(panelQuestions[panel] ?? '', maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(fontSize: 13, color: kBody)),
-            Text(ks.isEmpty ? 'Coming soon' : '$done of ${ks.length} missions done${focus ? ' · your focus' : ''}', style: TextStyle(fontSize: 12, color: kMuted)),
+            Text(ks.isEmpty ? 'Coming later: ${s.plannedIn(panel).length} missions planned' : '$done of ${ks.length} missions done${focus ? ' · your focus' : ''}', style: TextStyle(fontSize: 12, color: kMuted)),
           ]),
         ),
         Semantics(
@@ -322,6 +340,7 @@ class _Tree extends StatelessWidget {
   Widget build(BuildContext context) {
     final s = context.watch<AppState>();
     final ks = s.skillsIn(panel);
+    if (ks.isEmpty && s.plannedIn(panel).isNotEmpty) return _Planned(panel: panel, horizontal: horizontal);
     if (ks.isEmpty) {
       return Padding(
         padding: EdgeInsets.fromLTRB(32, 40, 32, 48),
@@ -930,4 +949,88 @@ void showDailyQuestion(BuildContext context) {
       ),
     ),
   );
+}
+
+
+/// The planned missions of a panel without content yet, drawn in the "coming later" colour.
+/// Tapping one opens the coming-later screen.
+class _Planned extends StatelessWidget {
+  final String panel;
+  final bool horizontal;
+  _Planned({super.key, required this.panel, this.horizontal = false});
+
+  @override
+  Widget build(BuildContext context) {
+    final s = context.watch<AppState>();
+    final nodes = [...s.plannedIn(panel)]..sort((a, b) => '${a['level']}${a['id']}'.compareTo('${b['level']}${b['id']}'));
+    final items = <Widget>[];
+    for (final (i, n) in nodes.indexed) {
+      if (i > 0) items.add(horizontal ? _dash(48, 3) : _dash(3, 28));
+      items.add(_PlannedNode(node: n));
+    }
+    return Padding(
+      padding: EdgeInsets.fromLTRB(24, 24, 24, 24),
+      child: horizontal
+          ? Row(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.center, children: [_dash(40, 3), ...items])
+          : Column(mainAxisSize: MainAxisSize.min, children: [...items.reversed, _dash(3, 28)]),
+    );
+  }
+
+  Widget _dash(double w, double h) => Container(
+        width: w, height: h,
+        decoration: BoxDecoration(color: kWarnBorder, borderRadius: BorderRadius.circular(2)),
+      );
+}
+
+class _PlannedNode extends StatelessWidget {
+  final Map<String, dynamic> node;
+  _PlannedNode({required this.node});
+
+  @override
+  Widget build(BuildContext context) => Semantics(
+        button: true,
+        label: '${node['title']}, coming later',
+        excludeSemantics: true,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(16),
+          onTap: () => GoRouter.of(context).push('/coming-later?node=${node['id']}'),
+          child: SizedBox(
+            width: 130,
+            child: Column(mainAxisSize: MainAxisSize.min, children: [
+              Container(
+                width: 60, height: 60,
+                decoration: BoxDecoration(color: kWarnSoft, shape: BoxShape.circle, border: Border.all(color: kWarnIcon, width: 2.5)),
+                child: Icon(Icons.schedule, color: kWarnIcon),
+              ),
+              SizedBox(height: 6),
+              Text('${node['title']}', textAlign: TextAlign.center, maxLines: 2, overflow: TextOverflow.ellipsis,
+                  style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: kInk, height: 1.2)),
+              Text('Coming later', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: kWarnText)),
+            ]),
+          ),
+        ),
+      );
+}
+
+/// Planned missions of a panel that already has some: small chips in the coming-later colour.
+class _PlannedStrip extends StatelessWidget {
+  final String panel;
+  _PlannedStrip({required this.panel});
+
+  @override
+  Widget build(BuildContext context) {
+    final s = context.watch<AppState>();
+    return Wrap(spacing: 6, runSpacing: 6, crossAxisAlignment: WrapCrossAlignment.center, children: [
+      Text('Coming later:', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: kWarnText)),
+      for (final n in s.plannedIn(panel))
+        ActionChip(
+          avatar: Icon(Icons.schedule, size: 16, color: kWarnIcon),
+          label: Text('${n['title']}', style: TextStyle(fontSize: 12, color: kInk)),
+          backgroundColor: kWarnSoft,
+          side: BorderSide(color: kWarnBorder),
+          visualDensity: VisualDensity.compact,
+          onPressed: () => GoRouter.of(context).push('/coming-later?node=${n['id']}'),
+        ),
+    ]);
+  }
 }

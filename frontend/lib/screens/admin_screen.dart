@@ -9,6 +9,7 @@
 
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../data/app_state.dart';
 import '../widgets/common.dart';
@@ -50,13 +51,13 @@ class _AdminScreenState extends State<AdminScreen> {
   @override
   void initState() {
     super.initState();
-    if (_key != null || context.read<AppState>().isAdmin) _data = _load();
+    if (context.read<AppState>().isAdmin) _data = _load();
   }
 
   @override
   Widget build(BuildContext context) {
-    final account = context.watch<AppState>().isAdmin;
-    if (_key == null && !account) return _keyGate();
+    // Admin accounts only: anyone else gets a polite stop (the backend refuses them too).
+    if (!context.watch<AppState>().isAdmin) return _adminsOnly();
     return DefaultTabController(
       length: 11,
       child: Scaffold(
@@ -100,6 +101,20 @@ class _AdminScreenState extends State<AdminScreen> {
     );
   }
 
+  Widget _adminsOnly() => Scaffold(
+        appBar: AppBar(title: Text('Admin panel')),
+        body: ListView(padding: EdgeInsets.all(24), children: [
+          Center(child: MascotPlaceholder(size: 200, pose: 'think')),
+          SizedBox(height: 12),
+          Center(child: Text('This page is for admins only', style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800, color: kInk))),
+          SizedBox(height: 6),
+          Center(child: Text('Sign in with an admin account to open it.', textAlign: TextAlign.center, style: TextStyle(color: kMuted))),
+          SizedBox(height: 18),
+          Center(child: FilledButton(style: FilledButton.styleFrom(minimumSize: Size(120, 44)), onPressed: () => GoRouter.of(context).go('/wheel'), child: Text('Back to the app'))),
+        ]),
+      );
+
+  // ignore: unused_element
   Widget _keyGate() => Scaffold(
         appBar: AppBar(title: Text('Admin panel')),
         body: ListView(padding: EdgeInsets.all(20), children: [

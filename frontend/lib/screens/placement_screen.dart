@@ -22,6 +22,7 @@ class _PlacementScreenState extends State<PlacementScreen> {
   int score = 0;
   bool done = false;
   final List<String> missed = [];
+  final Map<String, bool?> answers = {}; // question id -> right, wrong, or null for "I don't know
 
   @override
   Widget build(BuildContext context) {
@@ -63,7 +64,7 @@ class _PlacementScreenState extends State<PlacementScreen> {
                 picked = null;
               } else {
                 done = true;
-                s.finishPlacement(score, missed, retest: widget.retest);
+                s.finishPlacement(score, missed, retest: widget.retest, answers: answers);
               }
             }),
             child: Text(i < qs.length - 1 ? 'Next' : 'See my result'),
@@ -86,6 +87,7 @@ class _PlacementScreenState extends State<PlacementScreen> {
           ? null
           : () => setState(() {
                 picked = k;
+                answers[q.id] = k == -1 ? null : k == q.answer;
                 if (k == q.answer) {
                   score++;
                 } else {

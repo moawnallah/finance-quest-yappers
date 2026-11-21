@@ -177,6 +177,21 @@ class Api {
   Future<Map<String, dynamic>> awardScales(String name, String source) async =>
       Map<String, dynamic>.from(await _authed('POST', '/me/scales', name, body: {'source': source}));
 
+  /// The starting survey for the backend router (POST /onboarding) and the path it recommends.
+  Future<Map<String, dynamic>> onboarding(String name, Map<String, dynamic> survey) async =>
+      Map<String, dynamic>.from(await _authed('POST', '/onboarding', name, body: survey));
+  Future<Map<String, dynamic>> path(String name) async => Map<String, dynamic>.from(await _authed('GET', '/me/path', name));
+  Future<Map<String, dynamic>> choosePath(String name, String id) async =>
+      Map<String, dynamic>.from(await _authed('POST', '/onboarding/choose-path', name, body: {'path_id': id}));
+
+  /// Every node of the skills tree, built or planned (GET /roadmap).
+  Future<List<Map<String, dynamic>>> roadmap(String name) async =>
+      ((await _authed('GET', '/roadmap', name))['nodes'] as List).cast<Map<String, dynamic>>();
+
+  /// Hard tasks: run the public tests on the code panel's text (nothing is scored).
+  Future<Map<String, dynamic>> runHard(String name, String taskId, String code) async =>
+      Map<String, dynamic>.from(await _authed('POST', '/tasks/$taskId/run', name, body: {'code': code}));
+
   /// Real leagues per level, ranked by Scales.
   Future<Map<String, dynamic>> leagues(String name) async => Map<String, dynamic>.from(await _authed('GET', '/leagues', name));
 

@@ -12,13 +12,14 @@ import '../data/app_state.dart';
 import '../widgets/common.dart';
 
 class OnboardingScreen extends StatefulWidget {
-  OnboardingScreen({super.key});
+  final bool startAtSurvey; // signed-in learners retaking the starting survey skip the landing page
+  OnboardingScreen({super.key, this.startAtSurvey = false});
   @override
   State<OnboardingScreen> createState() => _OnboardingScreenState();
 }
 
 class _OnboardingScreenState extends State<OnboardingScreen> {
-  int step = 0;
+  late int step = widget.startAtSurvey ? 1 : 0;
   static const total = 6;
 
   void next() => setState(() => step++);
@@ -31,13 +32,13 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       _Welcome(onStart: next),
       _Choice(
         title: 'How old are you?',
-        options: ['18-29', '30-49', '50+'],
+        options: ['Under 18', '18-24', '25-39', '40-54', '55+'],
         selected: p.ageGroup,
         onPick: (v) => setState(() => p.ageGroup = v),
       ),
       _Choice(
         title: 'What are you investing for?',
-        options: ['A first habit', 'Kids\' education', 'Retirement', 'A home', 'Not sure yet'],
+        options: ['An emergency buffer', 'A first habit', 'Kids\' education', 'Retirement', 'A home', 'Not sure yet'],
         selected: p.goal,
         onPick: (v) => setState(() => p.goal = v),
       ),

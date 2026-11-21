@@ -3,7 +3,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../data/sfx.dart';
-import '../widgets/common.dart' show isWideWeb, PageWidth;
+import '../widgets/common.dart' show isWideWeb, PageWidth, TutorFab;
 
 class AppShell extends StatelessWidget {
   final Widget child;
@@ -12,8 +12,8 @@ class AppShell extends StatelessWidget {
 
   static const tabs = [
     ('/wheel', Icons.donut_large_outlined, Icons.donut_large, 'Explore'),
+    ('/path', Icons.route_outlined, Icons.route, 'Path'),
     ('/league', Icons.leaderboard_outlined, Icons.leaderboard, 'League'),
-    ('/tutor', Icons.auto_awesome_outlined, Icons.auto_awesome, 'Tutor'),
     ('/progress', Icons.emoji_events_outlined, Icons.emoji_events, 'Progress'),
   ];
 
@@ -21,27 +21,13 @@ class AppShell extends StatelessWidget {
   Widget build(BuildContext context) {
     var index = tabs.indexWhere((t) => location.startsWith(t.$1));
     if (index < 0) index = 0;
-    void select(int i) {
-      if (i != index) Sfx.tap();
-      context.go(tabs[i].$1);
-    }
-
-    final body = AnimatedSwitcher(
-      duration: Duration(milliseconds: 250),
-      switchInCurve: Curves.easeOut,
-      // Explore and Tutor use the full width (wheel, conversation list); other tabs a readable column.
-      child: KeyedSubtree(key: ValueKey(tabs[index].$1), child: child),
-    );
     if (isWideWeb(context)) {
       // Desktop browser: the tabs sit in the top bar (StatsBar), the page fills the window.
-      return Scaffold(body: body);
+      return Scaffold(body: child, floatingActionButton: TutorFab());
     }
     return Scaffold(
-      body: AnimatedSwitcher(
-        duration: Duration(milliseconds: 250),
-        switchInCurve: Curves.easeOut,
-        child: KeyedSubtree(key: ValueKey(tabs[index].$1), child: child),
-      ),
+      body: child,
+      floatingActionButton: TutorFab(),
       bottomNavigationBar: NavigationBar(
         selectedIndex: index,
         onDestinationSelected: (i) {

@@ -260,6 +260,32 @@ class _TopNav extends StatelessWidget {
             ),
           );
         }),
+      // Admin accounts only: a direct way into the admin panel.
+      if (context.watch<AppState>().isAdmin)
+        Padding(
+          padding: EdgeInsets.only(left: 6),
+          child: Semantics(
+            button: true,
+            label: 'Admin panel',
+            excludeSemantics: true,
+            child: Material(
+              color: kWarnSoft,
+              shape: StadiumBorder(side: BorderSide(color: kWarnBorder, width: 1.5)),
+              child: InkWell(
+                customBorder: StadiumBorder(),
+                onTap: () => GoRouter.of(context).push('/admin'),
+                child: Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+                  child: Row(mainAxisSize: MainAxisSize.min, children: [
+                    Icon(Icons.admin_panel_settings_outlined, size: 19, color: kWarnText),
+                    SizedBox(width: 6),
+                    Text('Admin', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: kWarnText)),
+                  ]),
+                ),
+              ),
+            ),
+          ),
+        ),
     ]);
   }
 }
@@ -606,6 +632,49 @@ class MascotPlaceholder extends StatelessWidget {
   }
 }
 
+/// The tutor, one tap away on every tab: a round button at the bottom right with Kyle's face.
+/// Larger on big screens; on phones it sits above the bottom navigation.
+class TutorFab extends StatelessWidget {
+  TutorFab({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final big = MediaQuery.sizeOf(context).width >= 900;
+    final d = big ? 66.0 : 58.0;
+    return Semantics(
+      button: true,
+      label: 'Ask the tutor',
+      excludeSemantics: true,
+      child: Tooltip(
+        message: 'Ask the tutor',
+        child: Material(
+          color: kPrimary,
+          shape: CircleBorder(side: BorderSide(color: Colors.white, width: 3)),
+          elevation: 6,
+          clipBehavior: Clip.antiAlias,
+          child: InkWell(
+            onTap: () => GoRouter.of(context).push('/tutor'),
+            child: SizedBox(
+              width: d, height: d,
+              child: Stack(children: [
+                Positioned.fill(child: Image.asset('assets/mascot/kyle/head_${appDark ? 'dark' : 'light'}.png', fit: BoxFit.cover)),
+                Positioned(
+                  right: 4, bottom: 4,
+                  child: Container(
+                    padding: EdgeInsets.all(3),
+                    decoration: BoxDecoration(color: kPrimary, shape: BoxShape.circle, border: Border.all(color: Colors.white, width: 1.5)),
+                    child: Icon(Icons.auto_awesome, size: big ? 14 : 12, color: Colors.white),
+                  ),
+                ),
+              ]),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 /// Kyle with a short line of speech. Wide screens: the bubble sits above the full figure.
 /// Phones: his round head avatar with the bubble beside it, so it never crowds the page.
 class KyleCallout extends StatelessWidget {
@@ -669,8 +738,8 @@ class Panel extends StatelessWidget {
       );
 }
 
-/// The AI tutor bubble. In the real app the text comes from POST /tutor
-/// (Gemini, education only, labelled as AI); here it shows the stored "why".
+/// The expert explanation after an answer: the team's written "why" for the question.
+/// "Ask the tutor about this" opens the AI tutor chat about it.
 class TutorBubble extends StatelessWidget {
   final String text;
   final VoidCallback? onAsk; // opens the tutor chat about this question
@@ -685,7 +754,7 @@ class TutorBubble extends StatelessWidget {
           Row(children: [
             MascotPlaceholder(size: 40, pose: 'teach'),
             SizedBox(width: 8),
-            Text('AI tutor', style: TextStyle(fontWeight: FontWeight.w700, color: kPrimaryText)),
+            Text('Expert explanation', style: TextStyle(fontWeight: FontWeight.w700, color: kPrimaryText)),
             Spacer(),
             Text('Educational, not advice', style: TextStyle(fontSize: 11, color: kMuted)),
           ]),
@@ -811,7 +880,7 @@ class _BadgeWatcherState extends State<BadgeWatcher> {
                 Text(b.rule, textAlign: TextAlign.center, style: TextStyle(color: kMuted)),
               ]),
               actionsAlignment: MainAxisAlignment.center,
-              actions: [FilledButton(onPressed: () => Navigator.pop(d), child: Text('Nice'))],
+              actions: [FilledButton(style: FilledButton.styleFrom(minimumSize: Size(120, 44)), onPressed: () => Navigator.pop(d), child: Text('Nice'))],
             ),
           );
         }

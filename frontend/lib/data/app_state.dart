@@ -12,7 +12,7 @@ import 'sfx.dart';
 
 class Profile {
   String name = 'You';
-  String ageGroup = '30-49';
+  String ageGroup = '25-39';
   String goal = 'Kids\' education';
   int horizonYears = 12;
   String experience = 'None';
@@ -262,6 +262,7 @@ class AppState extends ChangeNotifier {
     notifyListeners();
     try {
       skills = await api.skills(profile.name);
+      loadRoadmap();
       try {
         final saved = (await SharedPreferences.getInstance()).getString('wheel_panel');
         if (saved != null && panels.contains(saved)) selectedPanel = saved;
@@ -454,12 +455,57 @@ class AppState extends ChangeNotifier {
     }
   }
 
-  void finishPlacement(int score, List<String> missedIds, {bool retest = false}) {
+  /// Planned and built nodes of the whole tree (GET /roadmap), for "coming later" topics.
+  List<Map<String, dynamic>> roadmapNodes = [];
+  Future<void> loadRoadmap() async {
+    try {
+      roadmapNodes = await api.roadmap(profile.name);
+      notifyListeners();
+    } catch (_) {}
+  }
+
+  List<Map<String, dynamic>> plannedIn(String panel) =>
+      [for (final n in roadmapNodes) if (n['panel'] == panel && n['live'] != true) n];
+
+  /// The starting survey + quick check, in the backend router's format (backend/app/insights_api.py SurveyIn).
+  Map<String, dynamic> routerSurvey(Map<String, bool?> answers) {
+    final p = profile;
+    String band(String a) => const {'Under 18': 'under_18', '18-24': '18-24', '25-39': '25-39', '40-54': '40-54', '55+': '55+',
+        '18-29': '18-24', '30-49': '25-39', '50+': '55+'}[a] ?? '25-39';
+    final goal = switch (p.goal) {
+      'An emergency buffer' => 'buffer', 'A first habit' => 'first_investment', 'Retirement' => 'retirement', 'A home' => 'home', _ => 'other',
+    };
+    final horizon = p.horizonYears < 3 ? 'under_3' : p.horizonYears <= 10 ? '3_10' : 'over_10';
+    const rating = ['very_low', 'quite_low', 'average', 'quite_high', 'very_high'];
+    return {
+      'age_band': band(p.ageGroup),
+      'goal': goal,
+      'horizon': horizon,
+      'self_rating': rating[(p.confidenceBefore - 1).clamp(0, 4)],
+      'knowledge': {
+        for (final e in answers.entries) e.key.replaceFirst('eb_q', 'Q').toUpperCase(): {'correct': e.value},
+      },
+    };
+  }
+
+  /// Send the survey to the router; the Path tab then shows the recommended path.
+  Future<void> submitSurvey(Map<String, bool?> answers) async {
+    try {
+      await api.onboarding(profile.name, routerSurvey(answers));
+      surveyAt = DateTime.now();
+      notifyListeners();
+    } catch (_) {}
+  }
+
+  DateTime? surveyAt; // when the survey was last sent (the Path tab reloads after it)
+
+  void finishPlacement(int score, List<String> missedIds, {bool retest = false, Map<String, bool?>? answers}) {
     if (retest) {
       profile.retestScore = score;
       notifyListeners();
       return;
     }
+    if (answers != null) submitSurvey(answers);
     focusSlices
       ..clear()
       ..addAll(missedIds.map((id) => topicSlice[placementTopic[id]]).whereType<String>());
