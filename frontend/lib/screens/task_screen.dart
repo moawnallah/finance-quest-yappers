@@ -280,7 +280,14 @@ class _TaskRunScreenState extends State<TaskRunScreen> {
       }
       final feedback = kind == 'reflection' ? (reveal['feedback'] as List)[answer as int] as String : null;
       final why = feedback ?? reveal['why'] as String?;
-      if (why != null) out.addAll([SizedBox(height: 12), TutorBubble(text: why, onAsk: () => _askTutor(task, reveal, why))]);
+      if (why != null) {
+        out.addAll([
+          SizedBox(height: 12),
+          ExplanationBubble(text: why),
+          SizedBox(height: 10),
+          AskTutorBubble(onAsk: () => _askTutor(task, reveal, why)),
+        ]);
+      }
     }
     return out;
   }
@@ -396,7 +403,7 @@ class _TaskRunScreenState extends State<TaskRunScreen> {
         scored: true,
         note: task['variant'] == 'day_x' ? 'Day X tasks score your reasons, not the guess: nobody could know the outcome on day X.' : null,
       ));
-      if (reveal['text'] != null) out.addAll([SizedBox(height: 12), TutorBubble(text: (reveal['text'] as String).trim())]);
+      if (reveal['text'] != null) out.addAll([SizedBox(height: 12), ExplanationBubble(text: (reveal['text'] as String).trim())]);
     }
     return out;
   }

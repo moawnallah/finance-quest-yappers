@@ -732,39 +732,82 @@ class Panel extends StatelessWidget {
       );
 }
 
-/// The expert explanation after an answer: the team's written "why" for the question.
-/// "Ask the tutor about this" opens the AI tutor chat about it.
+/// The written explanation after an answer: the team's written "why" for the question.
+/// Kept separate from AI tutor prompts so it is clear it is human-written curriculum content.
+class ExplanationBubble extends StatelessWidget {
+  final String text;
+  final String? title;
+  ExplanationBubble({super.key, required this.text, this.title});
+
+  @override
+  Widget build(BuildContext context) => Panel(
+        border: kBorder,
+        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Row(children: [
+            Icon(Icons.lightbulb_outline, size: 18, color: kPrimaryText),
+            SizedBox(width: 6),
+            Text(title ?? 'Explanation', style: TextStyle(fontWeight: FontWeight.w700, color: kPrimaryText)),
+          ]),
+          SizedBox(height: 8),
+          Text(text, style: TextStyle(height: 1.45, color: kBody)),
+        ]),
+      );
+}
+
+/// The suggestion to ask the AI tutor: opens the tutor chat with the crocodile mascot.
+/// Sits in its own dedicated box, separate from the curriculum explanation.
+class AskTutorBubble extends StatelessWidget {
+  final VoidCallback onAsk;
+  AskTutorBubble({super.key, required this.onAsk});
+
+  @override
+  Widget build(BuildContext context) => Semantics(
+        button: true,
+        label: 'Ask the tutor about this',
+        child: Material(
+          color: kSurface,
+          borderRadius: BorderRadius.circular(16),
+          child: InkWell(
+            borderRadius: BorderRadius.circular(16),
+            onTap: onAsk,
+            child: Container(
+              padding: EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: kTutorBorder),
+              ),
+              child: Row(children: [
+                MascotPlaceholder(size: 40, pose: 'teach'),
+                SizedBox(width: 12),
+                Expanded(
+                  child: Text('Ask the tutor about this',
+                      style: TextStyle(fontWeight: FontWeight.w700, color: kPrimaryText)),
+                ),
+                Icon(Icons.chevron_right, color: kPrimaryText),
+              ]),
+            ),
+          ),
+        ),
+      );
+}
+
+/// Combined post-answer explanation and optional AI tutor redirection.
+/// The explanation is kept separate from the tutor redirection tile.
 class TutorBubble extends StatelessWidget {
   final String text;
   final VoidCallback? onAsk; // opens the tutor chat about this question
   TutorBubble({super.key, required this.text, this.onAsk});
 
   @override
-  Widget build(BuildContext context) => onAsk == null ? _panel() : InkWell(borderRadius: BorderRadius.circular(16), onTap: onAsk, child: _panel());
-
-  Widget _panel() => Panel(
-        border: kTutorBorder,
-        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Row(children: [
-            MascotPlaceholder(size: 40, pose: 'teach'),
-            SizedBox(width: 8),
-            Text('Expert explanation', style: TextStyle(fontWeight: FontWeight.w700, color: kPrimaryText)),
-            Spacer(),
-            Text('Educational, not advice', style: TextStyle(fontSize: 11, color: kMuted)),
-          ]),
-          SizedBox(height: 6),
-          Text(text, style: TextStyle(height: 1.45, color: kBody)),
+  Widget build(BuildContext context) => Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          ExplanationBubble(text: text),
           if (onAsk != null) ...[
             SizedBox(height: 10),
-            Row(children: [
-              Icon(Icons.chat_bubble_outline, size: 16, color: kPrimaryText),
-              SizedBox(width: 6),
-              Text('Ask the tutor about this', style: TextStyle(fontWeight: FontWeight.w700, color: kPrimaryText)),
-              Spacer(),
-              Icon(Icons.chevron_right, color: kPrimaryText),
-            ]),
+            AskTutorBubble(onAsk: onAsk!),
           ],
-        ]),
+        ],
       );
 }
 

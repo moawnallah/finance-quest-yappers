@@ -127,7 +127,7 @@ class _TimeMachineScreenState extends State<TimeMachineScreen> {
           ),
         if (!running && !finished) FilledButton(onPressed: run, child: Text('Run 12 years')),
         if (finished) ...[
-          TutorBubble(
+          ExplanationBubble(
             text: stayedCalm
                 ? 'You stayed in through the crash. Your mix fell too, but holding a diversified mix gave it time to recover. That patience is the skill this mission trains.'
                 : 'You sold in ${_years[soldAt!]}, which turned a temporary fall into a permanent loss and missed the recovery. Many people feel this urge; recognising it is the first step.',
