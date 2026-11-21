@@ -22,9 +22,9 @@ node are in [skills_tree.md](skills_tree.md).
 2. **Scoring runs in the backend.** The browser never receives correct
    answers, truth values or box weights before the user submits (as the
    backend README already states).
-3. **Data.** Series come from one table
-   `(series_id, date, value, source, licence)` (Yurii). Tasks refer to a
-   `series_id`; they never embed raw prices.
+3. **Data.** Each series has its own file `series/data/<series_id>.csv`
+   `(date, value)`; its source and licence are in `series/catalog.yaml`
+   (Yurii). Tasks refer to a `series_id`; they never embed raw prices.
 4. **The hard engine's internals are Yurii's.** This file fixes only its
    inputs, outputs and tests.
 

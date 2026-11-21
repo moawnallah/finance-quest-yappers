@@ -92,7 +92,7 @@ response:
 | `oecd_share_prices_pl_m` | Share price index Poland, 2015 = 100, monthly average, no dividends | OECD SDMX API, `DSD_STES@DF_FINMARK`, `POL.M.SHARE.IX` | 2005-01 to 2025-12 (252) | CC BY 4.0 (OECD default) |
 
 - Downloaded once, on 2026-11-21. The raw files are not committed. `backend/data/series/import_demo_series.py` lists
-  the exact URLs and rebuilds `series.csv` from them.
+  the exact URLs and rebuilds the three files in `series/data/` from them.
 - **FRED is not used.** It carries the same OECD series, but its terms forbid commercial redistribution without permission.
 - Attribution rows are in `backend/data/SOURCES.md`; the source register entries are `gus_cpi`, `nbp_ref_rate` and
   `oecd_share_prices_pl` in `backend/content/sources.yaml`.
