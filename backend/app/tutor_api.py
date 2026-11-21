@@ -171,3 +171,92 @@ def tutor(body: TutorIn, user: User = Depends(current_user), db: Session = Depen
                   fallback_used=False, flagged_for_review=flagged, answer_masked=mask(text + (f"\n[diagram]\n{mermaid}" if mermaid else "")))
     db.commit()
     return {"text": text, "mermaid": mermaid, "fallback": False}
+
+
+# ---------------------------------------------------------------- streaming
+
+STREAM_RULES = """
+Write your answer as plain text (not JSON), 2 to 5 short sentences.
+If the learner asked for a chart or diagram, write the explanation first, then the Mermaid code
+inside one fenced block at the very end:
+```mermaid
+...
+```"""
+
+
+def _stream_messages(body: TutorIn, visual: bool) -> list[dict]:
+    msgs = build_messages(body, visual)
+    msgs[0] = {"role": "system", "content": msgs[0]["content"].replace('Reply as JSON: {"text": "...", "mermaid": null}.', "")
+               + ("\n\nIgnore the JSON output format above." if visual else "") + STREAM_RULES}
+    return msgs
+
+
+@router.post("/tutor/stream")
+def tutor_stream(body: TutorIn, user: User = Depends(current_user)):
+    """Like POST /tutor, but streams the reply as NDJSON lines while the model writes it:
+    {"t": "delta", "text": "..."} for each piece of visible text, then one
+    {"t": "done", "text": <final text>, "mermaid": <checked code or null>, "fallback": bool}.
+    The Mermaid block is never streamed; it is checked and sent once, in "done"."""
+    from fastapi.responses import StreamingResponse
+    from app.db import SessionLocal
+
+    visual = bool(VISUAL.search(body.message))
+    intent = "advice_request" if ADVICE.search(body.message) else ("visualize" if visual else "question")
+    stored = (body.context or {}).get("explanation")
+    log = dict(mode=body.mode, intent=intent, model_role="tutor_small", model=f"ollama/{TUTOR_MODEL}",
+               prompt_version=PROMPT_VERSION, node=(body.context or {}).get("node"), task_id=(body.context or {}).get("task_id"),
+               prompt_masked=mask(body.message))
+
+    def line(obj) -> bytes:
+        return (json.dumps(obj, ensure_ascii=False) + "\n").encode()
+
+    def finish(text, mermaid, fallback, failed, latency=None, t_in=None, t_out=None):
+        with SessionLocal() as db:  # the request's session is closed once streaming starts
+            log_llm_event(db, user, **log, latency_ms=latency, tokens_in=t_in, tokens_out=t_out, checks_failed=failed,
+                          fallback_used=fallback, flagged_for_review=bool(failed) or intent == "advice_request",
+                          answer_masked=mask(text + (f"\n[diagram]\n{mermaid}" if mermaid else "")))
+            db.commit()
+        return line({"t": "done", "text": text, "mermaid": mermaid, "fallback": fallback})
+
+    def gen():
+        if not TUTOR_ENABLED:
+            yield finish(stored or "The tutor is resting right now.", None, True, [])
+            return
+        req = urllib.request.Request(
+            f"{OLLAMA_API_BASE}/api/chat",
+            data=json.dumps({"model": TUTOR_MODEL, "messages": _stream_messages(body, visual), "stream": True, "think": False,
+                             "keep_alive": "30m", "options": {"temperature": 0.3}}).encode(),
+            headers={"Content-Type": "application/json"})
+        full, sent, t0, t_in, t_out = "", 0, time.monotonic(), 0, 0
+        try:
+            with urllib.request.urlopen(req, timeout=TUTOR_TIMEOUT) as r:
+                for raw in r:
+                    if not raw.strip():
+                        continue
+                    chunk = json.loads(raw)
+                    if "error" in chunk:
+                        raise OSError(chunk["error"])
+                    full += chunk.get("message", {}).get("content", "")
+                    if chunk.get("done"):
+                        t_in, t_out = chunk.get("prompt_eval_count") or 0, chunk.get("eval_count") or 0
+                    visible = full.split("```", 1)[0]
+                    if "```" not in full:
+                        visible = visible.rstrip("`")  # hold back a fence that may be starting
+                    if len(visible) > sent:
+                        yield line({"t": "delta", "text": visible[sent:]})
+                        sent = len(visible)
+        except (urllib.error.URLError, TimeoutError, OSError, json.JSONDecodeError):
+            if not full:
+                yield finish(stored or "I can't reach the tutor model right now. Try again in a moment.", None, True,
+                             ["model_unreachable"])
+                return
+        text = full.split("```", 1)[0].strip()
+        m = re.search(r"```(?:mermaid)?\s*\n(.*?)(?:```|$)", full, re.S)
+        mermaid = clean_mermaid(m.group(1)) if m else None
+        failed = ["diagram_rejected"] if m and not mermaid else []
+        if ADVICE.search(text):
+            failed.append("advice")
+            text = stored or "I can't recommend products or predict prices, but I can explain how to compare options."
+        yield finish(text or (stored or ""), mermaid, False, failed, int((time.monotonic() - t0) * 1000), t_in, t_out)
+
+    return StreamingResponse(gen(), media_type="application/x-ndjson", headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"})

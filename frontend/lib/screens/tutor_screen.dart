@@ -13,6 +13,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../data/app_state.dart';
 import '../data/mermaid.dart';
+import '../data/stream.dart';
 import '../widgets/common.dart';
 
 class TutorScreen extends StatefulWidget {
@@ -155,24 +156,42 @@ class _TutorScreenState extends State<TutorScreen> {
     _toEnd();
     String reply;
     String? diagram;
+    final mode = conv.context == null || conv.context!.wasRight == true ? 'explain_concept' : 'explain_result';
+    final history = [for (final m in conv.messages) {'role': m.mine ? 'user' : 'tutor', 'text': m.text}];
+    // The reply bubble appears with the first streamed words and grows as the model writes.
+    TutorMessage? live;
     try {
-      final r = await s.api.tutor(
-        s.profile.name,
-        mode: conv.context == null || conv.context!.wasRight == true ? 'explain_concept' : 'explain_result',
-        message: t,
-        context: conv.context?.toJson(),
-        history: [for (final m in conv.messages) {'role': m.mine ? 'user' : 'tutor', 'text': m.text}],
-      );
+      if (!streamSupported) throw UnsupportedError('no streaming');
+      final r = await s.api.tutorStream(s.profile.name, mode: mode, message: t, context: conv.context?.toJson(), history: history,
+          onDelta: (d) {
+        if (!mounted) return;
+        setState(() {
+          if (live == null) {
+            live = TutorMessage(false, '');
+            conv.messages.add(live!);
+            typing = false;
+          }
+          live!.text += d;
+        });
+        _toEnd();
+      });
       reply = r.text;
       diagram = r.mermaid;
     } catch (_) {
-      await Future.delayed(Duration(milliseconds: 450)); // a short "typing" beat
-      reply = _offline(t, s, conv.context);
+      try {
+        final r = await s.api.tutor(s.profile.name, mode: mode, message: t, context: conv.context?.toJson(), history: history);
+        reply = r.text;
+        diagram = r.mermaid;
+      } catch (_) {
+        await Future.delayed(Duration(milliseconds: 450)); // a short "typing" beat
+        reply = _offline(t, s, conv.context);
+      }
     }
     if (!mounted) return;
-    final msg = TutorMessage(false, reply);
+    final msg = live ?? TutorMessage(false, reply);
     setState(() {
-      conv.messages.add(msg);
+      msg.text = reply; // the final, checked text
+      if (live == null) conv.messages.add(msg);
       typing = false;
     });
     s.notify(); // the list's preview updates

@@ -154,3 +154,12 @@ def test_tutor_falls_back_and_cleans_diagrams(client, auth, monkeypatch):
     items = client.get("/admin/llm-events", headers=key).json()["items"]
     assert any("diagram_rejected" in i["checks_failed"] for i in items)
     assert tutor_api.mask("mail me at a.b@x.pl or +48 600 700 800") == "mail me at [email] or [phone]"
+
+
+def test_tutor_stream_falls_back_when_no_model(client, auth, monkeypatch):
+    from app import tutor_api
+    monkeypatch.setattr(tutor_api, "OLLAMA_API_BASE", "http://127.0.0.1:9")
+    import json as _json
+    r = client.post("/tutor/stream", headers=auth, json={"message": "Why?", "context": {"explanation": "Stored text."}})
+    lines = [_json.loads(l) for l in r.text.splitlines() if l.strip()]
+    assert lines[-1]["t"] == "done" and lines[-1]["fallback"] is True and lines[-1]["text"] == "Stored text."

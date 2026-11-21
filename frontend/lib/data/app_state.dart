@@ -101,7 +101,7 @@ class TutorContext {
 /// One message in a tutor conversation. [image] is a rendered chart.
 class TutorMessage {
   final bool mine;
-  final String text;
+  String text; // grows while the reply streams in
   Uint8List? image;
   bool drawing = false;
   TutorMessage(this.mine, this.text);

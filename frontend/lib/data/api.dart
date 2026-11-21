@@ -9,6 +9,7 @@
 import 'dart:convert';
 
 import 'package:http/http.dart' as http;
+import 'stream.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 const apiUrl = String.fromEnvironment('API_URL', defaultValue: 'http://localhost:8001');
@@ -103,6 +104,30 @@ class Api {
       {required String mode, required String message, Map<String, dynamic>? context, List<Map<String, String>> history = const []}) async {
     final r = Map<String, dynamic>.from(await _authed('POST', '/tutor', name, body: {'mode': mode, 'message': message, 'context': context, 'history': history}));
     return (text: (r['text'] as String?) ?? '', mermaid: r['mermaid'] as String?);
+  }
+
+  /// The tutor, streamed (POST /tutor/stream): onDelta gets each piece of text
+  /// as the model writes it; the result is the final text and checked diagram.
+  Future<({String text, String? mermaid})> tutorStream(String name,
+      {required String mode, required String message, Map<String, dynamic>? context,
+      List<Map<String, String>> history = const [], required void Function(String) onDelta}) async {
+    final token = await _session(name);
+    String? text, mermaid;
+    await postStream(
+      '$baseUrl/tutor/stream',
+      {'Content-Type': 'application/json', 'Authorization': 'Bearer $token'},
+      jsonEncode({'mode': mode, 'message': message, 'context': context, 'history': history}),
+      (line) {
+        final m = jsonDecode(line) as Map<String, dynamic>;
+        if (m['t'] == 'delta') onDelta(m['text'] as String);
+        if (m['t'] == 'done') {
+          text = m['text'] as String?;
+          mermaid = m['mermaid'] as String?;
+        }
+      },
+    );
+    if (text == null) throw ApiException(0, 'stream', 'The reply stopped early.');
+    return (text: text!, mermaid: mermaid);
   }
 
   // ---------- skills (task engines) ----------
