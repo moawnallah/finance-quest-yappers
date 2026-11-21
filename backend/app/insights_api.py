@@ -304,7 +304,9 @@ def _path_view(res: dict, created_at, user, db: Session) -> dict:
         "personal" if source == "personal" else "recommended")
     return {"survey_done": True, "source": source, "path_id": path_id, "goal": res.get("goal"), "band": res.get("band"),
             "knowledge_score": res.get("knowledge_score"), "steps": steps, "next": nxt,
-            "challenges": [{"node": c["node"], "title": c.get("title"), "why": c.get("why"), "live": c["node"] in cat.nodes}
+            # done only once the node is completed (a failed quick check changes nothing)
+            "challenges": [{"node": c["node"], "title": c.get("title"), "why": c.get("why"), "live": c["node"] in cat.nodes,
+                            "done": c["node"] in cat.nodes and bool(node_status(cat, c["node"], user.id, by_node.get(c["node"], [])).get("done"))}
                            for c in res.get("challenges", [])],
             "demo": {k: demo_block.get(k) for k in ("status", "path_id", "message", "closest")},
             "options": [{"id": o["id"], "title": o["title"], "for": o.get("for"), "nodes": o["nodes"]}

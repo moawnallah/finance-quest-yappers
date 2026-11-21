@@ -340,3 +340,20 @@ def test_tutor_cache_serves_the_second_identical_question(client, monkeypatch):
     m = {x["mode"]: x for x in client.get("/admin/tutor-metrics", headers=ADMIN).json()["modes"]}
     assert m["explain_concept"]["cache_hit_rate"] > 0 and m["explain_concept"]["cold_loads"] >= 1
     assert client.delete("/admin/tutor-cache", headers=ADMIN).json()["deleted"] == 1
+
+
+def test_a_wrong_answer_does_not_move_mission_progress(client):
+    """Progress counts right answers only: a wrong answer leaves items_correct at 0, a right one makes it 1."""
+    from app.engines import catalog
+    a = client.post("/auth/register", json={"email": "wrong.answer@example.com", "password": "a-long-password"}).json()
+    h = {"Authorization": f"Bearer {a['token']}"}
+    item = next(i for i in catalog().items.values() if i["kind"] == "single" and i["scored"])
+    right = item["reveal"]["answer"]  # an option index
+    wrong = 1 if right == 0 else 0
+    node = item["node"]
+    status = lambda: next(s for s in client.get("/skills", headers=h).json() if s["id"] == node)["status"]  # noqa: E731
+    client.post(f"/tasks/{item['id']}/attempts", headers=h, json={"response": wrong, "confidence": 3})
+    st = status()
+    assert st["items_answered"] == 1 and st["items_correct"] == 0 and not st["done"]
+    client.post(f"/tasks/{item['id']}/attempts", headers=h, json={"response": right, "confidence": 3})
+    assert status()["items_correct"] == 1
