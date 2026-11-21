@@ -60,8 +60,12 @@ class ContentProvider:
         return kb.search(self.passages, node, query, k, self.prereq)
 
     def stored_explanation(self, key: str, mode: str) -> str:
-        if key in self.tasks:
+        # The reveal text is the answer: only after submission (explain_result). A hint that falls back
+        # before submission gets the node's first card instead.
+        if key in self.tasks and mode == "explain_result":
             text = self.tasks[key]["reveal"]["text"]
             return text["en"] if isinstance(text, dict) else text
+        if key in self.tasks:
+            key = self.tasks[key]["node"]
         cards = self.nodes.get(key, {}).get("cards") or []
         return cards[0]["body"] if cards else "Open the cards for this topic."

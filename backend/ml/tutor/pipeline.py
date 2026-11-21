@@ -16,9 +16,12 @@ PROMPTS = Path(__file__).resolve().parents[1] / "prompts"
 OUTPUT_SCHEMA = {
     "type": "object",
     "properties": {"text": {"type": "string"}, "cited": {"type": "array", "items": {"type": "string"}},
-                   "check_question": {"type": "string"}},
+                   "check_question": {"type": "string"}, "mermaid": {"type": ["string", "null"]}},
     "required": ["text", "cited", "check_question"],
 }
+HISTORY_TURNS, HISTORY_CHARS = 8, 1500
+VISUAL_NOTE = ("\n\nThe learner asked for a chart or diagram. Follow the skill below and put the Mermaid code in a "
+               "\"mermaid\" field of the same JSON (null if a diagram does not help).\n\n")
 
 
 def _prompt(version: str) -> str:
@@ -37,6 +40,8 @@ def _parse(text: str) -> dict | None:
         return None
     out.setdefault("cited", [])
     out.setdefault("check_question", "")
+    if not isinstance(out.get("mermaid"), str):
+        out["mermaid"] = None
     return out if isinstance(out["cited"], list) and isinstance(out["check_question"], str) else None
 
 
@@ -53,12 +58,12 @@ def answer(req: TutorRequest, ctx: ContextProvider, llm: LLMClient, denylist: li
         "flagged_for_review": False,
     }
 
-    def respond(text, question, intent, fallback=False, links=(), failed=()):
+    def respond(text, question, intent, fallback=False, links=(), failed=(), mermaid=None):
         event.update(intent=intent, fallback_used=fallback, checks_failed=list(failed),
                      flagged_for_review=bool(failed) or intent in ("advice_request", "injection"))
         return TutorResponse(text=text, links=list(links), check_question=question, hint_level=hint_level,
                              hint_paid=hint_level is not None and hint_level > FREE_HINTS, fallback=fallback,
-                             intent=intent, checks_failed=list(failed), event=event)
+                             intent=intent, checks_failed=list(failed), event=event, mermaid=mermaid)
 
     def fallback(intent, failed=()):
         key = req.task_id or req.node
@@ -78,10 +83,15 @@ def answer(req: TutorRequest, ctx: ContextProvider, llm: LLMClient, denylist: li
     except ValueError:
         return fallback(intent, ["context"])
     context_text = render(context)
-    messages = [
-        {"role": "system", "content": _prompt(prompt_version)},
-        {"role": "user", "content": f"CONTEXT\n{context_text}\n\nMODE: {req.mode}\nLEARNER: {message or '(no message)'}"},
-    ]
+    system = _prompt(prompt_version)
+    if req.visual:
+        system += VISUAL_NOTE + (PROMPTS / "skills" / "mermaid.md").read_text(encoding="utf-8")
+    messages = [{"role": "system", "content": system}]
+    for turn in req.history[-HISTORY_TURNS:]:  # earlier turns, masked like the new message
+        role = "assistant" if turn.get("role") == "tutor" else "user"
+        messages.append({"role": role, "content": mask(str(turn.get("text", ""))[:HISTORY_CHARS])})
+    messages.append({"role": "user",
+                     "content": f"CONTEXT\n{context_text}\n\nMODE: {req.mode}\nLEARNER: {message or '(no message)'}"})
 
     parsed = None
     for _ in range(2):  # one retry on invalid JSON
@@ -110,4 +120,5 @@ def answer(req: TutorRequest, ctx: ContextProvider, llm: LLMClient, denylist: li
 
     by_label = {p["label"]: p for p in context["passages"]}
     links = [{"label": c, "url": by_label[c].get("url")} for c in parsed["cited"]]
-    return respond(parsed["text"], parsed["check_question"], intent, links=links)
+    return respond(parsed["text"], parsed["check_question"], intent, links=links,
+                   mermaid=parsed["mermaid"] if req.visual else None)
