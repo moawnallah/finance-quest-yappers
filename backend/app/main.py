@@ -21,7 +21,7 @@ from app.catalog import CATALOG
 from app.config import AB_VARIANTS, DATABASE_URL, ON_VERCEL
 from app.db import get_db
 from app.deps import ApiError, current_user, log_event, require_admin
-from app.models import (Event, Answer, BenchmarkAnswer, BenchmarkQuestion, BenchmarkStat, Node, NodeProgress, Profile,
+from app.models import (Answer, BenchmarkAnswer, BenchmarkQuestion, BenchmarkStat, Node, NodeProgress, Profile,
                         Question, Slice, User, UserBadge)
 from app import schemas as s
 from app.insights_api import router as insights_router
@@ -311,19 +311,6 @@ def my_badges(user: User = Depends(current_user), db: Session = Depends(get_db))
             for k in badges.BADGES]
 
 
-class CalibrationEventIn(BaseModel):
-    action: Literal["viewed", "mission_opened", "chart_opened"] = Field(
-        description="The confidence card on Progress: shown, a mission opened from it, or the chart opened.")
-
-
-@app.post("/events/calibration")
-def calibration_event(body: CalibrationEventIn, user: User = Depends(current_user), db: Session = Depends(get_db)):
-    """A/B test of the confidence card (A: tags per mission, B: bars). Logged with the user's variant."""
-    log_event(db, user, f"calibration_{body.action}", variant=user.variant)
-    db.commit()
-    return {"ok": True, "variant": user.variant}
-
-
 class ScaleAwardIn(BaseModel):
     source: Literal["daily_right", "daily_tried", "quick_check"] = Field(
         description="daily_right / daily_tried: today's daily scenario (once a day); quick_check: the placement check (once).")
@@ -384,16 +371,8 @@ def ab_results(db: Session = Depends(get_db)):
                                .where(Answer.user_id.in_(ids), Question.kind == "behaviour")).all() if ids else []
         holds = [opts[c].lower().startswith("hold") for c, opts in behaviour if "hold" in " ".join(opts).lower()]
         avg = lambda xs: round(mean(xs), 2) if xs else None
-        # The confidence card test (Progress tab): A = tags per mission, B = bars per mission.
-        def who(name: str) -> set:
-            return set(db.scalars(select(Event.user_id).where(Event.name == name, Event.user_id.in_(ids)))) if ids else set()
-        seen, opened, chart = who("calibration_viewed"), who("calibration_mission_opened"), who("calibration_chart_opened")
         out[v] = {"users": len(ids), "benchmark_before_avg": avg(before), "benchmark_after_avg": avg(after),
                   "confidence_before_avg": avg([p.confidence_before for p in profs]),
                   "confidence_after_avg": avg([p.confidence_after for p in profs if p.confidence_after]),
-                  "hold_share": avg([1.0 if h else 0.0 for h in holds]),
-                  "calibration_design": "tags" if v == "A" else "bars",
-                  "calibration_viewers": len(seen),
-                  "calibration_opened_mission_share": round(len(opened & seen) / len(seen), 3) if seen else None,
-                  "calibration_opened_chart_share": round(len(chart & seen) / len(seen), 3) if seen else None}
+                  "hold_share": avg([1.0 if h else 0.0 for h in holds])}
     return out

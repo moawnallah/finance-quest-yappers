@@ -415,23 +415,6 @@ class AppState extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// A/B variant from the server (A or B); the confidence card on Progress differs by it.
-  String? abVariant;
-  /// Preview a design without joining the test: add ?ab=A or ?ab=B to the address.
-  /// Previews are not logged, so they never skew the results.
-  bool get abPreview => const ['A', 'B'].contains(Uri.base.queryParameters['ab']);
-  Future<void> loadVariant() async {
-    if (abPreview) {
-      abVariant = Uri.base.queryParameters['ab'];
-      notifyListeners();
-      return;
-    }
-    try {
-      abVariant = await api.variant(profile.name);
-      notifyListeners();
-    } catch (_) {}
-  }
-
   /// The server keeps the real total (app/scales.py); take its number whenever it sends one.
   void syncScales(int? total) {
     if (total == null || total == xp) return;
@@ -568,7 +551,6 @@ class AppState extends ChangeNotifier {
     guest = false;
     signInMethod = 'email';
     signIn((a['display_name'] as String?) ?? (email ?? 'You').split('@').first);
-    abVariant = a['variant'] as String?;
     refreshScales();
   }
 

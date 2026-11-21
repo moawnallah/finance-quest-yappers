@@ -555,14 +555,11 @@ class _AdminScreenState extends State<AdminScreen> {
       SizedBox(height: 8),
       Wrap(spacing: 6, runSpacing: 6, children: [for (final e in (clicks['by_source'] as Map? ?? {}).entries) _chip('${e.key}'.replaceAll('_', ' ') + ': ${e.value}')]),
       _h('A/B variants'),
-      _table(['Variant', 'Users', 'Quiz before', 'Quiz after', 'Confidence before', 'Confidence after', 'Chose "hold"',
-          'Confidence card', 'Saw it', 'Opened a mission', 'Opened the chart'], [
+      _table(['Variant', 'Users', 'Quiz before', 'Quiz after', 'Confidence before', 'Confidence after', 'Chose "hold"'], [
         for (final e in ab.entries)
           if (e.value is Map)
             ['${e.key}', '${e.value['users']}', _num(e.value['benchmark_before_avg']), _num(e.value['benchmark_after_avg']),
-              _num(e.value['confidence_before_avg']), _num(e.value['confidence_after_avg']), _pct(e.value['hold_share']),
-              '${e.value['calibration_design'] ?? '-'}', '${e.value['calibration_viewers'] ?? 0}',
-              _pct(e.value['calibration_opened_mission_share']), _pct(e.value['calibration_opened_chart_share'])],
+              _num(e.value['confidence_before_avg']), _num(e.value['confidence_after_avg']), _pct(e.value['hold_share'])],
       ]),
     ]);
   }

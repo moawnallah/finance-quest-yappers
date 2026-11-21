@@ -235,15 +235,3 @@ def test_hard_task_code_panel_run_and_submit(client):
     sub = client.post(f"/tasks/{tid}/attempts", headers=h, json={"response": {"code": code}}).json()
     assert sub["accepted"] is True and 51 <= sub["points"] <= 100
     assert len(sub["reveal"]["result"]["optional"]) == panel["hidden_tests"] + 1
-
-
-def test_calibration_ab_events_are_counted_per_variant(client):
-    h = {"Authorization": f"Bearer {client.post('/auth/session', json={'display_name': 'ab'}).json()['token']}"}
-    v = client.get("/me", headers=h).json()["variant"]
-    assert v in ("A", "B")
-    assert client.post("/events/calibration", headers=h, json={"action": "viewed"}).json()["variant"] == v
-    client.post("/events/calibration", headers=h, json={"action": "mission_opened"})
-    assert client.post("/events/calibration", headers=h, json={"action": "other"}).status_code == 422
-    ab = client.get("/admin/ab-results", headers={"X-Admin-Key": "test-admin-key"}).json()
-    assert ab[v]["calibration_viewers"] >= 1 and ab[v]["calibration_opened_mission_share"] > 0
-    assert ab["A"]["calibration_design"] == "tags" and ab["B"]["calibration_design"] == "bars"
