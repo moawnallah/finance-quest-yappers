@@ -144,7 +144,7 @@ hard:  # draft by Claude (AI), 2026-11-21. Engine: docs/hard_engine.md ("Next ve
     level: hard
     content_version: 2
     author: "draft by Claude (AI), 2026-11-21"
-    reviewer: null
+    reviewer: "Mateusz, 2026-11-21 (situation, tests and lessons approved)"
     sources: [damodaran_histret, ecb_fsr_2022_corr, podatki_fund_units]
     brief: >-
       Marek, 35, has 100,000 PLN invested: 60% in a broad share fund and 40%

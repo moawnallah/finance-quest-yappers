@@ -78,7 +78,7 @@ hard:  # draft by Claude (AI), 2026-11-21. Engine: docs/hard_engine.md ("Next ve
     level: hard
     content_version: 1
     author: "draft by Claude (AI), 2026-11-21"
-    reviewer: null
+    reviewer: "Mateusz, 2026-11-21 (situation, tests and lessons approved)"
     sources: [cfpb_emergency_fund, mf_bonds_edo, damodaran_histret]
     brief: >-
       Ania, 27, earns 5,800 PLN a month after tax, plus 0 to 1,500 PLN from

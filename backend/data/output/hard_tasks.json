@@ -6,7 +6,7 @@
       "node": "P1",
       "level": "hard",
       "content_version": 1,
-      "live": false,
+      "live": true,
       "question": {
         "brief": "Ania, 27, earns 5,800 PLN a month after tax, plus 0 to 1,500 PLN from freelance work that she only knows about when the month starts. She needs 4,800 PLN for essentials. She has a 4,000 PLN buffer and 3,000 PLN of card debt at 20% a year; the card takes a 3% minimum payment every month. Two bills come once a year: car insurance, 1,800 PLN, in month 9, and a holiday, 2,500 PLN, in month 14. She can keep money in her buffer or a bills pot, or invest it in a broad share fund, an inflation-indexed savings bond (1% fee if sold early) or shares of one company, CrocoTech. Write her monthly rule for 24 months. Two tests must pass: a 2-month job loss, whenever it comes, never makes her borrow on the card, and she invests at least 12,000 PLN. Then we test your rule against other surprises.",
         "palette": [
@@ -1526,7 +1526,7 @@
         },
         "reference_growth": 186089.54,
         "author": "draft by Claude (AI), 2026-11-21",
-        "reviewer": null,
+        "reviewer": "Mateusz, 2026-11-21 (situation, tests and lessons approved)",
         "content_file": "P1.yaml"
       }
     },
@@ -1535,7 +1535,7 @@
       "node": "P4",
       "level": "hard",
       "content_version": 2,
-      "live": false,
+      "live": true,
       "question": {
         "brief": "Marek, 35, has 100,000 PLN invested: 60% in a broad share fund and 40% in a bond fund. He adds 1,000 PLN every month. His goal, his daughter's studies, is 10 years away, so his target share of shares falls from 60% to 40% over those years. Every trade costs 0.29%, at least 5 PLN, and 19% tax is due each year on the gains he realises by selling. Write his rule for the 10 years. Two tests must pass: in a long rally his shares stay within 10 points of the month's target, and in a crash, whenever it comes, they never fall more than 20 points below it, so no panic selling. Then we test your rule in other markets.",
         "palette": [
@@ -2860,7 +2860,7 @@
         },
         "reference_growth": 387634.18,
         "author": "draft by Claude (AI), 2026-11-21",
-        "reviewer": null,
+        "reviewer": "Mateusz, 2026-11-21 (situation, tests and lessons approved)",
         "content_file": "P4.yaml"
       }
     }
