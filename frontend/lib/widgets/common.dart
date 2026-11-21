@@ -208,8 +208,36 @@ void showSettingsSheet(BuildContext context) {
           padding: EdgeInsets.fromLTRB(20, 10, 20, 20),
           child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
             Center(child: Container(width: 36, height: 4, margin: EdgeInsets.only(bottom: 14), decoration: BoxDecoration(color: kBorder, borderRadius: BorderRadius.circular(2)))),
-            Text(p.name, style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: kInk)),
-            Text('Goal: ${p.goal} · ${p.horizonYears} years', style: TextStyle(color: kMuted)),
+            // Account: name (editable), how the user signed in, sign out.
+            Row(children: [
+              CircleAvatar(
+                radius: 24,
+                backgroundColor: kPrimarySoft,
+                child: Text(p.name.isEmpty ? '?' : p.name[0].toUpperCase(),
+                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: kPrimaryText)),
+              ),
+              SizedBox(width: 12),
+              Expanded(
+                child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                  Row(children: [
+                    Flexible(child: Text(p.name, overflow: TextOverflow.ellipsis, style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: kInk))),
+                    IconButton(
+                      tooltip: 'Edit name',
+                      visualDensity: VisualDensity.compact,
+                      icon: Icon(Icons.edit_outlined, size: 18, color: kPrimaryText),
+                      onPressed: () => _editName(ctx, s),
+                    ),
+                  ]),
+                  Text(
+                    s.email ?? switch (s.signInMethod) { 'google' => 'Signed in with Google (demo)', 'guest' => 'Guest, not signed in', _ => 'Not signed in' },
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(color: kMuted),
+                  ),
+                ]),
+              ),
+            ]),
+            SizedBox(height: 6),
+            Text('Goal: ${p.goal} · ${p.horizonYears} years', style: TextStyle(color: kMuted, fontSize: 13)),
             if (s.isAdmin) ...[
               SizedBox(height: 10),
               ListTile(
@@ -245,12 +273,46 @@ void showSettingsSheet(BuildContext context) {
             Text('Daily goal (Scales)', style: TextStyle(fontWeight: FontWeight.w700, color: kInk)),
             SizedBox(height: 8),
             DailyGoalPicker(),
+            SizedBox(height: 16),
+            OutlinedButton.icon(
+              icon: Icon(Icons.logout, color: kRed),
+              label: Text(s.guest ? 'Leave guest mode' : 'Sign out', style: TextStyle(color: kRed)),
+              style: OutlinedButton.styleFrom(minimumSize: Size.fromHeight(48), side: BorderSide(color: kRed.withValues(alpha: 0.5))),
+              onPressed: () {
+                Navigator.pop(ctx);
+                s.signOut();
+                GoRouter.of(context).go('/');
+              },
+            ),
           ]),
         ),
         ),
       );
     }),
   );
+}
+
+/// Edit the display name (shown in the header, the league and the tutor).
+Future<void> _editName(BuildContext ctx, AppState s) async {
+  final c = TextEditingController(text: s.profile.name);
+  final name = await showDialog<String>(
+    context: ctx,
+    builder: (d) => AlertDialog(
+      title: Text('Your name'),
+      content: TextField(
+        controller: c,
+        autofocus: true,
+        maxLength: 30,
+        decoration: InputDecoration(labelText: 'Name shown in the app'),
+        onSubmitted: (v) => Navigator.pop(d, v),
+      ),
+      actions: [
+        TextButton(onPressed: () => Navigator.pop(d), child: Text('Cancel')),
+        FilledButton(onPressed: () => Navigator.pop(d, c.text), child: Text('Save')),
+      ],
+    ),
+  );
+  if (name != null) s.rename(name);
 }
 
 /// Daily goal choice in Scales (used in settings and after the quick check).

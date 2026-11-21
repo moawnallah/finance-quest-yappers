@@ -374,17 +374,38 @@ class AppState extends ChangeNotifier {
     email = e.toLowerCase();
     isAdmin = adminEmails.split(',').map((x) => x.trim().toLowerCase()).contains(email);
     guest = false;
+    signInMethod = 'email';
     signIn(e.split('@').first);
   }
 
   void signInAsGuest() {
     guest = true;
+    signInMethod = 'guest';
     isAdmin = false;
     signedIn = false;
     profile.name = 'Guest';
     notifyListeners();
   }
-  void signOut() { signedIn = false; profile.name = 'You'; api.reset(); notifyListeners(); }
+  /// How the user signed in: email | google | guest (null before sign-in).
+  String? signInMethod;
+
+  void signOut() {
+    signedIn = false;
+    guest = false;
+    isAdmin = false;
+    email = null;
+    signInMethod = null;
+    profile.name = 'You';
+    api.reset();
+    notifyListeners();
+  }
+
+  void rename(String name) {
+    final n = name.trim();
+    if (n.isEmpty) return;
+    profile.name = n.length > 30 ? n.substring(0, 30) : n;
+    notifyListeners();
+  }
   void markCoachSeen() { coachSeen = true; notifyListeners(); }
   void notify() => notifyListeners();
 }
