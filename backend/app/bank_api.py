@@ -42,6 +42,11 @@ def _visible(db: Session, synthetic: bool = True) -> list[User]:
     return list(db.scalars(q.where(User.is_admin.is_(False))))
 
 
+def _label(u: User) -> str | None:
+    """Demo scenarios carry a story name; real learners stay pseudonymous."""
+    return u.display_name if u.synthetic and not (u.display_name or "").startswith("Synthetic learner") else None
+
+
 def _done(db: Session, user_id: str) -> set[str]:
     cat, by = catalog(), {}
     for a in _attempts(db, user_id):
@@ -63,7 +68,7 @@ def learners(db: Session = Depends(get_db)):
         onb = db.get(Onboarding, u.id)
         path = [p["node"] for p in (onb.result.get("path", []) if onb else [])]
         done = _done(db, u.id)
-        out.append({"pseudo": pseudo(u.id), "synthetic": u.synthetic, "goal": (onb.survey or {}).get("goal") if onb else None,
+        out.append({"pseudo": pseudo(u.id), "synthetic": u.synthetic, "label": _label(u), "goal": (onb.survey or {}).get("goal") if onb else None,
                     "path": path, "done": sorted(done & set(path)), "progress": round(len(done & set(path)) / len(path), 2) if path else 0})
     return {"learners": sorted(out, key=lambda x: (-x["progress"], x["pseudo"])),
             "synthetic": any(x["synthetic"] for x in out)}
@@ -87,7 +92,7 @@ def learner_card(pseudo_id: str, db: Session = Depends(get_db)):
     nxt = onboarding_router.next_steps(onb.survey, onb.result, done) if onb else []
     reasons = [{"node": p["node"], "title": p.get("title"), "reason": p.get("reason")} for p in (onb.result.get("path", []) if onb else [])]
     events = db.scalars(select(Event).where(Event.user_id == u.id).order_by(Event.id.desc()).limit(40)).all()
-    return {"pseudo": pseudo_id, "synthetic": u.synthetic, "summary": summary, "need_reasons": reasons,
+    return {"pseudo": pseudo_id, "synthetic": u.synthetic, "label": _label(u), "summary": summary, "need_reasons": reasons,
             "next_steps": [{**x, "live": x["node"] in cat.nodes} for x in nxt],
             "timeline": [{"ts": e.created_at.isoformat() if e.created_at else None, "name": e.name} for e in events]}
 
@@ -95,7 +100,7 @@ def learner_card(pseudo_id: str, db: Session = Depends(get_db)):
 @router.get("/admin/adviser-signals", dependencies=admin)
 def adviser_signals(db: Session = Depends(get_db)):
     """Conversation signals at the level of types (never a product), for consenting and synthetic learners."""
-    rows = [{"pseudo": pseudo(u.id), "synthetic": u.synthetic, "survey": (db.get(Onboarding, u.id).survey if db.get(Onboarding, u.id) else {}),
+    rows = [{"pseudo": pseudo(u.id), "synthetic": u.synthetic, "label": _label(u), "survey": (db.get(Onboarding, u.id).survey if db.get(Onboarding, u.id) else {}),
              "done": _done(db, u.id), "confidence": _last_confidence(db, u.id)} for u in _visible(db)]
     sig = analytics.adviser_signals(rows)
     return {"signals": sig, "synthetic": any(x["synthetic"] for x in sig)}

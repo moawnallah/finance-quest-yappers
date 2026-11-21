@@ -40,3 +40,26 @@ def test_synthetic_seed_and_bank_views(client):
     assert client.get("/admin/export?table=nope", headers=ADMIN).status_code == 400
     with SessionLocal() as db:  # synthetic learners never enter leagues (no account)
         assert db.query(User).filter(User.synthetic.is_(True), User.email.isnot(None)).count() == 0
+
+
+def test_scenarios_tell_their_stories(client):
+    """The named demo scenarios end in the signals their stories promise, and seeding twice adds nothing."""
+    from app.db import SessionLocal
+    from app.synthetic import seed_scenarios
+    with SessionLocal() as db:
+        first = seed_scenarios(db)
+        assert seed_scenarios(db) == first
+    h = ADMIN
+    ls = {x["label"]: x for x in client.get("/admin/learners", headers=h).json()["learners"] if x.get("label")}
+    assert len(ls) == 6 and ls["Ola, 22: student with a card loan, no buffer"]["progress"] > 0
+    sig = client.get("/admin/adviser-signals", headers=h).json()["signals"]
+    by = {}
+    for s in sig:
+        by.setdefault(s["label"], set()).add(s["topic"])
+    assert by["Ola, 22: student with a card loan, no buffer"] >= {"an emergency fund and a savings account", "paying down costly consumer debt first"}
+    assert "index funds" in by["Tomek, 31: first investment, long horizon"]
+    assert by["Ewa, 58: retirement in 3 to 10 years"] >= {"deposits and retail bonds", "retirement accounts such as IKE and IKZE"}
+    assert "deposits and retail bonds" in by["Kasia, 27: saving for a home"]
+    assert "Marek, 35: confident, but struggling with funds" not in by and "Julia, 24: just started" not in by
+    card = client.get(f"/admin/learners/{ls['Tomek, 31: first investment, long horizon']['pseudo']}", headers=h).json()
+    assert card["label"].startswith("Tomek") and card["need_reasons"][0]["node"] == "I4"

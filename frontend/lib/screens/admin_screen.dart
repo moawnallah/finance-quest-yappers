@@ -677,8 +677,9 @@ class _AdminScreenState extends State<AdminScreen> {
           color: kSurface,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12), side: BorderSide(color: kLine)),
           child: ListTile(
-            title: Text('${l['pseudo']}${l['synthetic'] == true ? '  · synthetic' : ''}', style: TextStyle(fontWeight: FontWeight.w700, color: kInk)),
-            subtitle: Text('Goal ${'${l['goal'] ?? '-'}'.replaceAll('_', ' ')} · path ${(l['path'] as List).join(' > ')}', style: TextStyle(color: kMuted)),
+            title: Text(l['label'] != null ? '${l['label']}' : '${l['pseudo']}${l['synthetic'] == true ? '  · synthetic' : ''}',
+                style: TextStyle(fontWeight: FontWeight.w700, color: kInk)),
+            subtitle: Text('${l['label'] != null ? '${l['pseudo']} · demo scenario\n' : ''}Goal ${'${l['goal'] ?? '-'}'.replaceAll('_', ' ')} · path ${(l['path'] as List).join(' > ')}', style: TextStyle(color: kMuted)),
             trailing: SizedBox(width: 120, child: Row(children: [
               Expanded(child: LinearProgressIndicator(value: (l['progress'] as num).toDouble(), color: kGreen, backgroundColor: kLine)),
               SizedBox(width: 6),
@@ -703,7 +704,7 @@ class _AdminScreenState extends State<AdminScreen> {
     showDialog(
       context: context,
       builder: (d) => AlertDialog(
-        title: Text('Learner ${c['pseudo']}'),
+        title: Text(c['label'] != null ? '${c['label']} (${c['pseudo']})' : 'Learner ${c['pseudo']}'),
         content: SizedBox(
           width: 640,
           child: SingleChildScrollView(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -738,7 +739,10 @@ class _AdminScreenState extends State<AdminScreen> {
           child: Row(children: [
             Icon(Icons.forum_outlined, color: kPrimaryText),
             SizedBox(width: 10),
-            Expanded(child: Text('${x['text']}', style: TextStyle(color: kInk, height: 1.35))),
+            Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              if (x['label'] != null) Text('${x['label']}', style: TextStyle(color: kInk, fontWeight: FontWeight.w700)),
+              Text('${x['text']}', style: TextStyle(color: kInk, height: 1.35)),
+            ])),
             SizedBox(width: 8),
             TextButton(onPressed: () => _card(x['pseudo'] as String), child: Text('${x['pseudo']}')),
           ]),

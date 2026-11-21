@@ -41,6 +41,6 @@ def adviser_signals(learners: list[dict]) -> list[dict]:
                      f"horizon {HORIZONS.get(s.get('horizon'), 'not given')}"]
             if l.get("confidence"):
                 parts.append(f"confidence {l['confidence']}/5")
-            out.append({"pseudo": l["pseudo"], "topic": topic, "nodes": need, "synthetic": bool(l.get("synthetic")),
+            out.append({"pseudo": l["pseudo"], "label": l.get("label"), "topic": topic, "nodes": need, "synthetic": bool(l.get("synthetic")),
                         "text": f"Ready to talk about {topic}: " + ", ".join(parts)})
     return sorted(out, key=lambda x: (-len(x["nodes"]), x["topic"], x["pseudo"]))

@@ -87,6 +87,11 @@ def seed(db: Session) -> dict:
 
 if __name__ == "__main__":
     import sys
+    if "--scenarios" in sys.argv:  # python -m app.seed --scenarios
+        from app.synthetic import seed_scenarios
+        with SessionLocal() as session:
+            for row in seed_scenarios(session):
+                print(row["pseudo"], row["label"])
     if "--synthetic" in sys.argv:  # python -m app.seed --synthetic 200
         from app.synthetic import seed_synthetic
         n = int(sys.argv[sys.argv.index("--synthetic") + 1]) if len(sys.argv) > sys.argv.index("--synthetic") + 1 else 200
