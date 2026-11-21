@@ -55,6 +55,28 @@ final badgeDefs = [
   BadgeDef('goal', 'Daily goal', 'Reach your daily Scales goal'),
 ];
 
+/// Skills-tree panels in their teaching order (docs/skills_tree.md). The wheel
+/// shows the panels that have skills.
+const panelOrder = ['FOUNDATIONS', 'SAFETY', 'INSTRUMENTS', 'PORTFOLIO', 'DECISIONS', 'LONG HORIZON', 'PROTECTION'];
+const panelLabels = {
+  'FOUNDATIONS': 'Foundations',
+  'SAFETY': 'Safety',
+  'INSTRUMENTS': 'Instruments',
+  'PORTFOLIO': 'Portfolio',
+  'DECISIONS': 'Decisions',
+  'LONG HORIZON': 'Long horizon',
+  'PROTECTION': 'Protection',
+};
+const panelQuestions = {
+  'FOUNDATIONS': 'How does money work over time?',
+  'SAFETY': 'Am I protected before I invest?',
+  'INSTRUMENTS': 'What am I buying, and what can go wrong?',
+  'PORTFOLIO': 'How do I combine investments?',
+  'DECISIONS': 'How do I decide on day X?',
+  'LONG HORIZON': 'How do retirement and a mortgage change the plan?',
+  'PROTECTION': 'Who is on my side, and who is not?',
+};
+
 class AppState extends ChangeNotifier {
   /// Backend client for the Skills screens (task engines). Scoring happens on the server.
   Api api = Api();
@@ -64,14 +86,87 @@ class AppState extends ChangeNotifier {
   Map<String, dynamic> bands = {}; // Eurobarometer score bands (pl / eu %)
   final Set<String> focusSlices = {}; // slices to highlight after placement
 
-  /// Which wheel slice teaches each placement topic.
+  /// Which wheel panel teaches each placement topic (docs/skills_tree.md:
+  /// Q2 -> F3, Q3 -> F2, Q4 -> I3, Q5 -> I1, Q6 -> P1).
   static const topicSlice = {
-    'compound interest': 'etfs',
-    'inflation': 'money_market',
-    'bonds': 'bonds',
-    'risk and return': 'stocks',
-    'diversification': 'mutual_and_index_funds',
+    'compound interest': 'FOUNDATIONS',
+    'inflation': 'FOUNDATIONS',
+    'bonds': 'INSTRUMENTS',
+    'risk and return': 'INSTRUMENTS',
+    'diversification': 'PORTFOLIO',
   };
+
+  // ---- Skills tree from the backend (GET /skills): the missions on the roadmaps.
+  List<Map<String, dynamic>> skills = [];
+  bool skillsLoading = false;
+  String? skillsError;
+  String selectedPanel = 'SAFETY';
+
+  Future<void> loadSkills() async {
+    skillsLoading = true;
+    skillsError = null;
+    notifyListeners();
+    try {
+      skills = await api.skills(profile.name);
+      if (!panels.contains(selectedPanel) && panels.isNotEmpty) selectedPanel = startPanel ?? panels.first;
+    } catch (e) {
+      skillsError = '$e';
+    } finally {
+      skillsLoading = false;
+      notifyListeners();
+    }
+  }
+
+  List<String> get panels => [for (final p in panelOrder) if (skills.any((k) => k['panel'] == p)) p];
+  List<Map<String, dynamic>> skillsIn(String panel) => [for (final k in skills) if (k['panel'] == panel) k];
+  Map<String, dynamic>? skillById(String id) => skills.where((k) => k['id'] == id).firstOrNull;
+
+  Map<String, dynamic> _st(Map<String, dynamic> k) => Map<String, dynamic>.from(k['status'] ?? {});
+  bool skillDone(Map<String, dynamic> k) => _st(k)['done'] == true;
+  int skillAnswered(Map<String, dynamic> k) => ((_st(k)['items_answered'] as num?) ?? 0).toInt();
+  int skillTotal(Map<String, dynamic> k) => ((_st(k)['items_total'] as num?) ?? 0).toInt();
+
+  /// 0..1: done = 1, otherwise scored questions answered / all scored questions.
+  double skillProgress(Map<String, dynamic> k) {
+    if (skillDone(k)) return 1;
+    final total = skillTotal(k);
+    return total == 0 ? 0 : (skillAnswered(k) / total).clamp(0, 1).toDouble();
+  }
+
+  /// Prerequisites that exist in the loaded tree (others are not published yet).
+  List<String> knownAfter(Map<String, dynamic> k) => [for (final a in (k['after'] as List? ?? [])) if (skillById(a as String) != null) a];
+
+  /// done | open | locked. Locked skills can still be started after a warning.
+  String skillState(Map<String, dynamic> k) {
+    if (skillDone(k)) return 'done';
+    return knownAfter(k).every((a) => skillDone(skillById(a)!)) ? 'open' : 'locked';
+  }
+
+  double panelProgress(String panel) {
+    final ks = skillsIn(panel);
+    return ks.isEmpty ? 0 : ks.map(skillProgress).reduce((a, b) => a + b) / ks.length;
+  }
+
+  /// The panel with the first open, unfinished skill: where to start.
+  String? get startPanel => panels.where((p) => skillsIn(p).any((k) => skillState(k) == 'open')).firstOrNull;
+
+  void selectPanel(String p, {bool bySpin = true}) {
+    if (p == selectedPanel && (!bySpin || wheelSpun)) return;
+    selectedPanel = p;
+    if (bySpin) wheelSpun = true;
+    notifyListeners();
+  }
+
+  // ---- Badges: earning one queues it, and the shell shows a dialog.
+  String? pendingBadge;
+  void earn(String id) {
+    if (badges.add(id)) {
+      pendingBadge = id;
+      notifyListeners();
+    }
+  }
+
+  void clearPendingBadge() => pendingBadge = null;
   final Profile profile = Profile();
   final Set<String> doneNodes = {};
   final Map<String, int> nodeAnswered = {}; // node id -> questions answered so far
@@ -144,14 +239,14 @@ class AppState extends ChangeNotifier {
     xp += amount;
     xpToday += amount;
     if (streak == 0 && amount > 0) streak = 1;
-    if (xpToday >= dailyGoal) badges.add('goal');
+    if (xpToday >= dailyGoal && badges.add('goal')) pendingBadge = 'goal';
     notifyListeners();
   }
 
   void completeNode(Node n, int correct) {
     final scored = n.questions.where((q) => q.isScored).length;
     if (doneNodes.add(n.id)) {
-      badges.add('first_steps');
+      if (badges.add('first_steps')) pendingBadge = 'first_steps';
       final earned = Rewards.correctAnswer * correct + Rewards.missionDone;
       lastMission = (correct, scored, earned);
       addXp(earned);
@@ -171,7 +266,10 @@ class AppState extends ChangeNotifier {
       ..clear()
       ..addAll(missedIds.map((id) => topicSlice[placementTopic[id]]).whereType<String>());
     profile.placementScore = score;
-    if (badges.add('placement')) addXp(Rewards.quickCheck);
+    if (badges.add('placement')) {
+      pendingBadge = 'placement';
+      addXp(Rewards.quickCheck);
+    }
     notifyListeners();
   }
 
