@@ -114,6 +114,7 @@ hard:  # draft by Claude (AI), 2026-11-21. Engine: docs/hard_engine.md
       - "Money you do not assign in a month is spent."
       - "If a month's money runs out, the buffer pays first, then the credit card."
       - "The surprises and their likelihoods are illustrative, chosen for teaching."
+      - "After the tests, your rule also runs through 200 random 10-year futures: how often it never needed the card, and how much it grew (median), compared with the reference solution = 100."
     obligatory:
       - {name: "Job loss in month 6, lasting 2 months: never use the card", override: {job_loss: [[6, 2]]}, check: {no_card_debt: true}}
       - {name: "A normal 24 months: at least 15,000 PLN invested", override: {}, check: {contributed_at_least: 15000}}
@@ -124,7 +125,7 @@ hard:  # draft by Claude (AI), 2026-11-21. Engine: docs/hard_engine.md
       - {name: "Job loss in month 10, lasting 4 months", probability: 0.10, override: {job_loss: [[10, 4]]}}
       - {name: "Two shocks in one year: 3,000 PLN in month 3 and 2,500 PLN in month 8", probability: 0.08, override: {shocks: {3: 3000, 8: 2500}}}
       - {name: "Job loss in month 6, lasting 3 months", probability: 0.05, override: {job_loss: [[6, 3]]}}
-    futures: {n: 200, seed: 11, job_loss_per_month: 0.01, job_loss_months: [2, 5], shock_per_month: 0.04, shock_amount: [1000, 4000]}
+    futures: {n: 200, months: 120, seed: 11, job_loss_per_month: 0.01, job_loss_months: [2, 5], shock_per_month: 0.04, shock_amount: [1000, 4000]}
     reference_program:
       every_month:
         - block: if_else

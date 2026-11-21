@@ -42,7 +42,7 @@
               "*": "times",
               "+": "plus",
               "-": "minus",
-              "min": "or, if smaller,"
+              "min": "but at most"
             }
           },
           {
@@ -125,7 +125,8 @@
           "Share fund returns are synthetic: about 0.5% a month on average, with ups and downs. Not a forecast.",
           "Money you do not assign in a month is spent.",
           "If a month's money runs out, the buffer pays first, then the credit card.",
-          "The surprises and their likelihoods are illustrative, chosen for teaching."
+          "The surprises and their likelihoods are illustrative, chosen for teaching.",
+          "After the tests, your rule also runs through 200 random 10-year futures: how often it never needed the card, and how much it grew (median), compared with the reference solution = 100."
         ],
         "obligatory": [
           "Job loss in month 6, lasting 2 months: never use the card",
@@ -134,21 +135,436 @@
         "optional_count": 6,
         "bots": [
           {
+            "name": "Reference solution",
+            "accepted": true,
+            "score": 97,
+            "growth_index": 100,
+            "reference": true
+          },
+          {
             "name": "Invests everything",
             "accepted": false,
-            "score": null
+            "score": null,
+            "growth_index": null
           },
           {
             "name": "Buffer of 2 months, then invests",
             "accepted": true,
-            "score": 91
+            "score": 91,
+            "growth_index": 97
           },
           {
             "name": "Buffer of 6 months, then invests",
             "accepted": true,
-            "score": 100
+            "score": 100,
+            "growth_index": 98
           }
-        ]
+        ],
+        "blockly": {
+          "blocks": [
+            {
+              "type": "fq_every_month",
+              "message0": "Every month %1",
+              "args0": [
+                {
+                  "type": "input_statement",
+                  "name": "DO"
+                }
+              ],
+              "colour": 45,
+              "deletable": false,
+              "tooltip": "Your rule runs once at the start of every month."
+            },
+            {
+              "type": "fq_if_else",
+              "message0": "If %1 then %2 otherwise %3",
+              "args0": [
+                {
+                  "type": "input_value",
+                  "name": "IF",
+                  "check": "Boolean"
+                },
+                {
+                  "type": "input_statement",
+                  "name": "THEN"
+                },
+                {
+                  "type": "input_statement",
+                  "name": "ELSE"
+                }
+              ],
+              "inputsInline": false,
+              "previousStatement": null,
+              "nextStatement": null,
+              "colour": 210
+            },
+            {
+              "type": "fq_compare",
+              "message0": "%1 %2 %3",
+              "args0": [
+                {
+                  "type": "input_value",
+                  "name": "LEFT",
+                  "check": "Number"
+                },
+                {
+                  "type": "field_dropdown",
+                  "name": "OP",
+                  "options": [
+                    [
+                      "is less than",
+                      "<"
+                    ],
+                    [
+                      "is more than",
+                      ">"
+                    ]
+                  ]
+                },
+                {
+                  "type": "input_value",
+                  "name": "RIGHT",
+                  "check": "Number"
+                }
+              ],
+              "inputsInline": true,
+              "output": "Boolean",
+              "colour": 120
+            },
+            {
+              "type": "fq_and",
+              "message0": "%1 and %2",
+              "args0": [
+                {
+                  "type": "input_value",
+                  "name": "A",
+                  "check": "Boolean"
+                },
+                {
+                  "type": "input_value",
+                  "name": "B",
+                  "check": "Boolean"
+                }
+              ],
+              "inputsInline": true,
+              "output": "Boolean",
+              "colour": 120
+            },
+            {
+              "type": "fq_not",
+              "message0": "not %1",
+              "args0": [
+                {
+                  "type": "input_value",
+                  "name": "A",
+                  "check": "Boolean"
+                }
+              ],
+              "inputsInline": true,
+              "output": "Boolean",
+              "colour": 120
+            },
+            {
+              "type": "fq_math",
+              "message0": "%1 %2 %3",
+              "args0": [
+                {
+                  "type": "input_value",
+                  "name": "LEFT",
+                  "check": "Number"
+                },
+                {
+                  "type": "field_dropdown",
+                  "name": "OP",
+                  "options": [
+                    [
+                      "times",
+                      "*"
+                    ],
+                    [
+                      "plus",
+                      "+"
+                    ],
+                    [
+                      "minus",
+                      "-"
+                    ],
+                    [
+                      "but at most",
+                      "min"
+                    ]
+                  ]
+                },
+                {
+                  "type": "input_value",
+                  "name": "RIGHT",
+                  "check": "Number"
+                }
+              ],
+              "inputsInline": true,
+              "output": "Number",
+              "colour": 230
+            },
+            {
+              "type": "fq_number",
+              "message0": "%1",
+              "args0": [
+                {
+                  "type": "field_number",
+                  "name": "VALUE",
+                  "value": 0
+                }
+              ],
+              "inputsInline": true,
+              "output": "Number",
+              "colour": 230
+            },
+            {
+              "type": "fq_save_to_buffer",
+              "message0": "Put %1 PLN into my buffer",
+              "args0": [
+                {
+                  "type": "input_value",
+                  "name": "AMOUNT",
+                  "check": "Number"
+                }
+              ],
+              "inputsInline": true,
+              "previousStatement": null,
+              "nextStatement": null,
+              "colour": 290
+            },
+            {
+              "type": "fq_invest",
+              "message0": "Invest %1 PLN in a broad share fund",
+              "args0": [
+                {
+                  "type": "input_value",
+                  "name": "AMOUNT",
+                  "check": "Number"
+                }
+              ],
+              "inputsInline": true,
+              "previousStatement": null,
+              "nextStatement": null,
+              "colour": 290
+            },
+            {
+              "type": "fq_pay_debt",
+              "message0": "Pay %1 PLN off my card",
+              "args0": [
+                {
+                  "type": "input_value",
+                  "name": "AMOUNT",
+                  "check": "Number"
+                }
+              ],
+              "inputsInline": true,
+              "previousStatement": null,
+              "nextStatement": null,
+              "colour": 290
+            },
+            {
+              "type": "fq_sell_investments",
+              "message0": "Sell %1 PLN of my investments",
+              "args0": [
+                {
+                  "type": "input_value",
+                  "name": "AMOUNT",
+                  "check": "Number"
+                }
+              ],
+              "inputsInline": true,
+              "previousStatement": null,
+              "nextStatement": null,
+              "colour": 290
+            },
+            {
+              "type": "fq_var",
+              "message0": "%1",
+              "args0": [
+                {
+                  "type": "field_dropdown",
+                  "name": "NAME",
+                  "options": [
+                    [
+                      "money left this month",
+                      "cash"
+                    ],
+                    [
+                      "money missing this month",
+                      "shortfall"
+                    ],
+                    [
+                      "months my buffer covers",
+                      "buffer_months"
+                    ],
+                    [
+                      "my essential costs",
+                      "costs"
+                    ],
+                    [
+                      "my card debt",
+                      "card_debt"
+                    ],
+                    [
+                      "my investments",
+                      "invested"
+                    ],
+                    [
+                      "I have a job (1 = yes, 0 = no)",
+                      "employed"
+                    ],
+                    [
+                      "the month number",
+                      "month"
+                    ]
+                  ]
+                }
+              ],
+              "inputsInline": true,
+              "output": "Number",
+              "colour": 230
+            }
+          ],
+          "toolbox": {
+            "kind": "categoryToolbox",
+            "contents": [
+              {
+                "kind": "category",
+                "name": "Rules",
+                "contents": [
+                  {
+                    "kind": "block",
+                    "type": "fq_if_else"
+                  }
+                ]
+              },
+              {
+                "kind": "category",
+                "name": "Conditions",
+                "contents": [
+                  {
+                    "kind": "block",
+                    "type": "fq_compare"
+                  },
+                  {
+                    "kind": "block",
+                    "type": "fq_and"
+                  },
+                  {
+                    "kind": "block",
+                    "type": "fq_not"
+                  }
+                ]
+              },
+              {
+                "kind": "category",
+                "name": "Numbers",
+                "contents": [
+                  {
+                    "kind": "block",
+                    "type": "fq_number"
+                  },
+                  {
+                    "kind": "block",
+                    "type": "fq_math"
+                  },
+                  {
+                    "kind": "block",
+                    "type": "fq_var",
+                    "fields": {
+                      "NAME": "cash"
+                    }
+                  },
+                  {
+                    "kind": "block",
+                    "type": "fq_var",
+                    "fields": {
+                      "NAME": "shortfall"
+                    }
+                  },
+                  {
+                    "kind": "block",
+                    "type": "fq_var",
+                    "fields": {
+                      "NAME": "buffer_months"
+                    }
+                  },
+                  {
+                    "kind": "block",
+                    "type": "fq_var",
+                    "fields": {
+                      "NAME": "costs"
+                    }
+                  },
+                  {
+                    "kind": "block",
+                    "type": "fq_var",
+                    "fields": {
+                      "NAME": "card_debt"
+                    }
+                  },
+                  {
+                    "kind": "block",
+                    "type": "fq_var",
+                    "fields": {
+                      "NAME": "invested"
+                    }
+                  },
+                  {
+                    "kind": "block",
+                    "type": "fq_var",
+                    "fields": {
+                      "NAME": "employed"
+                    }
+                  },
+                  {
+                    "kind": "block",
+                    "type": "fq_var",
+                    "fields": {
+                      "NAME": "month"
+                    }
+                  }
+                ]
+              },
+              {
+                "kind": "category",
+                "name": "Actions",
+                "contents": [
+                  {
+                    "kind": "block",
+                    "type": "fq_save_to_buffer"
+                  },
+                  {
+                    "kind": "block",
+                    "type": "fq_invest"
+                  },
+                  {
+                    "kind": "block",
+                    "type": "fq_pay_debt"
+                  },
+                  {
+                    "kind": "block",
+                    "type": "fq_sell_investments"
+                  }
+                ]
+              }
+            ]
+          },
+          "starter": {
+            "blocks": {
+              "languageVersion": 0,
+              "blocks": [
+                {
+                  "type": "fq_every_month",
+                  "x": 20,
+                  "y": 20
+                }
+              ]
+            }
+          }
+        }
       },
       "reveal": {
         "reference_program": {
@@ -213,6 +629,131 @@
               ]
             }
           ]
+        },
+        "reference_workspace": {
+          "blocks": {
+            "languageVersion": 0,
+            "blocks": [
+              {
+                "type": "fq_every_month",
+                "x": 20,
+                "y": 20,
+                "inputs": {
+                  "DO": {
+                    "block": {
+                      "type": "fq_if_else",
+                      "inputs": {
+                        "IF": {
+                          "block": {
+                            "type": "fq_compare",
+                            "fields": {
+                              "OP": ">"
+                            },
+                            "inputs": {
+                              "LEFT": {
+                                "block": {
+                                  "type": "fq_var",
+                                  "fields": {
+                                    "NAME": "card_debt"
+                                  }
+                                }
+                              },
+                              "RIGHT": {
+                                "block": {
+                                  "type": "fq_number",
+                                  "fields": {
+                                    "VALUE": 0
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        },
+                        "THEN": {
+                          "block": {
+                            "type": "fq_pay_debt",
+                            "inputs": {
+                              "AMOUNT": {
+                                "block": {
+                                  "type": "fq_var",
+                                  "fields": {
+                                    "NAME": "cash"
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        },
+                        "ELSE": {
+                          "block": {
+                            "type": "fq_if_else",
+                            "inputs": {
+                              "IF": {
+                                "block": {
+                                  "type": "fq_compare",
+                                  "fields": {
+                                    "OP": "<"
+                                  },
+                                  "inputs": {
+                                    "LEFT": {
+                                      "block": {
+                                        "type": "fq_var",
+                                        "fields": {
+                                          "NAME": "buffer_months"
+                                        }
+                                      }
+                                    },
+                                    "RIGHT": {
+                                      "block": {
+                                        "type": "fq_number",
+                                        "fields": {
+                                          "VALUE": 3
+                                        }
+                                      }
+                                    }
+                                  }
+                                }
+                              },
+                              "THEN": {
+                                "block": {
+                                  "type": "fq_save_to_buffer",
+                                  "inputs": {
+                                    "AMOUNT": {
+                                      "block": {
+                                        "type": "fq_var",
+                                        "fields": {
+                                          "NAME": "cash"
+                                        }
+                                      }
+                                    }
+                                  }
+                                }
+                              },
+                              "ELSE": {
+                                "block": {
+                                  "type": "fq_invest",
+                                  "inputs": {
+                                    "AMOUNT": {
+                                      "block": {
+                                        "type": "fq_var",
+                                        "fields": {
+                                          "NAME": "cash"
+                                        }
+                                      }
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            ]
+          }
         },
         "editorial": "The reference rule does three things in order. If there is card debt, it pays it off first, because 20% a year beats any expected return. Until the buffer covers 3 months of essential costs, it saves. After that, it invests. A 2-month buffer passes the required tests but fails more of the surprises; a 6-month buffer survives almost everything but invests less. There is no single right size: it depends on how secure the income is.",
         "optional": [
@@ -351,6 +892,7 @@
         ],
         "futures": {
           "n": 200,
+          "months": 120,
           "seed": 11,
           "job_loss_per_month": 0.01,
           "job_loss_months": [
@@ -363,6 +905,7 @@
             4000
           ]
         },
+        "reference_growth": 233442.05,
         "author": "draft by Claude (AI), 2026-11-21",
         "reviewer": null,
         "content_file": "S1.yaml"

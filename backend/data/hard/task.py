@@ -10,10 +10,16 @@ from __future__ import annotations
 
 import copy
 import random
+import statistics
+
+from functools import lru_cache
+from pathlib import Path
 
 from common import AttemptError, Report, check_source_ids, is_text, localize_all
-from sim import Household, Scenario, metrics, run, synthetic_returns
+from series_store import SeriesStore
+from sim import KINDS, Household, Scenario, build_path, metrics, run
 
+from .blockly import ConversionError, block_definitions, program_to_workspace, toolbox, workspace_to_program
 from .dsl import BLOCKS, VARS, check, compile_program
 
 CHECKS = {"no_card_debt", "contributed_at_least", "net_worth_at_least"}
@@ -27,11 +33,21 @@ def _household(spec: dict) -> Household:
     return Household(**spec["household"])
 
 
+SERIES = Path(__file__).resolve().parent.parent / "series"
+
+
+@lru_cache(maxsize=1)
+def _store() -> SeriesStore:
+    return SeriesStore(SERIES / "series.csv", SERIES / "catalog.yaml")
+
+
 def _returns(world: dict, seed_offset: int = 0) -> list[float]:
-    m = world.get("market") or {}
-    if m.get("kind", "synthetic") != "synthetic":
-        raise ValueError(f"market kind {m.get('kind')!r} not implemented")
-    return synthetic_returns(world["months"], m.get("seed", 1) + seed_offset, m.get("mean", 0.005), m.get("sd", 0.04))
+    """The household's fund returns: one asset of a market path (docs/market_sim.md).
+    world.market: {kind: synthetic | replay | bootstrap | fictional, asset: <key>, ...}."""
+    m = dict(world.get("market") or {"kind": "synthetic"})
+    path = build_path(m, world["months"], seed_offset, _store())
+    asset = m.get("asset") or path.assets[0]
+    return path.returns[asset]
 
 
 def _scenario(world: dict, override: dict | None, returns: list[float]) -> Scenario:
@@ -61,9 +77,11 @@ def _optional_metric(m: dict) -> float:
 
 
 def _futures(meta: dict, policy) -> dict:
-    f, world = meta["futures"], meta["world"]
+    f = meta["futures"]
+    # Futures may run longer than the tests (e.g. 10 years), so growth differences show.
+    world = {**meta["world"], "months": f.get("months", meta["world"]["months"])}
     rng = random.Random(f["seed"])
-    clean = 0
+    clean, nets = 0, []
     for i in range(f["n"]):
         job_loss, shocks = [], {}
         for month in range(1, world["months"] + 1):
@@ -72,8 +90,11 @@ def _futures(meta: dict, policy) -> dict:
             if rng.random() < f["shock_per_month"]:
                 shocks[month] = round(rng.uniform(*f["shock_amount"]), -1)
         sc = Scenario(world["months"], _returns(world, 1000 + i), job_loss, shocks)
-        clean += metrics(run(_household(meta), policy, sc))["card_debt_max"] == 0
-    return {"n": f["n"], "without_card_debt": clean}
+        m = metrics(run(_household(meta), policy, sc))
+        clean += m["card_debt_max"] == 0
+        nets.append(m["net_worth_end"])
+    return {"n": f["n"], "without_card_debt": clean,
+            "median_net_worth": round(statistics.median(nets), 2) if nets else None}
 
 
 def evaluate(meta: dict, program: dict, with_futures: bool = True) -> dict:
@@ -99,6 +120,11 @@ def evaluate(meta: dict, program: dict, with_futures: bool = True) -> dict:
     result = {"accepted": accepted, "score": score, "obligatory": obligatory, "optional": optional, "story": story}
     if accepted and with_futures:
         result["futures"] = _futures(meta, policy)
+        ref = meta.get("reference_growth")
+        med = result["futures"]["median_net_worth"]
+        # Second axis (decided 2026-11-21): growth = median end net worth over the futures, as an
+        # index where the reference solution = 100. Shown next to the 51-100 resilience points.
+        result["growth_index"] = round(100 * med / ref) if ref and med is not None else None
     return result
 
 
@@ -135,8 +161,11 @@ def validate(task: dict, sources: dict) -> Report:
     world = task.get("world") or {}
     if not isinstance(world.get("months"), int) or world["months"] < 1:
         r.error("world.months must be a positive integer")
-    if (world.get("market") or {}).get("kind", "synthetic") != "synthetic":
-        r.error("world.market.kind: only synthetic is implemented")
+    market = world.get("market") or {}
+    if market.get("kind", "synthetic") not in KINDS:
+        r.error(f"world.market.kind must be one of {list(KINDS)}")
+    elif market.get("kind") in ("replay", "bootstrap") and not market.get("series"):
+        r.error("world.market: replay and bootstrap need `series: {asset: series_id}`")
     if not task.get("obligatory"):
         r.error("at least one obligatory test is required")
     for t in task.get("obligatory") or []:
@@ -189,10 +218,13 @@ def _meta(task: dict) -> dict:
 
 def compile_task(task: dict) -> dict:
     meta = _meta(task)
-    bots = []
+    meta["reference_growth"] = evaluate(meta, task["reference_program"])["futures"]["median_net_worth"]
+    bots = [{"name": "Reference solution", "accepted": True, "score": None, "growth_index": 100, "reference": True}]
     for b in task.get("baseline_bots") or []:
-        res = evaluate(meta, b["program"], with_futures=False)
-        bots.append({"name": b["name"], "accepted": res["accepted"], "score": res["score"]})
+        res = evaluate(meta, b["program"])
+        bots.append({"name": b["name"], "accepted": res["accepted"], "score": res["score"],
+                     "growth_index": res.get("growth_index")})
+    bots[0]["score"] = evaluate(meta, task["reference_program"], with_futures=False)["score"]
     palette = [{"block": b, **BLOCKS[b]} for b in task["palette"]]
     return {
         "id": task["id"], "node": task["node"], "level": "hard", "content_version": task["content_version"],
@@ -209,9 +241,13 @@ def compile_task(task: dict) -> dict:
             "obligatory": [t["name"] for t in task["obligatory"]],
             "optional_count": len(task.get("optional") or []),
             "bots": bots,
+            "blockly": {"blocks": block_definitions(task["palette"], task["vars"]),
+                        "toolbox": toolbox(task["palette"], task["vars"]),
+                        "starter": program_to_workspace(task.get("starter_program") or {"every_month": []})},
         },
         "reveal": {
             "reference_program": task["reference_program"],
+            "reference_workspace": program_to_workspace(task["reference_program"]),
             "editorial": task["editorial"],
             "optional": [{"name": t["name"], "probability": t["probability"]} for t in task.get("optional") or []],
             "sources": task.get("sources", []),
@@ -237,7 +273,13 @@ def secrets(record: dict) -> dict:
 
 
 def score(record: dict, program: dict) -> dict:
-    """POST /answers for a hard task. Field names match the attempt record (docs/task_engines.md)."""
+    """POST /answers for a hard task. `program` is our program JSON or a Blockly workspace JSON
+    (it has a "blocks" key). Field names match the attempt record (docs/task_engines.md)."""
+    if isinstance(program, dict) and "blocks" in program:
+        try:
+            program = workspace_to_program(program)
+        except ConversionError as e:
+            raise AttemptError(str(e)) from e
     q = record["question"]
     errors = check(program, [b["block"] for b in q["palette"]], [v["name"] for v in q["vars"]],
                    q["limits"].get("max_blocks", 30), q["limits"].get("max_depth", 5))

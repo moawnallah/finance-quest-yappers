@@ -48,11 +48,12 @@ def build(content: Path = CONTENT):
 
 
 def qa_report(results) -> str:
-    lines = ["# Hard tasks: QA report", "", "| | id | reference score | bots |", "|---|---|---|---|"]
+    lines = ["# Hard tasks: QA report", "", "| | id | reference and bots: resilience points / growth index |", "|---|---|---|"]
     for tid, rec, r, _ in results:
         mark = "❌" if not rec else "⚠️" if r.warnings else "✅"
-        bots = ", ".join(f"{b['name']}: {b['score'] if b['accepted'] else 'not accepted'}" for b in rec["question"]["bots"]) if rec else ""
-        lines.append(f"| {mark} | {tid} | {'' if not rec else 'ok'} | {bots} |")
+        bots = "; ".join(f"{b['name']}: {b['score']} / {b['growth_index']}" if b["accepted"] else f"{b['name']}: not accepted"
+                         for b in rec["question"]["bots"]) if rec else ""
+        lines.append(f"| {mark} | {tid} | {bots} |")
     for tid, rec, r, file in results:
         if r.errors or r.warnings:
             lines += ["", f"## {tid} ({file})"] + [f"- ❌ {e}" for e in r.errors] + [f"- ⚠️ {w}" for w in r.warnings]

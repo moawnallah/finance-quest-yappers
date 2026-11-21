@@ -78,6 +78,14 @@ def test_reference_scores_and_bots_are_ordered(s1):
     assert ref["accepted"] and 51 <= two_months["score"] < ref["points"] <= 100
 
 
+def test_second_axis_shows_the_trade_off(s1):
+    # The 2-D score exists to show that a bigger buffer buys resilience at the cost of growth.
+    bots = {b["name"]: b for b in s1["question"]["bots"]}
+    six = bots["Buffer of 6 months, then invests"]
+    ref = bots["Reference solution"]
+    assert six["score"] > ref["score"] and six["growth_index"] < ref["growth_index"] == 100
+
+
 def test_rejected_program_gets_the_failing_story(s1):
     res = score(s1, {"every_month": [{"block": "invest", "amount": {"block": "var", "name": "cash"}}]})
     assert not res["accepted"] and res["points"] is None

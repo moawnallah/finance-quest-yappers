@@ -37,7 +37,7 @@ BLOCKS = {
     "number": {"type": "number", "text": "{value}"},
     "var": {"type": "number", "text": "{name}"},
     "math": {"type": "number", "text": "{left} {op} {right}",
-             "ops": {"*": "times", "+": "plus", "-": "minus", "min": "or, if smaller,"}},
+             "ops": {"*": "times", "+": "plus", "-": "minus", "min": "but at most"}},
     "save_to_buffer": {"type": "statement", "text": "Put {amount} PLN into my buffer"},
     "invest": {"type": "statement", "text": "Invest {amount} PLN in a broad share fund"},
     "pay_debt": {"type": "statement", "text": "Pay {amount} PLN off my card"},
