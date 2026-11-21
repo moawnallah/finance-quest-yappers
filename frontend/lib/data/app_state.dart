@@ -246,6 +246,7 @@ class AppState extends ChangeNotifier {
   final Map<String, int> nodeAnswered = {}; // node id -> questions answered so far
   String selectedSlice = 'bonds'; // the topic at the top of the home wheel
   bool wheelSpun = false; // hides the "spin me" hint after the first spin
+  bool wheelNudged = false; // the hint wiggle plays once per visit, not on every tab switch
   final Set<String> badges = {};
   int xp = 0;
   int xpToday = 0;

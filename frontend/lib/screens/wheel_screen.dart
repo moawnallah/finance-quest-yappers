@@ -27,6 +27,8 @@ class _WheelScreenState extends State<WheelScreen> {
   static const headerH = 92.0;
   bool _headerVisible = true;
   Timer? _showAgain;
+  DateTime _quietUntil = DateTime.now().add(Duration(milliseconds: 900));
+  String? _shownPanel;
 
   @override
   void initState() {
@@ -44,6 +46,8 @@ class _WheelScreenState extends State<WheelScreen> {
   // Hide the roadmap header while the user scrolls; bring it back when they stop.
   bool _onScroll(ScrollNotification n) {
     if (n.depth != 0) return false;
+    // Relayouts (opening the tab, switching topic) also send scroll events; ignore them.
+    if (DateTime.now().isBefore(_quietUntil)) return false;
     if (n is ScrollUpdateNotification && (n.scrollDelta ?? 0).abs() > 0.5) {
       // any real movement (finger, mouse wheel, trackpad) hides the header
       _showAgain?.cancel();
@@ -63,6 +67,13 @@ class _WheelScreenState extends State<WheelScreen> {
   @override
   Widget build(BuildContext context) {
     final s = context.watch<AppState>();
+    if (_shownPanel != s.selectedPanel) {
+      // A new topic: show its header and ignore the relayout that follows.
+      _shownPanel = s.selectedPanel;
+      _headerVisible = true;
+      _showAgain?.cancel();
+      _quietUntil = DateTime.now().add(Duration(milliseconds: 700));
+    }
     Widget body;
     if (s.skills.isEmpty && s.skillsLoading) {
       body = Center(child: CircularProgressIndicator());
@@ -498,7 +509,10 @@ class _SpinWheelState extends State<_SpinWheel> with SingleTickerProviderStateMi
     _rot.value = -math.max(i, 0) * step;
     _sel = _indexFor(_rot.value);
     _rot.addListener(_onTurn);
-    if (!s.wheelSpun) _nudge();
+    if (!s.wheelSpun && !s.wheelNudged) {
+      s.wheelNudged = true;
+      _nudge();
+    }
   }
 
   @override
