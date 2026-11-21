@@ -214,7 +214,10 @@ extension on _WheelScreenState {
               Expanded(
                 child: Stack(children: [
                   Positioned.fill(child: s.skillsIn(panel).isEmpty
-                    ? Center(child: SingleChildScrollView(scrollDirection: Axis.horizontal, child: _Tree(key: ValueKey(panel), panel: panel, horizontal: true)))
+                    ? Padding( // centred in the space beside Kyle, not under him
+                        padding: EdgeInsets.only(right: kyleW),
+                        child: Center(child: SingleChildScrollView(scrollDirection: Axis.horizontal, child: _Tree(key: ValueKey(panel), panel: panel, horizontal: true))),
+                      )
                     : LayoutBuilder(builder: (context, tc) => NotificationListener<ScrollNotification>(
                   onNotification: (n) {
                     if (n.metrics.axis == Axis.horizontal) {
@@ -266,6 +269,7 @@ extension on _WheelScreenState {
                               duration: Duration(milliseconds: 260),
                               child: KyleCallout(
                           size: kyle,
+                          mirrored: true, // on Explore Kyle faces left, towards the roadmap
                           onTap: () => GoRouter.of(context).push('/tutor'),
                           text: s.skillsIn(panel).isEmpty ? 'These missions are coming later. Tap one to see where it fits.' : 'Tap a glowing mission to start, or tap me to ask a question.',
                         ),
@@ -342,7 +346,7 @@ class _RoadmapHeader extends StatelessWidget {
         ),
         if (!s.dailyAnswered)
           IconButton(
-            tooltip: "Today's question, +${Rewards.dailyRight} Scales",
+            tooltip: "Today's question, +${Rewards.dailyRight} Emeralds",
             icon: Icon(Icons.today, color: kWarnIcon),
             onPressed: () => showDailyQuestion(context),
           ),
@@ -578,10 +582,10 @@ class _MissionNode extends StatelessWidget {
     final state = s.skillState(skill);
     final prog = s.skillProgress(skill);
     final locked = state == 'locked', done = state == 'done';
-    final total = s.skillTotal(skill), answered = s.skillAnswered(skill);
+    final total = s.skillTotal(skill), answered = s.skillCorrect(skill);
     return Semantics(
       button: true,
-      label: '${skill['title']}. ${done ? 'Done' : locked ? 'Not unlocked yet, can still be started' : '$answered of $total questions answered'}',
+      label: '${skill['title']}. ${done ? 'Done' : locked ? 'Not unlocked yet, can still be started' : '$answered of $total questions right'}',
       excludeSemantics: true,
       child: GestureDetector(
         onTap: () => _open(context),
@@ -966,7 +970,7 @@ class _PanelPicker extends StatelessWidget {
 }
 
 // ---------------------------------------------------------------------------
-// Daily question (idea from Basis): one question a day for bonus Scales. The
+// Daily question (idea from Basis): one question a day for bonus Emeralds. The
 // dialog has a heading, shows the right answer and its explanation, and closes.
 
 void showDailyQuestion(BuildContext context) {
@@ -1015,7 +1019,7 @@ void showDailyQuestion(BuildContext context) {
               ),
             if (picked != null) ...[
               SizedBox(height: 4),
-              Text(picked == q.answer ? 'Correct! +${Rewards.dailyRight} Scales' : 'Not quite. +${Rewards.dailyTried} Scales for trying',
+              Text(picked == q.answer ? 'Correct! +${Rewards.dailyRight} Emeralds' : 'Not quite. +${Rewards.dailyTried} Emeralds for trying',
                   style: TextStyle(fontWeight: FontWeight.w800, color: picked == q.answer ? kGreen : kWarnText)),
               SizedBox(height: 6),
               Text('Answer: ${q.options[q.answer!]}. ${q.why ?? ''}', style: TextStyle(color: kBody, height: 1.4)),

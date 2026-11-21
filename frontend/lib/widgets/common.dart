@@ -75,7 +75,7 @@ class PageWidth extends StatelessWidget {
 }
 
 /// Top header shown on every main screen: current level with progress to the
-/// next one, streak and Scales on the left, the user's avatar on the right
+/// next one, streak and Emeralds on the left, the user's avatar on the right
 /// (tap it for settings). A crocodile-back ridge runs along the bottom edge.
 class StatsBar extends StatelessWidget implements PreferredSizeWidget {
   final String title;
@@ -136,7 +136,7 @@ class StatsBar extends StatelessWidget implements PreferredSizeWidget {
           container: true,
           button: true,
           excludeSemantics: true,
-          label: '${lvl.name}, ${s.xp} Scales, ${s.streak} day streak. ${next == null ? 'Top level' : '${next.minXp - s.xp} Scales to ${next.name}'}. Open progress',
+          label: '${lvl.name}, ${s.xp} Emeralds, ${s.streak} day streak. ${next == null ? 'Top level' : '${next.minXp - s.xp} Emeralds to ${next.name}'}. Open progress',
           child: GestureDetector(
           onTap: () => GoRouter.of(context).go('/progress'),
           child: Container(
@@ -160,7 +160,7 @@ class StatsBar extends StatelessWidget implements PreferredSizeWidget {
                 ),
                 SizedBox(width: 10),
                 Semantics(
-                  label: '${s.xp} Scales',
+                  label: '${s.xp} Emeralds',
                   excludeSemantics: true,
                   child: Row(mainAxisSize: MainAxisSize.min, children: [
                     ScaleIcon(size: 17),
@@ -175,7 +175,7 @@ class StatsBar extends StatelessWidget implements PreferredSizeWidget {
                 child: LinearProgressIndicator(value: frac.clamp(0, 1).toDouble(), minHeight: 6, color: kGreen, backgroundColor: kLine),
               ),
               SizedBox(height: 2),
-              Text(next == null ? 'Top level' : '${next.minXp - s.xp} Scales to ${next.name}', style: TextStyle(fontSize: 10, color: kMuted)),
+              Text(next == null ? 'Top level' : '${next.minXp - s.xp} Emeralds to ${next.name}', style: TextStyle(fontSize: 10, color: kMuted)),
             ]),
           ),
           ),
@@ -447,7 +447,7 @@ void showSettingsSheet(BuildContext context) {
             ]),
             SwitchListTile(contentPadding: EdgeInsets.zero, title: Text('List instead of the wheel'), value: s.listView, onChanged: s.setListView),
             SizedBox(height: 8),
-            Text('Daily goal (Scales)', style: TextStyle(fontWeight: FontWeight.w700, color: kInk)),
+            Text('Daily goal (Emeralds)', style: TextStyle(fontWeight: FontWeight.w700, color: kInk)),
             SizedBox(height: 8),
             DailyGoalPicker(),
             SizedBox(height: 16),
@@ -492,7 +492,7 @@ Future<void> _editName(BuildContext ctx, AppState s) async {
   if (name != null) s.rename(name);
 }
 
-/// Daily goal choice in Scales (used in settings and after the quick check).
+/// Daily goal choice in Emeralds (used in settings and after the quick check).
 class DailyGoalPicker extends StatelessWidget {
   DailyGoalPicker({super.key});
   @override
@@ -712,7 +712,8 @@ class KyleCallout extends StatelessWidget {
   final String pose;
   final double size;
   final VoidCallback? onTap; // e.g. open the tutor: Kyle himself is the button
-  KyleCallout({super.key, required this.text, this.pose = 'point', this.size = 200, this.onTap});
+  final bool mirrored; // flip Kyle left to right (the text bubble stays readable)
+  KyleCallout({super.key, required this.text, this.pose = 'point', this.size = 200, this.onTap, this.mirrored = false});
 
   @override
   Widget build(BuildContext context) {
@@ -727,7 +728,7 @@ class KyleCallout extends StatelessWidget {
         ),
       ),
       SizedBox(height: 4),
-      MascotPlaceholder(size: size, pose: pose),
+      mirrored ? Transform.flip(flipX: true, child: MascotPlaceholder(size: size, pose: pose)) : MascotPlaceholder(size: size, pose: pose),
     ]);
     if (onTap == null) return body;
     return Semantics(

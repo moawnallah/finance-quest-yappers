@@ -146,7 +146,7 @@ class _StepsScreenState extends State<StepsScreen> {
             color: score >= 0.8 ? kGreenSoft : kWarnSoft,
             border: score >= 0.8 ? kGreen : kWarnBorder,
             child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Text(score >= 0.8 ? 'Strong plan! +${Rewards.correctAnswer} Scales' : 'Score: ${(score * 100).round()}%',
+              Text(score >= 0.8 ? 'Strong plan! +${Rewards.correctAnswer} Emeralds' : 'Score: ${(score * 100).round()}%',
                   style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: score >= 0.8 ? kGreen : kWarnText)),
               SizedBox(height: 6),
               Text(t['why'] as String, style: TextStyle(color: kBody, height: 1.4)),

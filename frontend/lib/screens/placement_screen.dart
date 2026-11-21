@@ -187,7 +187,7 @@ class _PlacementScreenState extends State<PlacementScreen> {
         ],
         if (!widget.retest) ...[
           SizedBox(height: 20),
-          Text('Daily goal (Scales)', style: TextStyle(fontWeight: FontWeight.w700)),
+          Text('Daily goal (Emeralds)', style: TextStyle(fontWeight: FontWeight.w700)),
           SizedBox(height: 8),
           DailyGoalPicker(),
         ],

@@ -1,5 +1,5 @@
 // Progress: today's goal, level, the three badges,
-// and how Scales are earned. The league has its own tab.
+// and how Emeralds are earned. The league has its own tab.
 
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
@@ -37,7 +37,7 @@ class ProgressScreen extends StatelessWidget {
               Text('$today', style: TextStyle(fontSize: 30, fontWeight: FontWeight.w800, color: kInk, height: 1)),
               Padding(
                 padding: EdgeInsets.only(bottom: 3, left: 6),
-                child: Text('of $goal Scales', style: TextStyle(color: kMuted)),
+                child: Text('of $goal Emeralds', style: TextStyle(color: kMuted)),
               ),
             ]),
             SizedBox(height: 10),
@@ -46,7 +46,7 @@ class ProgressScreen extends StatelessWidget {
               child: LinearProgressIndicator(value: (today / goal).clamp(0, 1).toDouble(), minHeight: 10, color: kGreen, backgroundColor: kLine),
             ),
             SizedBox(height: 6),
-            Text(reached ? 'Daily goal reached. Nice work.' : '${goal - today} more Scales to reach today\'s goal.',
+            Text(reached ? 'Daily goal reached. Nice work.' : '${goal - today} more Emeralds to reach today\'s goal.',
                 style: TextStyle(color: kBody)),
           ])),
           SizedBox(width: 12),
@@ -72,7 +72,7 @@ class ProgressScreen extends StatelessWidget {
               ],
             ]),
             SizedBox(height: 10),
-            Text(next == null ? 'You reached the top level.' : '${next.minXp - s.xp} Scales to ${next.name}.', style: TextStyle(color: kBody)),
+            Text(next == null ? 'You reached the top level.' : '${next.minXp - s.xp} Emeralds to ${next.name}.', style: TextStyle(color: kBody)),
           ]),
         ),
         SizedBox(height: 12),
@@ -95,7 +95,7 @@ class ProgressScreen extends StatelessWidget {
         SizedBox(height: 16),
         _Calibration(points: s.calibration),
         SizedBox(height: 16),
-        Text('How you earn Scales', style: TextStyle(fontWeight: FontWeight.w700, color: kInk)),
+        Text('How you earn Emeralds', style: TextStyle(fontWeight: FontWeight.w700, color: kInk)),
         SizedBox(height: 6),
         for (final (what, n) in [
           ('Correct answer', Rewards.correctAnswer),

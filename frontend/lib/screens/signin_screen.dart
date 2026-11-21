@@ -34,7 +34,7 @@ class _SignInScreenState extends State<SignInScreen> {
       body: ListView(padding: EdgeInsets.all(20), children: [
         Center(child: MascotPlaceholder(size: 200, pose: 'wave')),
         SizedBox(height: 16),
-        Text('Sign in to keep your Scales, streak and roadmap on every device.',
+        Text('Sign in to keep your Emeralds, streak and roadmap on every device.',
             textAlign: TextAlign.center, style: TextStyle(fontSize: 16, color: kBody, height: 1.4)),
         SizedBox(height: 24),
         // Google sign-in (demo). The real version uses Google OAuth (Firebase Auth

@@ -47,7 +47,7 @@ class _TaskRunScreenState extends State<TaskRunScreen> {
   final List<double> scores = [];
   Map<String, dynamic>? lastStatus;
   bool completedNode = false;
-  int earned = 0; // Scales earned in this run
+  int earned = 0; // Emeralds earned in this run
   final List<(int, double)> confScore = []; // (how sure 1-5, score 0-1) per scored answer
 
   @override
@@ -437,7 +437,7 @@ class _TaskRunScreenState extends State<TaskRunScreen> {
               child: Row(mainAxisSize: MainAxisSize.min, children: [
                 ScaleIcon(size: 20),
                 SizedBox(width: 6),
-                Text('+$earned Scales', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: kPrimaryText)),
+                Text('+$earned Emeralds', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: kPrimaryText)),
               ]),
             ),
           ),

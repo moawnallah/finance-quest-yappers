@@ -221,8 +221,8 @@ class Api {
 
   // ---------- skills (task engines) ----------
 
-  /// Scales kept on the server (GET /me/scales) and the rewards earned outside a task.
-  /// Guests keep their Scales in the app only.
+  /// Emeralds kept on the server (GET /me/scales) and the rewards earned outside a task.
+  /// Guests keep their Emeralds in the app only.
   Future<Map<String, dynamic>> scales(String name) async {
     await _load();
     return isGuest ? {} : Map<String, dynamic>.from(await _authed('GET', '/me/scales', name));
@@ -291,7 +291,7 @@ class Api {
   Future<Map<String, dynamic>> runHard(String name, String taskId, String code) async =>
       Map<String, dynamic>.from(await _authed('POST', '/tasks/$taskId/run', name, body: {'code': code}));
 
-  /// Real leagues per level, ranked by Scales.
+  /// Real leagues per level, ranked by Emeralds.
   Future<Map<String, dynamic>> leagues(String name, {int guestScales = 0}) async =>
       Map<String, dynamic>.from(await _authed('GET', '/leagues', name, extra: {'X-Guest-Scales': '$guestScales'}));
 

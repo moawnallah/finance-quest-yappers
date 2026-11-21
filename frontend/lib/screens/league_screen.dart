@@ -1,6 +1,6 @@
 // Leagues: one per level (Beginner, Intermediate, Expert). You compete in your
 // level's league; the others can be viewed. Swipe sideways through pages of 10
-// learners. Real learners from GET /leagues, ranked by the Scales the server
+// learners. Real learners from GET /leagues, ranked by the Emeralds the server
 // recorded for them (app/scales.py).
 
 import 'package:flutter/material.dart';
@@ -98,7 +98,7 @@ class _LeagueScreenState extends State<LeagueScreen> {
               MascotPlaceholder(size: 40, pose: myRank < 3 ? 'cheer' : 'point'),
               SizedBox(width: 10),
               Expanded(
-                child: Text('You are #${myRank + 1} of ${rows.length} in the $mine league, with ${s.xp} Scales',
+                child: Text('You are #${myRank + 1} of ${rows.length} in the $mine league, with ${s.xp} Emeralds',
                     style: TextStyle(fontWeight: FontWeight.w700, color: kPrimaryText)),
               ),
               TextButton(onPressed: () => _go(myRank ~/ perPage), child: Text('Find me')),
