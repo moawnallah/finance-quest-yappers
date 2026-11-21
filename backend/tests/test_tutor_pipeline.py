@@ -112,3 +112,9 @@ def test_with_the_flag_off_the_old_tutor_answers(client, user, monkeypatch):
     monkeypatch.setattr(tutor_api, "call_model", lambda messages: ({"text": "Old path.", "mermaid": None}, 5, 1, 1))
     r = client.post("/tutor", headers=user, json={"mode": "explain_concept", "message": "What is an index?"})
     assert r.json()["text"] == "Old path." and "check_question" not in r.json()
+
+
+def test_a_guest_can_ask_and_nothing_is_stored(client, model):
+    """Guests have no users row: logging their tutor call broke the foreign key (500)."""
+    r = client.post("/tutor", headers={"X-Guest-Id": "g-1"}, json={"mode": "explain_concept", "message": "What is an index fund?"})
+    assert r.status_code == 200 and r.json()["text"]

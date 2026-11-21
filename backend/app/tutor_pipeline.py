@@ -24,6 +24,7 @@ from sqlalchemy.orm import Session
 
 from app.admin import log_llm_event
 from app.config import BACKEND_DIR, SERVE_DRAFTS
+from app.deps import is_guest
 from app.engines import catalog, easy, hard, medium
 from app.models import Attempt, Onboarding, User
 
@@ -194,13 +195,14 @@ def run(body, user: User, db: Session, call, model: str, visual: bool, clean_mer
     e = resp.event
     # The pipeline sets the event's model only when a model ran; otherwise a rule template answered.
     template = resp.intent if not e.get("model") and not resp.fallback else None
-    log_llm_event(db, user, mode=mode, intent=resp.intent, model_role="tutor_small",
-                  model=e.get("model") or ("template" if template else f"ollama/{model}"),
-                  prompt_version=e.get("prompt_version"), node=node or None, task_id=task_id,
-                  latency_ms=e.get("latency_ms"), tokens_in=e.get("tokens_in"), tokens_out=e.get("tokens_out"),
-                  checks_failed=failed, fallback_used=resp.fallback, flagged_for_review=e.get("flagged_for_review") or bool(failed),
-                  hint_level=resp.hint_level, prompt_masked=mask(body.message),
-                  answer_masked=mask(text + (f"\n[diagram]\n{mermaid}" if mermaid else "")))
+    if not is_guest(user):  # guests are stateless: nothing about them is stored
+        log_llm_event(db, user, mode=mode, intent=resp.intent, model_role="tutor_small",
+                    model=e.get("model") or ("template" if template else f"ollama/{model}"),
+                    prompt_version=e.get("prompt_version"), node=node or None, task_id=task_id,
+                    latency_ms=e.get("latency_ms"), tokens_in=e.get("tokens_in"), tokens_out=e.get("tokens_out"),
+                    checks_failed=failed, fallback_used=resp.fallback, flagged_for_review=e.get("flagged_for_review") or bool(failed),
+                    hint_level=resp.hint_level, prompt_masked=mask(body.message),
+                    answer_masked=mask(text + (f"\n[diagram]\n{mermaid}" if mermaid else "")))
     db.commit()
     return {"text": text, "mermaid": mermaid, "fallback": resp.fallback, "template": template, "links": resp.links,
             "check_question": resp.check_question, "hint_level": resp.hint_level, "hint_paid": resp.hint_paid}
