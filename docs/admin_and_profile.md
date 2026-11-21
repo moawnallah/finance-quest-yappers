@@ -402,7 +402,7 @@ Routes are in `backend/app/insights_api.py`; the numbers come from
 | `GET /me/summary` | profile | path, goal, challenges, benchmarks, panels with node bands and done flags, calibration (gap, words, Brier, weekly, badge), hard results, activity |
 | `POST /events/node-opened` | every node open | logs `node` and `source` (`recommended`, `self_chosen`, `explore_wheel`, `tutor_link`, `end_of_path`) |
 | `POST /feedback` | "Report a problem", mission rating | stores the report; the text is masked |
-| `GET /study/consent`, `POST /study/join` | hallway test | consent text and version; a session under a random participant id (no name) |
+| `GET /study/consent`, `POST /study/join` | hallway test | consent text and version; a session under a random participant id (no name). `join` needs the facilitator's `X-Study-Key` (`STUDY_KEY`) or the admin key |
 | `POST /onboarding/choose-path` | "not ready yet" screen, "try the other path" | stores the pick, logs `path_chosen` |
 | `POST /paths/finish` | end of a path | stores the check-in; returns the thanks message, the optional feedback ask, the other path |
 | `GET /admin/client-insights` | stakeholders | aggregate client overview, groups under 5 hidden |

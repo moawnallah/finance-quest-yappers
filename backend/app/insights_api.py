@@ -8,16 +8,16 @@ import secrets
 import sys
 import uuid
 from datetime import datetime, timedelta, timezone
-from typing import Any, Literal
+from typing import Literal
 
 from fastapi import APIRouter, Depends
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 from sqlalchemy import delete, func, select
 from sqlalchemy.orm import Session
 
 from app.config import AB_VARIANTS, BACKEND_DIR
 from app.db import get_db
-from app.deps import ApiError, current_user, log_event, require_admin
+from app.deps import ApiError, current_user, log_event, require_admin, require_study_access
 from app.engines import catalog, node_status
 from app.models import (Attempt, BenchmarkAnswer, Consent, Event, Feedback, LlmEvent, Onboarding, PathCheckin, Profile,
                         RecoEvent, User)
@@ -66,6 +66,13 @@ def _reports(db: Session) -> list[dict]:
 
 # ---------------------------------------------------------------- onboarding and profile
 
+class KnowledgeItem(BaseModel):
+    """One knowledge question: right, wrong or don't know (null), and how sure (1-5)."""
+    model_config = ConfigDict(strict=True)  # "yes" or "4" are errors, not quietly converted
+    correct: bool | None = None
+    confidence: int | None = Field(default=None, ge=1, le=5)
+
+
 class SurveyIn(BaseModel):
     """The 12 survey answers (docs/onboarding_router.md, "Implementation")."""
     age_band: Literal["under_18", "18-24", "25-39", "40-54", "55+"]
@@ -73,7 +80,7 @@ class SurveyIn(BaseModel):
     goal: Literal["buffer", "first_investment", "retirement", "home", "other"]
     horizon: Literal["under_3", "3_10", "over_10"]
     self_rating: Literal["very_high", "quite_high", "average", "quite_low", "very_low", "dont_know"] | None = None
-    knowledge: dict[Literal["Q2", "Q3", "Q4", "Q5", "Q6"], dict[str, Any]] = Field(
+    knowledge: dict[Literal["Q2", "Q3", "Q4", "Q5", "Q6"], "KnowledgeItem"] = Field(
         description='Per item {"correct": true | false | null (don\'t know), "confidence": 1-5}.')
     buffer: Literal["none", "under_1", "1_3", "3_6", "6_plus"] | None = None
     products: list[Literal["pension", "life_insurance", "non_life_insurance", "mortgage", "consumer_loan",
@@ -142,6 +149,8 @@ class PathFinishIn(BaseModel):
 @router.post("/paths/finish")
 def finish_path(body: PathFinishIn, user: User = Depends(current_user), db: Session = Depends(get_db)):
     """Store the check-in and return the thanks screen: the demo note, the optional feedback ask, the other path."""
+    if body.path_id not in demo.demo_paths() and body.path_id != "personal":
+        raise ApiError(400, "invalid_request", f"path_id must be 'personal' or one of {sorted(demo.demo_paths())}")
     if any(not 1 <= v <= 5 for v in body.confidence.values()):
         raise ApiError(400, "invalid_request", "confidence values must be 1-5")
     db.add(PathCheckin(user_id=user.id, path_id=body.path_id, answers=body.model_dump(exclude={"path_id"})))
@@ -173,6 +182,8 @@ class NodeOpenedIn(BaseModel):
 @router.post("/events/node-opened")
 def node_opened(body: NodeOpenedIn, user: User = Depends(current_user), db: Session = Depends(get_db)):
     """Log which node the user opened and from where. Self-chosen clicks feed the next-step model."""
+    if body.node not in onboarding_router.tree():
+        raise ApiError(404, "not_found", f"No node {body.node}")
     log_event(db, user, "node_opened", node=body.node, source=body.source)
     db.commit()
     return {"ok": True}
@@ -238,7 +249,7 @@ class StudyJoinIn(BaseModel):
     consent: bool = Field(description="True only when the participant ticked 'I agree to take part'.")
 
 
-@router.post("/study/join")
+@router.post("/study/join", dependencies=[Depends(require_study_access)])
 def study_join(body: StudyJoinIn, db: Session = Depends(get_db)):
     """Start a session under a random participant id; no name or contact details are stored."""
     if not body.consent:
@@ -261,7 +272,11 @@ def study_withdraw(participant_id: str, db: Session = Depends(get_db)):
     c = db.get(Consent, participant_id)
     if not c:
         raise ApiError(404, "not_found", f"No participant {participant_id}")
-    db.execute(delete(User).where(User.id == c.user_id))
+    # Delete every row about this participant, not only the user: rows with
+    # ondelete="SET NULL" (feedback text, tutor prompts, events) would otherwise stay.
+    for model in (Feedback, LlmEvent, RecoEvent, Event):
+        db.execute(delete(model).where(model.user_id == c.user_id))
+    db.execute(delete(User).where(User.id == c.user_id))  # cascades to consent, onboarding, attempts, check-ins
     log_event(db, None, "study_withdrawn", participant_id=participant_id)
     db.commit()
     return {"deleted": participant_id}
