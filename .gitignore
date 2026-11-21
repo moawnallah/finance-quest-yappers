@@ -12,3 +12,7 @@ build/
 .idea/
 backend/ml/eval/runs/
 .DS_Store
+# local SQLite databases (the default DATABASE_URL in backend/app/config.py)
+*.db
+*.db-wal
+*.db-shm

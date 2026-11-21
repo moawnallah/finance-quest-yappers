@@ -19,7 +19,7 @@ tutor/rules.py      personal-data masking, advice and injection rules, safe temp
 tutor/kb.py         ingest reviewed cards from backend/content, SEARCH_SQL for Postgres, in-memory search
 tutor/llm.py        LiteLLMClient: roles -> models from config/llm.yaml, refusals before any call
 config/llm.yaml     roles -> models, ${ENV} values
-prompts/tutor_small/tutor-v1.md
+prompts/tutor_small/tutor-v2.md
 tests/              checks, context guard, pipeline fallbacks, ingest rules, role refusals
 eval/               20-prompt model choice set, red-team set, runner
 router/             onboarding router: tree.yaml, benchmarks.yaml (EB525 PL), router.py (docs/onboarding_router.md)

@@ -10,7 +10,9 @@ Purpose: enough detail to build the tutor in the 48 hours without
 re-deciding the design.
 
 Status: draft on branch `skills-tree`, 2026-11-20. It replaces the
-architecture text that was in `backend/ml/README.md`.
+architecture text that was in `backend/ml/README.md`. Wired behind `POST
+/tutor` on 2026-11-21, switched by `TUTOR_PIPELINE` (section 5, "As
+wired").
 
 ## Assumptions
 
@@ -177,7 +179,7 @@ roles:
   tutor_cloud:
     primary: {model: "vertex_ai/<model>", vertex_location: "${VERTEX_AI_REGION}"}
     allowed_for_user_data: false
-prompt_version: tutor-v1
+prompt_version: tutor-v2
 ```
 
 **Rules.**
@@ -246,15 +248,30 @@ flowchart LR
 | Passages (top 3) | yes | yes | yes | – | yes (links) |
 | Raw income, name, free-text history beyond 8 turns | never | never | never | never | never |
 
-**System prompt (outline of `prompts/tutor_small/tutor-v1.md`).**
+**System prompt (outline of `prompts/tutor_small/tutor-v2.md`).**
 - **Role:** a patient tutor in a financial-literacy app for adults of all
   ages.
 - **Use only** the facts and numbers in CONTEXT. If something is not there,
   say you do not know and point to the sources.
+- **May** explain investing and encourage the learner to start investing
+  their own money, at the level of types: shares, funds, bonds, deposits.
+  Decided 2026-11-21 (tutor-v2). Generic advice about a type of instrument
+  is not investment advice under Delegated Regulation 2017/565, recital 15.
+  Presenting it as suitable for this learner would make the bank answer for
+  its suitability.
 - **Never:**
-  - recommend a product, fund, stock, bank or adviser;
+  - name a particular company, fund, ticker, bank, broker or adviser
+    (Art. 9 of 2017/565; MAR Art. 20);
   - say what to buy or sell;
+  - say that something is suitable for this learner;
   - give the answer to a task before it is submitted.
+- **Rule layer:**
+  - "Should I invest in the stock market?" and "Czy warto inwestować w
+    akcje?" reach the model;
+  - "Should I invest in Nvidia?", "which ETF" and market timing get the
+    template. The template now describes how people usually start
+    (emergency fund, then a low-cost diversified fund, monthly), with no
+    product named.
 - **Hint levels:** 1 concept, 2 example with other numbers, 3 pointer.
 - **Style:**
   - plain English, short sentences, at most 200 words;
@@ -335,8 +352,41 @@ model_role, model, prompt_version, latency_ms, tokens_in, tokens_out,
 checks_failed, fallback_used, hint_level, user_rating, flagged_for_review
 ```
 
+**As wired (2026-11-21, `backend/app/tutor_pipeline.py`).** Mohamed's
+`app/tutor_api.py` keeps the HTTP contract, the Ollama call (`call_model`),
+Mermaid checking, titles and diagram repair. With `TUTOR_PIPELINE=true`, the
+modes `explain_concept`, `hint`, `explain_result` and `rephrase` go through
+`answer()` instead.
+- **Model:** an `OllamaClient` wraps `call_model`; LiteLLM is not needed on
+  the server.
+- **Context:** a `DbContext` reads the engine catalog, the user's own
+  attempts and onboarding, and the card passages. The app's context is used
+  only for `node` and `task_id`.
+- **Mode decided by the server:** with a stored attempt for the task, the
+  request is served as `explain_result`, with the reveal. Without one it is
+  `explain_concept`, whatever mode the app sends.
+- **History and diagrams:** the last 8 turns go to the model, masked. A
+  request for a chart adds the Mermaid skill, and the reply's `mermaid` field
+  goes through `clean_mermaid`.
+- **Reply:**
+  - `[K1]` markers are removed from the text and the check question is
+    appended;
+  - `links`, `check_question`, `hint_level` and `hint_paid` are extra fields
+    the app may ignore.
+- **`/tutor/stream`:** the checks need the whole answer, so the stream sends
+  one `delta` and the `done` line. It is the same NDJSON contract, without
+  word-by-word streaming.
+- **Fallback:** the stored explanation is a card's text, except in
+  `explain_result`, so a failed hint never shows the answer.
+- **Default off:** `TUTOR_PIPELINE` is off by default, so merging changes
+  nothing until a test environment turns it on.
+- **Not verified with Gemma yet:** whether it returns `cited` and
+  `check_question` reliably. If it does not, most replies fall back. This
+  shows in `/admin/llm-events` as `checks_failed`.
+
 **Kill switches** (environment, readable from the admin panel):
 - `TUTOR_ENABLED`;
+- `TUTOR_PIPELINE` (our pipeline behind `/tutor`, default off);
 - `CLOUD_ROLES_ENABLED`;
 - `MODEL_ALLOWLIST`;
 - `PROMPT_VERSION`;

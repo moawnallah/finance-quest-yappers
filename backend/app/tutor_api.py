@@ -25,6 +25,7 @@ from fastapi import APIRouter, Depends
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
+from app import tutor_pipeline
 from app.admin import log_llm_event
 from app.db import get_db
 from app.deps import current_user, is_guest, viewer
@@ -145,6 +146,8 @@ def _log(db, user, **kw):
 @router.post("/tutor")
 def tutor(body: TutorIn, user=Depends(viewer), db: Session = Depends(get_db)):
     visual = bool(VISUAL.search(body.message)) and body.mode != "repair_diagram"
+    if tutor_pipeline.handles(body.mode):  # TUTOR_PIPELINE=true: server-side context and output checks
+        return tutor_pipeline.run(body, user, db, call_model, TUTOR_MODEL, visual, clean_mermaid)
     intent = "advice_request" if ADVICE.search(body.message) else ("visualize" if visual else "question")
     stored = (body.context or {}).get("explanation")
     log = dict(mode=body.mode, intent=intent, model_role="tutor_small", model=f"ollama/{TUTOR_MODEL}",
@@ -215,6 +218,18 @@ def tutor_stream(body: TutorIn, user=Depends(viewer)):
 
     def line(obj) -> bytes:
         return (json.dumps(obj, ensure_ascii=False) + "\n").encode()
+
+    if tutor_pipeline.handles(body.mode):
+        # The output checks need the whole answer, so with the pipeline the text arrives in one piece:
+        # the same NDJSON contract, one "delta" (unless it is a fallback) and the "done" line.
+        def checked():
+            with SessionLocal() as db:
+                out = tutor_pipeline.run(body, user, db, call_model, TUTOR_MODEL, visual, clean_mermaid)
+            if not out["fallback"]:
+                yield line({"t": "delta", "text": out["text"]})
+            yield line({"t": "done", **out})
+        return StreamingResponse(checked(), media_type="application/x-ndjson",
+                                 headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"})
 
     def finish(text, mermaid, fallback, failed, latency=None, t_in=None, t_out=None):
         with SessionLocal() as db:  # the request's session is closed once streaming starts

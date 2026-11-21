@@ -19,6 +19,8 @@ class TutorRequest:
     draft_response: dict | None = None
     hint_level: int = 1             # 1 concept, 2 example with other numbers, 3 pointer
     last_answer: str | None = None  # the text to rephrase
+    history: list[dict] = field(default_factory=list)  # earlier turns: {"role": "user" | "tutor", "text": ...}
+    visual: bool = False            # the learner asked for a chart or diagram: the reply may carry Mermaid code
 
 
 @dataclass
@@ -32,6 +34,7 @@ class TutorResponse:
     intent: str
     checks_failed: list[str] = field(default_factory=list)
     event: dict = field(default_factory=dict)  # one llm_events row for the backend to store
+    mermaid: str | None = None      # raw diagram code when visual; the backend checks it before sending
 
 
 @dataclass

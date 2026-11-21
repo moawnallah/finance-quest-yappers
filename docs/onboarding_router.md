@@ -114,6 +114,8 @@ copied from the EB525 report or the questionnaire file in the dataset.
      never first targets.
    - Add every target's unmet prerequisites (m < 0.6), recursively.
    - Safety rule: if n_S1 ≥ 0.6, S1 goes first.
+   - Minimum length (rules-2): while the path has fewer than 3 nodes, add
+     the next target by priority, with its prerequisites.
    - Order by prerequisite depth, and cap at 5 nodes.
 8. **Correction.** The first item of each node (its prerequisite test)
    updates θ_k. From then on, the two-sided Elo updates both the user and
@@ -262,7 +264,8 @@ result = route(survey, user_pseudo_id)
 |---|---|---|
 | Tree | `router/tree.yaml` | The 32 nodes with title, panel, level and prerequisites. The machine-readable copy of docs/skills_tree.md; a test checks that every node file in `backend/content/nodes` has the same `title` and `after` |
 | Benchmarks | `router/benchmarks.yaml` | EB525 vol. C Poland, weighted: items correct, knowledge bands, self-rating "high", buffer under one month; all ages and by age group |
-| Algorithm | `router/router.py` | Ability (EAP, flat prior), mastery, needs, priority, path, challenges, goal, `reco_events` rows |
+| Algorithm | `router/router.py` | Ability (EAP, flat prior), mastery, needs, priority, path, challenges, goal, `reco_events` rows; `next_steps` after a finished path |
+| Shadow model | `router/shadow.py` | BASAL request builder, call and comparison; shadow mode, off unless `BASAL_URL` is set |
 
 **Survey input:**
 
@@ -290,7 +293,7 @@ result = route(survey, user_pseudo_id)
 - `knowledge_score` (0-5) and `band`;
 - `benchmarks` (you vs Poland vs your age group);
 - `theta`, `mastery`, `needs`, `priority` per node;
-- `path`: up to 5 nodes, each with a reason;
+- `path`: 3 to 5 nodes, each with a reason;
 - `challenges`: nodes offered as a 2-question challenge, each with a reason;
 - `goal`: a higher-priority node, often H, shown as the path's goal;
 - `events`: `reco_events` rows, one `path_issued`, then one per path node
@@ -309,9 +312,9 @@ result = route(survey, user_pseudo_id)
 | Persona | Path | Challenges | Goal |
 |---|---|---|---|
 | Young adult (demo): under a month of savings, wants to invest; Q2, Q3 right | S1 → I1 → I2 → I4 → P1 | F1 | - |
-| Investor (demo): holds funds, 5 of 5 | I4 → I5 | F1, F3, I1 (+ other known ancestors) | - |
-| Student: consumer loan, someone else manages money, 1 of 5 | F4 → S2 | F3, S1 | - |
-| Pre-retiree: goal retirement, 3 of 5 | O1 → L1 | S4 | L3 |
+| Investor (demo): holds funds, 5 of 5 | I4 → I5 → P1 | F1, F3, I1 (+ other known ancestors) | - |
+| Student: goal buffer, consumer loan, someone else manages money, 1 of 5 | S1 → F4 → S2 | F1, F3 | - |
+| Pre-retiree: goal retirement, 3 of 5 | O1 → I1 → L1 | S4 | L3 |
 
 **First run vs hand-written expectations.** Two personas differed from
 the hand calculation. The hand calculation had used the dropped age and
@@ -321,6 +324,49 @@ education prior. With the flat prior:
 
 The expectations were revised, with the reason in the test file. The demo
 paths did not change.
+
+**rules-2 (2026-11-21).** What the app sends today was checked by routing
+every combination of age, goal, horizon, self-rating and quiz result
+(5,760 inputs, without buffer, products and confidence, which the app does
+not ask). With rules-1, 74% of the paths had 2 nodes, and the goal "an
+emergency buffer" never put S1 on the path. Changes:
+- **Minimum length 3** (above). On the same inputs: 3 nodes 80%, 4 nodes
+  12%, 5 nodes 8%. A test checks the minimum on these inputs.
+- **Goal "buffer"** sets n_S1 = 0.9 ("Your goal is an emergency buffer.").
+- **`experience`** (the app's "How much have you invested before?"): "a
+  little" or "quite a lot" counts like holding investments (I4, I5, P1 at
+  0.7), unless products already say so.
+- **Unasked knowledge items are left out**, not counted as wrong. "Don't
+  know" still counts as wrong, as in EB525. Without the quick check θ is
+  the prior mean (0), and the knowledge score, band and band benchmark are
+  null (the EB525 score needs all 5 items). The API accepts a survey
+  without `knowledge`, so the app can build a path when the quick check is
+  skipped.
+
+Persona paths moved as in the table: the investor's path is still inside
+the investor demo path; the student and the pre-retiree remain "not ready".
+With the demo rule below, 89% of those 5,760 inputs get "not ready" (the
+recommended path uses a node without content), so most demo users choose a
+path by hand.
+
+**After a finished path (`router.next_steps`, rules-2).** `POST
+/paths/finish` returns `next_steps`: 3 nodes, each with a reason and
+`live`, and logs `next_steps_shown`. Needs are recomputed with the
+check-in's next goal (`keep_learning` keeps the survey goal); done nodes
+count as known, and nodes probably known at the survey are skipped. Order:
+1. nodes a need rule asks for, by priority; if one is not open yet, its
+   first missing prerequisite is suggested instead ("Needed before ...");
+2. nodes that build on a done node, easier levels first;
+3. the rest, easier levels first.
+
+Tie-breaking by level matters: with the base need alone, H nodes would win,
+because their mastery is lowest. Tests check that no suggestion is done or
+blocked, and that a new goal of retirement leads towards L1.
+
+**Back to the survey's path.** `POST /onboarding/choose-path` with
+`"recommended"` clears the chosen demo path. The survey's path is never
+overwritten, and progress lives in attempts, so switching back and forth
+loses nothing.
 
 ## Demo mode (built 2026-11-21, `router/demo.py`)
 
@@ -349,7 +395,7 @@ have content. Two demo paths are defined in `router/demo_paths.yaml`:
 | Student (F4 → S2) | not ready | picks one of the two |
 | Pre-retiree (O1 → L1) | not ready | picks one of the two |
 
-## Shadow decision model: BASAL (experiment, planned 2026-11-21)
+## Shadow decision model: BASAL (experiment, client built 2026-11-21, not run yet)
 
 **Idea (yours).** Next to the rule router, ask a typed decision model
 whether each candidate node is right for this learner. Compare the two,
@@ -442,10 +488,28 @@ calibrated." This is honest, and it shows AI used as a measured component.
 
 **Resolves the branch:** the persona measurement above.
 
+**Built (`router/shadow.py`, 2026-11-21).**
+- Request format checked against BASAL's `docs/API.md` (read
+  2026-11-21): `POST /v1/systemone` with `state`, `questions` and
+  `"lang": "en"`; a `noul` answer has `noul` (P(yes)), `probabilities` and
+  `confidence`.
+- Candidates: the path, then the highest-priority other nodes, 8 in all,
+  so 16 `noul` questions over one shared state. The state holds the
+  survey bands, the quiz answers by topic, and each candidate's title,
+  level, prerequisites and (by default) the router's mastery.
+- `POST /onboarding` asks BASAL when `BASAL_URL` is set, with a 3-second
+  timeout, and logs one `reco_events` row of type `shadow_decision`. Its
+  payload has the model, the latency, τ and per node: router m, on the
+  path, `ready_p`, `start_p`, confidence, agreement, below τ. An error or
+  timeout logs `{"error": ...}`, and the user's path is unchanged; an API
+  test checks both cases with a fake server.
+- Not run against a real BASAL server: no GPU here.
+
 **Next steps:**
-1. Read BASAL's `docs/API.md`.
-2. Start `basal-serve` on Mo's GPU with basal-2.0 4.5B.
-3. Write the request builder in `backend/ml/router`.
+1. Start `basal-serve` on Mo's GPU with basal-2.0 4.5B and set
+   `BASAL_URL` in the test environment.
+2. Run the persona measurement (about 30 requests), including the variant
+   without `router_mastery` (`build_request(..., with_router=False)`).
 
 ## Facts for the pitch
 

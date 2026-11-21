@@ -14,7 +14,7 @@ def ok_json(text="The fee is part of what you borrow [K1].", cited=("K1",), q="W
 @pytest.fixture(autouse=True)
 def env(monkeypatch):
     monkeypatch.setenv("TUTOR_ENABLED", "true")
-    monkeypatch.setenv("PROMPT_VERSION", "tutor-v1")
+    monkeypatch.setenv("PROMPT_VERSION", "tutor-v2")
 
 
 def hint(**kw):
@@ -88,3 +88,30 @@ def test_model_error_falls_back():
 
     resp = answer(hint(), FakeProvider(), Broken())
     assert resp.fallback and resp.checks_failed == ["model: TimeoutError"]
+
+
+def test_history_reaches_the_model_masked_and_in_order():
+    # Without the earlier turns the tutor answers "and why?" out of context; personal data in them is masked too.
+    llm = ScriptedLLM(ok_json())
+    history = [{"role": "user", "text": "What is RRSO? mail me at ola@example.com"}, {"role": "tutor", "text": "It is the APR."}]
+    answer(hint(history=history), FakeProvider(), llm)
+    msgs = llm.calls[0]["messages"]
+    assert [m["role"] for m in msgs] == ["system", "user", "assistant", "user"]
+    assert "ola@example.com" not in msgs[1]["content"]
+
+
+def test_diagram_is_returned_only_when_asked_for():
+    reply = json.dumps({"text": "Here is the split [K1].", "cited": ["K1"], "check_question": "What changes?",
+                        "mermaid": "pie\n  \"Fee\" : 8"})
+    assert answer(hint(visual=True), FakeProvider(), ScriptedLLM(reply)).mermaid.startswith("pie")
+    assert answer(hint(), FakeProvider(), ScriptedLLM(reply)).mermaid is None
+
+
+def test_content_provider_hint_fallback_does_not_reveal_the_outcome():
+    # The fallback text is shown when the model fails; before submission it must not be the reveal.
+    from eval.provider import ContentProvider
+    p = ContentProvider()
+    task_id = next(iter(p.tasks))
+    reveal = p.tasks[task_id]["reveal"]["text"]
+    reveal = reveal["en"] if isinstance(reveal, dict) else reveal
+    assert p.stored_explanation(task_id, "hint") != reveal and p.stored_explanation(task_id, "explain_result") == reveal
