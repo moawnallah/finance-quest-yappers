@@ -29,7 +29,8 @@ class AppShell extends StatelessWidget {
     final body = AnimatedSwitcher(
       duration: Duration(milliseconds: 250),
       switchInCurve: Curves.easeOut,
-      child: KeyedSubtree(key: ValueKey(tabs[index].$1), child: index == 0 ? child : PageWidth(child: child)),
+      // Explore and Tutor use the full width (wheel, conversation list); other tabs a readable column.
+      child: KeyedSubtree(key: ValueKey(tabs[index].$1), child: index == 0 || tabs[index].$1 == '/tutor' ? child : PageWidth(child: child)),
     );
     if (isWideWeb(context)) {
       // Desktop browser: a navigation rail on the left, the page fills the rest.

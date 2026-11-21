@@ -2,6 +2,7 @@
 // FastAPI backend (POST /answers) so the browser never sees correct answers.
 
 import 'dart:convert';
+import 'dart:typed_data';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart' show rootBundle;
 import '../models/content.dart';
@@ -91,8 +92,51 @@ class TutorContext {
       };
 }
 
+/// One message in a tutor conversation. [image] is a rendered chart.
+class TutorMessage {
+  final bool mine;
+  final String text;
+  Uint8List? image;
+  bool drawing = false;
+  TutorMessage(this.mine, this.text);
+}
+
+/// A tutor conversation: its messages and, when opened from a question, that
+/// question's context. Kept in memory for now (lost on reload).
+class TutorConversation {
+  final String id;
+  String title;
+  final DateTime started = DateTime.now();
+  final TutorContext? context;
+  final List<TutorMessage> messages = [];
+  TutorConversation({required this.id, required this.title, this.context});
+}
+
 class AppState extends ChangeNotifier {
   TutorContext? tutorContext;
+  final List<TutorConversation> conversations = [];
+  String? activeConversation;
+  int _convSeq = 0;
+
+  TutorConversation newConversation({TutorContext? context}) {
+    final c = TutorConversation(id: 'c${++_convSeq}', title: context?.question ?? 'New chat', context: context);
+    conversations.insert(0, c);
+    activeConversation = c.id;
+    notifyListeners();
+    return c;
+  }
+
+  TutorConversation? get currentConversation => conversations.where((c) => c.id == activeConversation).firstOrNull;
+  void openConversation(String id) {
+    activeConversation = id;
+    notifyListeners();
+  }
+
+  void deleteConversation(String id) {
+    conversations.removeWhere((c) => c.id == id);
+    if (activeConversation == id) activeConversation = conversations.firstOrNull?.id;
+    notifyListeners();
+  }
   /// Backend client for the Skills screens (task engines). Scoring happens on the server.
   Api api = Api();
   Roadmap? roadmap;
