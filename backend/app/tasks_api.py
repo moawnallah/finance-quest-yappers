@@ -8,6 +8,8 @@ from fastapi import APIRouter, Depends
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from hard import text as hard_text
+from hard.dsl import check as hard_check
 from app import scales
 from app import schemas as s
 from app.db import get_db
@@ -86,7 +88,75 @@ def get_task(task_id: str, lang: str = "en", user: User = Depends(current_user))
         raise ApiError(404, "not_found", f"No task '{task_id}'")
     level, rec = found
     view = {"easy": easy.question_view, "medium": medium.question_view, "hard": hard.question_view}[level](rec, lang)
+    if level == "hard":
+        view["code"] = _code_panel(rec)
     return s.TaskOut(level=level, task=view)
+
+
+STARTER = '''# Your plan runs once every month. Write rules with if / elif / else,
+# indent the lines under a rule by 4 spaces, then press "Run tests".
+# Example:
+# if buffer_months < 2:
+#     save_to_buffer(cash)
+'''
+
+
+def _hard_lists(rec: dict) -> tuple[list[str], list[str]]:
+    q = rec["question"]
+    return [v["name"] for v in q["vars"]], [a["name"] for a in q.get("assets") or []]
+
+
+def _code_panel(rec: dict) -> dict:
+    """What the app's hard-task code panel needs: starter code, the public tests, and the vocabulary."""
+    from hard.dsl import BLOCKS, VARS
+    q = rec["question"]
+    names, assets = _hard_lists(rec)
+    starter = hard_text.to_text(q.get("starter_program")) or STARTER  # an empty starter program gets the guide
+    actions = []
+    for b in [p["block"] for p in q["palette"]]:
+        if b in ("save_to_buffer", "save_to_pot", "pay_debt", "invest", "sell_investments"):
+            actions.append({"code": f"{b}(amount)", "meaning": BLOCKS[b]["text"].replace("{amount}", "amount")})
+        elif b in ("invest_in", "sell"):
+            actions.append({"code": f"{b}(amount, asset)", "meaning": BLOCKS[b]["text"].replace("{amount}", "amount").replace("{asset}", "asset")})
+        elif b == "rebalance":
+            actions.append({"code": "rebalance()", "meaning": BLOCKS[b]["text"]})
+    return {"starter": starter, "public_tests": hard.public_tests(rec["meta"]),
+            "hidden_tests": max(0, len(rec["meta"]["optional"]) - hard.PUBLIC_OPTIONAL),
+            "values": [{"name": n, "meaning": VARS.get(n, n)} for n in names], "assets": assets, "actions": actions,
+            "own_variables": "my_total = 0, my_total += cash (up to 3 names)" if "set_var" in [p["block"] for p in q["palette"]] else None}
+
+
+def _program_from(rec: dict, response):
+    """A hard-task response: {"code": "..."} text from the code panel, or the program / Blockly JSON."""
+    if isinstance(response, dict) and isinstance(response.get("code"), str):
+        names, assets = _hard_lists(rec)
+        try:
+            return hard_text.to_program(response["code"], names, assets)
+        except hard_text.TextError as e:
+            raise ApiError(400, "invalid_response", str(e)) from e
+    return response
+
+
+@router.post("/tasks/{task_id}/run")
+def run_public_tests(task_id: str, body: s.CodeIn, user: User = Depends(current_user), db: Session = Depends(get_db)):
+    """Hard tasks: run the public tests on code from the code panel. Nothing is scored or stored as an
+    attempt, and hidden tests are not run: submit (POST /tasks/{id}/attempts with {"code": ...}) for that."""
+    found = catalog().find(task_id)
+    if not found or found[0] != "hard":
+        raise ApiError(404, "not_found", f"No hard task '{task_id}'")
+    rec = found[1]
+    program = _program_from(rec, {"code": body.code})
+    q = rec["question"]
+    names, assets = _hard_lists(rec)
+    errors = hard_check(program, [b["block"] for b in q["palette"]], names, q["limits"].get("max_blocks", 30),
+                        q["limits"].get("max_depth", 5), assets)
+    if errors:
+        raise ApiError(400, "invalid_response", "; ".join(errors))
+    started = time.perf_counter()
+    out = hard.run_public(rec["meta"], program)
+    log_event(db, user, "hard_tests_run", task_id=task_id, required_passed=out["required_passed"])
+    db.commit()
+    return {**out, "duration_ms": int((time.perf_counter() - started) * 1000)}
 
 
 @router.post("/tasks/{task_id}/attempts", response_model=s.AttemptOut)
@@ -119,6 +189,7 @@ def submit_attempt(task_id: str, body: s.AttemptIn, lang: str = "en",
             result = medium.score(rec, body.response, body.reasons or [], body.confidence)
             reveal = medium.reveal_view(rec, lang)
         else:
+            body.response = _program_from(rec, body.response)
             if not isinstance(body.response, dict):
                 raise AttemptError("a hard task needs the Blockly workspace JSON or the program JSON")
             result = hard.score(rec, body.response)

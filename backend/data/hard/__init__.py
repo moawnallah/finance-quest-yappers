@@ -12,7 +12,7 @@ from pathlib import Path
 
 from common import AttemptError
 
-from .task import question_view, reveal_view, score, secrets
+from .task import PUBLIC_OPTIONAL, public_tests, question_view, reveal_view, run_public, score, secrets
 
 OUTPUT = Path(__file__).resolve().parent.parent / "output" / "hard_tasks.json"
 
@@ -21,4 +21,4 @@ def load_records(path: Path | str = OUTPUT) -> dict[str, dict]:
     return {t["id"]: t for t in json.loads(Path(path).read_text(encoding="utf-8"))["tasks"]}
 
 
-__all__ = ["AttemptError", "load_records", "question_view", "reveal_view", "score", "secrets"]
+__all__ = ["AttemptError", "PUBLIC_OPTIONAL", "load_records", "public_tests", "question_view", "reveal_view", "run_public", "score", "secrets"]

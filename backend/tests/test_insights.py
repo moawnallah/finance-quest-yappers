@@ -184,3 +184,22 @@ def test_unknown_path_and_node_are_rejected(client, user):
     assert client.post("/paths/finish", headers=user, json={"path_id": "does_not_exist", "progress": "yes",
                                                             "next_goal": "other"}).status_code == 400
     assert client.post("/events/node-opened", headers=user, json={"node": "ZZ", "source": "self_chosen"}).status_code == 404
+
+
+def test_roadmap_lists_built_and_planned_nodes(client):
+    nodes = client.get("/roadmap").json()["nodes"]
+    assert len(nodes) == 32
+    assert any(n["live"] for n in nodes) and any(not n["live"] for n in nodes)
+    assert {"id", "title", "panel", "after", "live"} <= set(nodes[0])
+
+
+def test_my_path_follows_the_survey(client, user):
+    assert client.get("/me/path", headers=user).json() == {"survey_done": False, "steps": [], "challenges": []}
+    client.post("/onboarding", headers=user, json=YOUNG)
+    p = client.get("/me/path", headers=user).json()
+    assert p["survey_done"] is True and p["steps"] and p["source"] in ("recommended", "demo", "personal", "chosen")
+    assert all({"node", "title", "live", "done"} <= set(s) for s in p["steps"])
+    if p["options"]:
+        client.post("/onboarding/choose-path", headers=user, json={"path_id": p["options"][0]["id"]})
+        q = client.get("/me/path", headers=user).json()
+        assert q["source"] == "chosen" and [s["node"] for s in q["steps"]] == p["options"][0]["nodes"]

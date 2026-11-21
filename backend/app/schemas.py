@@ -245,6 +245,10 @@ class TaskOut(BaseModel):
     task: dict[str, Any] = Field(description="The question view, without answers, truth or weights.")
 
 
+class CodeIn(BaseModel):
+    code: str = Field(max_length=8000, description="Hard tasks: the plan written in the code panel's text form.")
+
+
 class AttemptIn(BaseModel):
     response: Any = Field(description="Easy: option index (single, reflection), list of indexes (multi), boolean (true_false) or number (numeric). Medium: the direction, e.g. 'down'. Hard: the saved Blockly workspace JSON, or the program JSON.")
     reasons: list[str] | None = Field(default=None, description="Medium only: picked reason box ids, between pick.min and pick.max.")

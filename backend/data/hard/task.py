@@ -192,6 +192,40 @@ def evaluate(meta: dict, program: dict, with_futures: bool = True) -> dict:
     return result
 
 
+
+PUBLIC_OPTIONAL = 1  # optional events shown as public tests; the rest stay hidden until submit
+
+
+def public_tests(meta: dict) -> list[dict]:
+    """The tests a learner can run before submitting: every obligatory test and the first optional
+    event (as a sample). The other optional events and the futures stay hidden until submit."""
+    tests = [{"name": t["name"], "kind": "required"} for t in meta["obligatory"]]
+    tests += [{"name": t["name"], "kind": "sample"} for t in meta["optional"][:PUBLIC_OPTIONAL]]
+    return tests
+
+
+def run_public(meta: dict, program: dict) -> dict:
+    """Run only the public tests (no score, nothing hidden). Required tests pass or fail; the sample
+    event reports how well the plan did (0-1), like an optional event does at submit."""
+    policy = compile_program(program)
+    base_returns = _returns(meta["world"])
+    results = []
+    for t in meta["obligatory"]:
+        passed, failed_at = True, None
+        for v in t.get("variants") or [{}]:
+            override = {**(t.get("override") or {}), **v}
+            rows = run(_household(meta), policy, _scenario(meta["world"], override, base_returns))
+            if not _passes(t["check"], metrics(rows), rows, meta["household"]):
+                passed, failed_at = False, v or None
+                break
+        results.append({"name": t["name"], "kind": "required", "passed": passed, "failed_variant": failed_at})
+    for t in meta["optional"][:PUBLIC_OPTIONAL]:
+        rows = run(_household(meta), policy, _scenario(meta["world"], t.get("override"), base_returns))
+        m = _optional_metric(metrics(rows), rows, meta.get("optional_metric"), meta["household"])
+        results.append({"name": t["name"], "kind": "sample", "passed": None, "metric": round(m, 3)})
+    return {"tests": results, "required_passed": all(r["passed"] for r in results if r["kind"] == "required"),
+            "hidden_tests": max(0, len(meta["optional"]) - PUBLIC_OPTIONAL)}
+
 # ---------------------------------------------------------------- validate
 
 def validate(task: dict, sources: dict) -> Report:

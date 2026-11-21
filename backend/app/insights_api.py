@@ -174,6 +174,57 @@ def my_summary(user: User = Depends(current_user), db: Session = Depends(get_db)
     return analytics.profile_summary(_rows(attempts), onboarding_router.tree(), states, onb.result if onb else None)
 
 
+@router.get("/roadmap")
+def roadmap():
+    """Every node of the skills tree, built or planned. `live` is false for nodes without content yet,
+    so the app can draw planned topics in their own colour ("coming later")."""
+    cat, t = catalog(), onboarding_router.tree()
+    return {"nodes": [{"id": k, "title": v["title"], "panel": v["panel"], "level": v["level"], "after": v["after"],
+                       "live": k in cat.nodes} for k, v in t.items()]}
+
+
+@router.get("/me/path")
+def my_path(user: User = Depends(current_user), db: Session = Depends(get_db)):
+    """The recommended learning path from the starting survey (POST /onboarding): the steps to follow in
+    order, each with its title, why it is there, whether it has content yet, and the learner's progress.
+    `steps` is what to show: the chosen demo path, the ready demo path, or the router's recommendation."""
+    onb = db.get(Onboarding, user.id)
+    if not onb:
+        return {"survey_done": False, "steps": [], "challenges": []}
+    cat, t = catalog(), onboarding_router.tree()
+    res = onb.result
+    reasons = {p["node"]: p.get("reason") for p in res.get("path", [])}
+    demo_block = res.get("demo") or {}
+    chosen = res.get("chosen_path")
+    if chosen and chosen in demo.demo_paths():
+        ids, source = demo.demo_paths()[chosen]["nodes"], "chosen"
+    elif demo_block.get("status") == "ready" and demo_block.get("path"):
+        ids, source = demo_block["path"], "demo" if demo_block.get("path_id") != "personal" else "personal"
+    else:
+        ids, source = [p["node"] for p in res.get("path", [])], "recommended"
+    attempts = _attempts(db, user.id)
+    by_node: dict[str, list[Attempt]] = {}
+    for a in attempts:
+        by_node.setdefault(a.node_id, []).append(a)
+    steps = []
+    for k in ids:
+        live = k in cat.nodes
+        st = node_status(cat, k, user.id, by_node.get(k, [])) if live else None
+        steps.append({"node": k, "title": t.get(k, {}).get("title", k), "panel": t.get(k, {}).get("panel"),
+                      "level": t.get(k, {}).get("level"), "reason": reasons.get(k), "live": live,
+                      "done": bool(st and st.get("done")), "answered": (st or {}).get("items_answered", 0),
+                      "total": (st or {}).get("items_total", 0)})
+    nxt = next((x["node"] for x in steps if x["live"] and not x["done"]), None)
+    return {"survey_done": True, "source": source, "goal": res.get("goal"), "band": res.get("band"),
+            "knowledge_score": res.get("knowledge_score"), "steps": steps, "next": nxt,
+            "challenges": [{"node": c["node"], "title": c.get("title"), "why": c.get("why"), "live": c["node"] in cat.nodes}
+                           for c in res.get("challenges", [])],
+            "demo": {k: demo_block.get(k) for k in ("status", "path_id", "message", "closest")},
+            "options": [{"id": o["id"], "title": o["title"], "for": o.get("for"), "nodes": o["nodes"]}
+                        for o in demo_block.get("options", [])],
+            "recommended": [p["node"] for p in res.get("path", [])], "created_at": onb.created_at.isoformat()}
+
+
 class NodeOpenedIn(BaseModel):
     node: str = Field(max_length=10)
     source: Literal["recommended", "self_chosen", "explore_wheel", "tutor_link", "end_of_path"]

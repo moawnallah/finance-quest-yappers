@@ -213,3 +213,25 @@ def test_scales_are_kept_on_the_server_and_leagues_are_real(client):
     assert [l["name"] for l in lg["levels"]] == ["Beginner", "Intermediate", "Expert"]
     me = [e for l in lg["levels"] for e in l["entries"] if e["is_me"]]
     assert len(me) == 1 and me[0]["scales"] == lg["me"]["scales"] == d1["scales"]
+
+
+def test_hard_task_code_panel_run_and_submit(client):
+    from app.engines import catalog
+    from hard.text import to_text
+    h = {"Authorization": f"Bearer {client.post('/auth/session', json={'display_name': 'coder'}).json()['token']}"}
+    tid = sorted(catalog().hard_tasks)[0]
+    view = client.get(f"/tasks/{tid}", headers=h).json()["task"]
+    panel = view["code"]
+    assert [t["kind"] for t in panel["public_tests"]].count("sample") == 1 and panel["hidden_tests"] >= 1
+    assert panel["starter"] and panel["values"] and panel["actions"]
+    # bad code: a clear 400 with the line number
+    r = client.post(f"/tasks/{tid}/run", headers=h, json={"code": "if cash < 2\n    invest(cash)"})
+    assert r.status_code == 400 and "line 1" in r.json()["error"]["message"]
+    # the reference solution passes the public tests; running stores no attempt
+    code = to_text(catalog().hard_tasks[tid]["reveal"]["reference_program"])
+    run = client.post(f"/tasks/{tid}/run", headers=h, json={"code": code}).json()
+    assert run["required_passed"] is True and len(run["tests"]) == len(panel["public_tests"])
+    assert "optional" not in run and "futures" not in run  # hidden results only on submit
+    sub = client.post(f"/tasks/{tid}/attempts", headers=h, json={"response": {"code": code}}).json()
+    assert sub["accepted"] is True and 51 <= sub["points"] <= 100
+    assert len(sub["reveal"]["result"]["optional"]) == panel["hidden_tests"] + 1
