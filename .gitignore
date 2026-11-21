@@ -11,3 +11,4 @@ build/
 *.iml
 .idea/
 backend/ml/eval/runs/
+.DS_Store
