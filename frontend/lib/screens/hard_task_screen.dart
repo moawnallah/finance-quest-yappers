@@ -12,6 +12,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import '../data/app_state.dart';
 import '../data/sfx.dart';
+import '../widgets/block_editor.dart';
 import '../widgets/common.dart';
 import 'skills_screen.dart' show ErrorPanel;
 
@@ -23,8 +24,11 @@ class HardTaskScreen extends StatefulWidget {
 }
 
 class _HardTaskScreenState extends State<HardTaskScreen> with SingleTickerProviderStateMixin {
-  late final TabController _tabs = TabController(length: 2, vsync: this); // Blocks | Test results
-  final _code = TextEditingController();
+  late final TabController _tabs = TabController(length: 2, vsync: this); // Test results | Code
+  final _code = TextEditingController(); // the code the backend runs (generated from the blocks in block mode)
+  BlockProgram _program = BlockProgram();
+  bool _textMode = false; // blocks are the main view; text is for people who prefer typing
+  int _rev = 0; // rebuilds the block editor when the program is replaced
   Map<String, dynamic>? _task;
   String? _loadError;
   Map<String, dynamic>? _run; // last public run
@@ -72,13 +76,81 @@ class _HardTaskScreenState extends State<HardTaskScreen> with SingleTickerProvid
       final t = await s.api.task(s.profile.name, widget.taskId);
       final task = Map<String, dynamic>.from(t['task'] as Map);
       _code.text = (task['code']?['starter'] as String?) ?? '';
-      setState(() => _task = task);
+      setState(() {
+        _task = task;
+        _resetBlocks();
+      });
     } catch (e) {
       setState(() => _loadError = '$e');
     }
   }
 
   Map<String, dynamic> get _panel => Map<String, dynamic>.from(_task?['code'] as Map? ?? {});
+
+  Color _lineColor(String line) => line.startsWith('my_') ? cMine : cAction;
+
+  /// Blocks from the starter code (only comments for most tasks, so an empty workspace).
+  void _resetBlocks() {
+    _program = BlockProgram.parse(_code.text, _lineColor) ?? BlockProgram();
+    _rev++;
+  }
+
+  void _setMode(bool text) {
+    if (text == _textMode) return;
+    if (!text) {
+      final p = BlockProgram.parse(_code.text, _lineColor);
+      if (p == null) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('This code cannot be shown as blocks (check the indentation). Keep editing it as text.')));
+        return;
+      }
+      _program = p;
+      _rev++;
+    } else {
+      final c = _program.code();
+      if (c.isNotEmpty) _code.text = c;
+    }
+    setState(() => _textMode = text);
+  }
+
+  List<(String, Color, List<Piece>)> _palette() {
+    final values = [for (final v in (_panel['values'] as List? ?? []).cast<Map>()) '${v['name']}'];
+    final meaning = {for (final v in (_panel['values'] as List? ?? []).cast<Map>()) '${v['name']}': '${v['meaning']}'};
+    final assets = [for (final a in (_panel['assets'] as List? ?? [])) '$a'];
+    final asset = assets.isEmpty ? 'fund' : assets.first;
+    return [
+      ('Control: decide when', cControl, [
+        Piece('if … :', 'if', 'Do the blocks inside only when the condition in the gap is true.', 'if', cControl),
+        Piece('elif … :', 'elif', 'Otherwise, if another condition is true', 'elif', cControl),
+        Piece('else:', 'else', 'Otherwise', 'else', cControl),
+      ]),
+      ('Actions: what to do with the money', cAction, [
+        for (final a in (_panel['actions'] as List? ?? []).cast<Map>())
+          Piece('${a['code']}'.split('(').first, '${a['code']}'.replaceAll('amount', 'cash').replaceAll('asset', asset), '${a['meaning']}', 'line', cAction),
+      ]),
+      ('Values: facts about the month', cValue, [for (final v in values) Piece(v, v, meaning[v] ?? v, 'token', cValue)]),
+      ('Comparisons: true or false', cCond, [
+        Piece('<', '<', 'is less than', 'token', cCond),
+        Piece('>', '>', 'is more than', 'token', cCond),
+        Piece('and', 'and', 'both must be true', 'token', cCond),
+        Piece('or', 'or', 'one is enough', 'token', cCond),
+        Piece('not', 'not', 'the opposite', 'token', cCond),
+      ]),
+      ('Maths and numbers', cMath, [
+        Piece('number', '1000', 'a number (tap it in the gap to change it)', 'token', cMath),
+        Piece('+', '+', 'plus', 'token', cMath),
+        Piece('-', '-', 'minus', 'token', cMath),
+        Piece('*', '*', 'times', 'token', cMath),
+        Piece('/', '/', 'divided by', 'token', cMath),
+        Piece('min(a, b)', 'min(cash, 1000)', 'the smaller of two', 'token', cMath),
+        Piece('max(a, b)', 'max(cash, 0)', 'the bigger of two', 'token', cMath),
+      ]),
+      if (_panel['own_variables'] != null)
+        ('My variables', cMine, [
+          Piece('my_total = 0', 'my_total = 0', 'make or set your own number', 'line', cMine),
+          Piece('my_total += cash', 'my_total += cash', 'add to your own number', 'line', cMine),
+        ]),
+    ];
+  }
 
   Future<void> _runTests() async {
     final s = context.read<AppState>();
@@ -87,11 +159,11 @@ class _HardTaskScreenState extends State<HardTaskScreen> with SingleTickerProvid
       final r = await s.api.runHard(s.profile.name, widget.taskId, _code.text);
       r['required_passed'] == true ? Sfx.correct() : Sfx.wrong();
       setState(() => _run = r);
-      _tabs.animateTo(1);
+      _tabs.animateTo(0);
     } catch (e) {
       Sfx.wrong();
       setState(() { _error = '$e'; _run = null; });
-      _tabs.animateTo(1);
+      _tabs.animateTo(0);
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -144,7 +216,7 @@ class _HardTaskScreenState extends State<HardTaskScreen> with SingleTickerProvid
           _tag('Experimental'),
         ]),
         actions: [
-          IconButton(tooltip: 'Start over', icon: Icon(Icons.restart_alt), onPressed: _busy ? null : () => setState(() { _code.text = _panel['starter'] as String? ?? ''; _run = null; _error = null; })),
+          IconButton(tooltip: 'Start over', icon: Icon(Icons.restart_alt), onPressed: _busy ? null : () => setState(() { _code.text = _panel['starter'] as String? ?? ''; _resetBlocks(); _run = null; _error = null; })),
           if (wide) ...actions,
           SizedBox(width: 12),
         ],
@@ -155,9 +227,10 @@ class _HardTaskScreenState extends State<HardTaskScreen> with SingleTickerProvid
               VerticalDivider(width: 1, color: kLine),
               Expanded(
                 child: Column(children: [
-                  Expanded(child: Padding(padding: EdgeInsets.fromLTRB(16, 12, 16, 8), child: _editor(expand: true))),
+                  _modeBar(),
+                  Expanded(child: _main(wide: true)),
                   Divider(height: 1, color: kLine),
-                  SizedBox(height: 300, child: _lower()),
+                  SizedBox(height: 260, child: _lower()),
                 ]),
               ),
             ])
@@ -172,7 +245,8 @@ class _HardTaskScreenState extends State<HardTaskScreen> with SingleTickerProvid
                 ),
               )),
               SizedBox(height: 12),
-              SizedBox(height: 340, child: _editor(expand: true)),
+              _modeBar(),
+              SizedBox(height: 520, child: Panel(child: _main(wide: false))),
               SizedBox(height: 10),
               Row(children: [Expanded(child: actions[0]), SizedBox(width: 8), Expanded(child: actions[2])]),
               SizedBox(height: 12),
@@ -238,12 +312,19 @@ class _HardTaskScreenState extends State<HardTaskScreen> with SingleTickerProvid
         ]),
       ),
       SizedBox(height: 16),
-      Text('What you can write', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: kInk)),
+      Text('How the blocks work', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: kInk)),
       SizedBox(height: 6),
-      _codeHint('if <condition>:   elif <condition>:   else:'),
-      _codeHint('compare with < or >, combine with and / or / not'),
-      _codeHint('maths: + - * /  min(a, b)  max(a, b)'),
-      if (_panel['own_variables'] != null) _codeHint('${_panel['own_variables']}'),
+      _colorRule(cControl, 'Orange: control', 'if, elif and else decide WHEN. Each has a gap (___) for a condition and holds the blocks that run.'),
+      _colorRule(cValue, 'Blue: values', 'Facts about the month, like buffer_months. Put them in a gap.'),
+      _colorRule(cCond, 'Green: comparisons', '< and > compare; and, or, not combine. A condition reads value, comparison, number.'),
+      _colorRule(cMath, 'Teal: maths and numbers', 'A number, + - * /, min and max. Tap a number in a gap to change it.'),
+      _colorRule(cAction, 'Purple: actions', 'What to do with the money. They go inside an if, elif or else, or on their own line.'),
+      if (_panel['own_variables'] != null) _colorRule(cMine, 'Light orange: my variables', '${_panel['own_variables']}'),
+      SizedBox(height: 4),
+      _codeHint('if buffer_months < 2:'),
+      _codeHint('    save_to_buffer(cash)'),
+      _codeHint('else:'),
+      _codeHint('    save_to_pot(cash)'),
       SizedBox(height: 8),
       Text('Actions', style: TextStyle(fontWeight: FontWeight.w700, color: kInk)),
       for (final a in (_panel['actions'] as List? ?? []).cast<Map>()) _vocab('${a['code']}', '${a['meaning']}'),
@@ -253,6 +334,18 @@ class _HardTaskScreenState extends State<HardTaskScreen> with SingleTickerProvid
       for (final v in (_panel['values'] as List? ?? []).cast<Map>()) _vocab('${v['name']}', '${v['meaning']}'),
     ]);
   }
+
+  Widget _colorRule(Color c, String title, String text) => Padding(
+        padding: EdgeInsets.only(bottom: 6),
+        child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Container(margin: EdgeInsets.only(top: 3), width: 12, height: 12, decoration: BoxDecoration(color: c, borderRadius: BorderRadius.circular(3))),
+          SizedBox(width: 8),
+          Expanded(child: Text.rich(TextSpan(children: [
+            TextSpan(text: '$title. ', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: kInk)),
+            TextSpan(text: text, style: TextStyle(fontSize: 12, color: kBody)),
+          ]))),
+        ]),
+      );
 
   Widget _codeHint(String t) => Padding(
         padding: EdgeInsets.only(bottom: 4),
@@ -307,166 +400,44 @@ class _HardTaskScreenState extends State<HardTaskScreen> with SingleTickerProvid
         ),
       );
 
-  /// Below the code: the blocks you can use (like Scratch) and the test results, on one bar.
+  Widget _modeBar() => Padding(
+        padding: EdgeInsets.fromLTRB(16, 10, 16, 6),
+        child: Row(children: [
+          SegmentedButton<bool>(
+            showSelectedIcon: false,
+            segments: [
+              ButtonSegment(value: false, label: Text('Blocks', softWrap: false)),
+              ButtonSegment(value: true, label: Text('Text', softWrap: false)),
+            ],
+            selected: {_textMode},
+            onSelectionChanged: (v) => _setMode(v.first),
+          ),
+          SizedBox(width: 12),
+          Expanded(child: Text(_textMode ? 'Type the plan yourself. Switch back to see it as blocks.' : 'Drag a block onto a slot, or tap a slot or a gap (___) and then tap a block.',
+              style: TextStyle(fontSize: 12, color: kMuted))),
+        ]),
+      );
+
+  Widget _main({required bool wide}) => _textMode
+      ? Padding(padding: EdgeInsets.fromLTRB(16, 0, 16, 8), child: _editor(expand: true))
+      : BlockEditor(key: ValueKey(_rev), program: _program, palette: _palette(), wide: wide, onChanged: (c) => setState(() => _code.text = c));
+
+  /// Below the workspace: the test results and the code the blocks make, on one bar.
   Widget _lower() => Column(children: [
         TabBar(
           controller: _tabs,
           isScrollable: true,
           tabAlignment: TabAlignment.start,
-          tabs: [Tab(icon: Icon(Icons.extension_rounded, size: 18), text: 'Blocks'), Tab(icon: Icon(Icons.fact_check_outlined, size: 18), text: 'Test results')],
+          tabs: [Tab(icon: Icon(Icons.fact_check_outlined, size: 18), text: 'Test results'), Tab(icon: Icon(Icons.code, size: 18), text: 'Code')],
         ),
-        Expanded(child: TabBarView(controller: _tabs, children: [_blocks(), _results()])),
+        Expanded(child: TabBarView(controller: _tabs, children: [_results(), _codeView()])),
       ]);
 
-  static const _cControl = Color(0xFFFFAB19), _cCond = Color(0xFF59C059), _cMath = Color(0xFF0FBD8C),
-      _cValue = Color(0xFF4C97FF), _cAction = Color(0xFF9966FF), _cMine = Color(0xFFFF8C1A);
-
-  Widget _blocks() {
-    final values = [for (final v in (_panel['values'] as List? ?? []).cast<Map>()) '${v['name']}'];
-    final meaning = {for (final v in (_panel['values'] as List? ?? []).cast<Map>()) '${v['name']}': '${v['meaning']}'};
-    final assets = [for (final a in (_panel['assets'] as List? ?? [])) '$a'];
-    final asset = assets.isEmpty ? 'fund' : assets.first;
-    final actions = <(String, String, String)>[
-      for (final a in (_panel['actions'] as List? ?? []).cast<Map>())
-        ('${a['code']}'.split('(').first, '${a['code']}'.replaceAll('amount', 'cash').replaceAll('asset', asset), '${a['meaning']}'),
-    ];
-    Widget section(String title, Color c, List<Widget> chips) => Padding(
-          padding: EdgeInsets.only(bottom: 10),
-          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Row(children: [
-              Container(width: 10, height: 10, decoration: BoxDecoration(color: c, shape: BoxShape.circle)),
-              SizedBox(width: 6),
-              Text(title, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: kMuted)),
-            ]),
-            SizedBox(height: 6),
-            Wrap(spacing: 6, runSpacing: 6, children: chips),
-          ]),
-        );
-    return ListView(padding: EdgeInsets.fromLTRB(12, 10, 12, 10), children: [
-      Text('Tap a block to add it where the cursor is.', style: TextStyle(fontSize: 12, color: kMuted)),
-      SizedBox(height: 8),
-      section('Control', _cControl, [
-        _block('if … :', _cControl, 'if ___:', 'Do the lines under it only when the condition is true. Fill the gap with a value, < or > and a number.', line: true),
-        _block('elif … :', _cControl, 'elif ___:', 'Otherwise, if another condition is true', line: true),
-        _block('else:', _cControl, 'else:', 'Otherwise', line: true),
-      ]),
-      section('Actions', _cAction, [for (final a in actions) _block(a.$1, _cAction, a.$2, a.$3, line: true)]),
-      section('Conditions', _cCond, [
-        _block('<', _cCond, ' < ', 'is less than'),
-        _block('>', _cCond, ' > ', 'is more than'),
-        _block('and', _cCond, ' and ', 'both must be true'),
-        _block('or', _cCond, ' or ', 'one is enough'),
-        _block('not', _cCond, 'not ', 'the opposite'),
-      ]),
-      section('Values', _cValue, [for (final v in values) _block(v, _cValue, v, meaning[v] ?? v)]),
-      section('Maths', _cMath, [
-        _block('+', _cMath, ' + ', 'plus'),
-        _block('-', _cMath, ' - ', 'minus'),
-        _block('*', _cMath, ' * ', 'times'),
-        _block('/', _cMath, ' / ', 'divided by'),
-        _block('min(a, b)', _cMath, 'min(cash, 1000)', 'the smaller of two'),
-        _block('max(a, b)', _cMath, 'max(cash, 0)', 'the bigger of two'),
-        _block('number', _cMath, '1000', 'a number'),
-      ]),
-      if (_panel['own_variables'] != null)
-        section('My variables', _cMine, [
-          _block('my_total = 0', _cMine, 'my_total = 0', 'make or set your own number', line: true),
-          _block('my_total += cash', _cMine, 'my_total += cash', 'add to your own number', line: true),
-        ]),
-    ]);
-  }
-
-  Widget _block(String label, Color c, String code, String tip, {bool line = false}) => Tooltip(
-        message: tip,
-        child: Material(
-          color: c,
-          borderRadius: BorderRadius.circular(8),
-          child: InkWell(
-            borderRadius: BorderRadius.circular(8),
-            onTap: () => _insert(code, line: line),
-            child: Container(
-              padding: EdgeInsets.symmetric(horizontal: 10, vertical: 7),
-              decoration: BoxDecoration(borderRadius: BorderRadius.circular(8), border: Border.all(color: Colors.black.withValues(alpha: .15))),
-              child: Text(label, style: GoogleFonts.robotoMono(fontSize: 13, fontWeight: FontWeight.w700, color: Colors.white)),
-            ),
-          ),
-        ),
-      );
-
-  /// Insert a block's code. Statements go on a new line with the right indent; parts of an
-  /// expression go where the cursor is.
-  static const _gap = '___';
-
-  /// Insert a block. Statements go on their own line with the right indent (`elif` and `else` line up
-  /// with their `if`; anything after a line ending in ':' goes inside it). `if` and `elif` leave a gap
-  /// (___) selected; values, comparisons and maths fill the selected gap, or go where the cursor is
-  /// inside a condition or an action's brackets. Elsewhere they are refused with a hint.
-  void _insert(String code, {bool line = false}) {
-    final t = _code.text;
-    final sel = _code.selection;
-    final at = sel.isValid ? sel.end : t.length;
-    final lineStart = t.lastIndexOf('\n', at > 0 ? at - 1 : 0) + 1;
-    var lineEnd = t.indexOf('\n', at);
-    if (lineEnd < 0) lineEnd = t.length;
-    final current = t.substring(lineStart, lineEnd);
-
-    if (!line) {
-      if (sel.isValid && !sel.isCollapsed) {
-        _set(t.replaceRange(sel.start, sel.end, code.trim()), sel.start + code.trim().length);
-        return;
-      }
-      final before = t.substring(lineStart, at), after = t.substring(at, lineEnd);
-      final trimmed = current.trimLeft();
-      final inCondition = (trimmed.startsWith('if ') || trimmed.startsWith('elif ')) && after.contains(':');
-      final inBrackets = '('.allMatches(before).length > ')'.allMatches(before).length;
-      if (!inCondition && !inBrackets) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-            content: Text('Tap "if" first, then fill its gap (___), or put the cursor inside a condition or the brackets of an action.')));
-        return;
-      }
-      final glue = before.isNotEmpty && RegExp(r'[A-Za-z0-9_)]$').hasMatch(before) && !code.startsWith(' ') ? ' ' : '';
-      final piece = glue + code;
-      _set(t.replaceRange(at, at, piece), at + piece.length);
-      return;
-    }
-
-    int indentOf(String l) => l.length - l.trimLeft().length;
-    var indent = indentOf(current);
-    final head = code.trimLeft();
-    if (head.startsWith('elif') || head.startsWith('else')) {
-      // Line up with the `if` this belongs to: the nearest if/elif above with a smaller indent
-      // (or the same indent when the cursor is on that if line itself).
-      final lines = t.substring(0, lineEnd).split('\n');
-      for (var k = lines.length - 1; k >= 0; k--) {
-        final l = lines[k], tl = l.trimLeft();
-        if ((tl.startsWith('if ') || tl.startsWith('elif ')) && (indentOf(l) < indent || k == lines.length - 1)) {
-          indent = indentOf(l);
-          break;
-        }
-      }
-    } else if (current.trimRight().endsWith(':')) {
-      indent += 4; // inside the block
-    }
-    var block = ' ' * indent + code;
-    if (head.endsWith(':') && !head.contains(_gap)) block += '\n' + ' ' * (indent + 4); // else: start its body
-    final String text;
-    final int insertAt;
-    if (current.trim().isEmpty) {
-      text = t.replaceRange(lineStart, lineEnd, block);
-      insertAt = lineStart;
-    } else {
-      text = t.replaceRange(lineEnd, lineEnd, '\n$block');
-      insertAt = lineEnd + 1;
-    }
-    final g = block.indexOf(_gap);
-    if (g >= 0) {
-      _code.value = TextEditingValue(text: text, selection: TextSelection(baseOffset: insertAt + g, extentOffset: insertAt + g + _gap.length));
-    } else {
-      _set(text, insertAt + block.length);
-    }
-  }
-
-  void _set(String text, int cursor) => _code.value = TextEditingValue(text: text, selection: TextSelection.collapsed(offset: cursor));
+  Widget _codeView() => ListView(padding: EdgeInsets.all(12), children: [
+        Text('This is the code your blocks make. It is what the tests run.', style: TextStyle(fontSize: 12, color: kMuted)),
+        SizedBox(height: 8),
+        SelectableText(_code.text.trim().isEmpty ? '# no blocks yet' : _code.text, style: GoogleFonts.robotoMono(fontSize: 13, height: 1.5, color: kInk)),
+      ]);
 
   Widget _results({bool scroll = true}) {
     final children = <Widget>[
