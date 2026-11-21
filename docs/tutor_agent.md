@@ -179,7 +179,7 @@ roles:
   tutor_cloud:
     primary: {model: "vertex_ai/<model>", vertex_location: "${VERTEX_AI_REGION}"}
     allowed_for_user_data: false
-prompt_version: tutor-v1
+prompt_version: tutor-v2
 ```
 
 **Rules.**
@@ -248,15 +248,30 @@ flowchart LR
 | Passages (top 3) | yes | yes | yes | – | yes (links) |
 | Raw income, name, free-text history beyond 8 turns | never | never | never | never | never |
 
-**System prompt (outline of `prompts/tutor_small/tutor-v1.md`).**
+**System prompt (outline of `prompts/tutor_small/tutor-v2.md`).**
 - **Role:** a patient tutor in a financial-literacy app for adults of all
   ages.
 - **Use only** the facts and numbers in CONTEXT. If something is not there,
   say you do not know and point to the sources.
+- **May** explain investing and encourage the learner to start investing
+  their own money, at the level of types: shares, funds, bonds, deposits.
+  Decided 2026-11-21 (tutor-v2). Generic advice about a type of instrument
+  is not investment advice under Delegated Regulation 2017/565, recital 15.
+  Presenting it as suitable for this learner would make the bank answer for
+  its suitability.
 - **Never:**
-  - recommend a product, fund, stock, bank or adviser;
+  - name a particular company, fund, ticker, bank, broker or adviser
+    (Art. 9 of 2017/565; MAR Art. 20);
   - say what to buy or sell;
+  - say that something is suitable for this learner;
   - give the answer to a task before it is submitted.
+- **Rule layer:**
+  - "Should I invest in the stock market?" and "Czy warto inwestować w
+    akcje?" reach the model;
+  - "Should I invest in Nvidia?", "which ETF" and market timing get the
+    template. The template now describes how people usually start
+    (emergency fund, then a low-cost diversified fund, monthly), with no
+    product named.
 - **Hint levels:** 1 concept, 2 example with other numbers, 3 pointer.
 - **Style:**
   - plain English, short sentences, at most 200 words;

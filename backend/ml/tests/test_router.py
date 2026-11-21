@@ -4,7 +4,12 @@ before the code was run, so a change to rules or parameters that moves a demo pa
 Revised once after the first run (2026-11-21): the hand calculation still used the old age and
 education prior, which was dropped on 2026-11-20. With the flat prior the young adult's theta is
 -0.18 (not -0.35), so F2 (m 0.62) is met and needs no challenge; the student's F3 (m 0.43) is a
-challenge, not a full node. The demo paths themselves did not change."""
+challenge, not a full node. The demo paths themselves did not change.
+
+Revised for rules-2 (2026-11-21): a path has at least 3 nodes (MIN_PATH), and the goal "buffer" puts
+S1 on the path. The investor's I4 > I5 gains P1 (still inside the investor demo path); the student
+(goal "buffer") gains S1 first; the pre-retiree gains I1, where the quiz showed overconfidence."""
+import itertools
 from pathlib import Path
 
 import yaml
@@ -44,20 +49,20 @@ def test_young_adult_demo_path():
 
 def test_investor_demo_path():
     r = route(INVESTOR)
-    assert nodes(r["path"]) == ["I4", "I5"]
+    assert nodes(r["path"]) == ["I4", "I5", "P1"]
     assert {"F1", "F3", "I1"} <= set(nodes(r["challenges"]))
     assert r["knowledge_score"] == 5 and r["band"] == "high"
 
 
 def test_student_path():
     r = route(STUDENT)
-    assert nodes(r["path"]) == ["F4", "S2"]
-    assert {"F3", "S1"} <= set(nodes(r["challenges"]))
+    assert nodes(r["path"]) == ["S1", "F4", "S2"]
+    assert {"F1", "F3"} <= set(nodes(r["challenges"]))  # S1 is on the path now, so no longer a challenge
 
 
 def test_pre_retiree_path_and_goal():
     r = route(RETIREE)
-    assert nodes(r["path"]) == ["O1", "L1"]
+    assert nodes(r["path"]) == ["O1", "I1", "L1"]
     assert "S4" in nodes(r["challenges"]) and r["goal"]["node"] == "L3"
 
 
@@ -65,6 +70,37 @@ def test_skipped_questions_still_give_a_path():
     r = route({"age_band": "40-54", "goal": "other", "horizon": "3_10", "buffer": None, "products": None,
                "knowledge": k(Q2=None, Q3=None, Q4=None, Q5=None, Q6=None)})
     assert r["knowledge_score"] == 0 and r["band"] == "low" and r["path"]
+
+
+def test_skipped_quick_check_is_no_evidence_and_still_gives_a_path():
+    # The app lets users skip the 5 knowledge items; the other answers must still build a path,
+    # and items never asked must not count as wrong (that would send everyone to the basics).
+    r = route({"age_band": "25-39", "goal": "first_investment", "horizon": "over_10", "knowledge": {}})
+    assert r["knowledge_score"] is None and r["band"] is None and r["theta"] == 0.0
+    assert r["benchmarks"]["your_band_share"] is None and len(r["path"]) >= 3
+
+
+def test_app_inputs_always_give_a_path_of_at_least_three_nodes():
+    # The answers the app sends today (no buffer, products or confidence): with rules-1, 74% of these
+    # paths had 2 nodes. Checked on every combination of goal, horizon and quiz result for two ages.
+    for age, goal, horizon, bits in itertools.product(["18-24", "55+"], ["buffer", "first_investment", "retirement", "home", "other"],
+                                                      ["under_3", "3_10", "over_10"], range(32)):
+        knowledge = {q: {"correct": bool(bits >> i & 1)} for i, q in enumerate(["Q2", "Q3", "Q4", "Q5", "Q6"])}
+        r = route({"age_band": age, "goal": goal, "horizon": horizon, "self_rating": "average", "knowledge": knowledge})
+        assert 3 <= len(r["path"]) <= 5, (age, goal, horizon, bits, nodes(r["path"]))
+
+
+def test_goal_buffer_starts_with_the_emergency_fund():
+    # Before rules-2 only the buffer question (which the app does not ask) could put S1 on the path.
+    r = route({"age_band": "25-39", "goal": "buffer", "horizon": "under_3", "knowledge": k(Q2=(True, 3), Q3=(True, 3))})
+    assert r["path"][0]["node"] == "S1" and r["path"][0]["reason"] == "Your goal is an emergency buffer."
+
+
+def test_experience_counts_like_holding_investments():
+    # The app asks "How much have you invested before?"; it should move the path towards funds and mixing.
+    base = {"age_band": "25-39", "goal": "other", "horizon": "over_10", "knowledge": {}}
+    assert "I5" in nodes(route({**base, "experience": "a_little"})["path"])
+    assert "I5" not in nodes(route({**base, "experience": "none"})["path"])
 
 
 def test_placement_depends_on_answers_not_on_age():
@@ -79,6 +115,32 @@ def test_events_match_the_result():
     assert types.count("path_issued") == 1
     assert types.count("recommendation_shown") == len(r["path"]) and types.count("challenge_offered") == len(r["challenges"])
     assert all(0 <= e["predicted_m"] <= 1 for e in r["events"] if "predicted_m" in e)
+
+
+# ---------------------------------------------------------------- after a finished path
+
+from router import next_steps  # noqa: E402
+
+
+def test_next_steps_are_open_new_and_explained():
+    # Never a done node, never a node whose prerequisites are neither done nor met at the survey.
+    t = tree()
+    for persona, done in [(YOUNG, {"S1", "I1", "I2", "I4", "P1"}), (INVESTOR, {"I4", "I5", "P1", "P4"}),
+                          (STUDENT, {"S1", "F4", "S2"}), (RETIREE, {"O1", "I1", "L1"})]:
+        r = route(persona)
+        steps = next_steps(persona, r, done, "keep_learning")
+        assert len(steps) == 3 and all(s["reason"] for s in steps)
+        for s in steps:
+            assert s["node"] not in done
+            assert all(a in done or r["mastery"][a] >= 0.6 for a in t[s["node"]]["after"]), s
+
+
+def test_next_steps_follow_the_new_goal():
+    # The end-of-path check-in asks for the next goal; retirement must lead towards L1 (via its missing S4).
+    r = route(INVESTOR)
+    steps = nodes(next_steps(INVESTOR, r, {"I4", "I5", "P1", "P4"}, "retirement"))
+    assert "L1" in steps or "S4" in steps
+    assert "L1" not in nodes(next_steps(INVESTOR, r, {"I4", "I5", "P1", "P4"}, "keep_learning"))
 
 
 def test_benchmarks_come_from_the_table():
@@ -109,7 +171,7 @@ def test_demo_young_adult_gets_the_path_directly():
 
 
 def test_demo_investor_router_path_extends_to_the_investor_path():
-    # The router gives I4 > I5; it is part of the investor demo path, so the user gets the whole path.
+    # The router gives I4 > I5 > P1; it is part of the investor demo path, so the user gets the whole path.
     d = match(route(INVESTOR), BUILT)
     assert d["path_id"] == "investor" and d["path"] == ["I4", "I5", "P1", "P4"] and "P2" in d["challenges"]
     # Decided 2026-11-21: the young-adult capstone (P1) is optional for investors; their capstone is P4.
@@ -118,7 +180,7 @@ def test_demo_investor_router_path_extends_to_the_investor_path():
 
 def test_demo_path_not_ready_offers_both_paths():
     d = match(route(STUDENT), BUILT)
-    assert d["status"] == "not_ready" and d["missing"] == ["F4", "S2"]
+    assert d["status"] == "not_ready" and d["missing"] == ["F4", "S2"] and d["recommended"][0] == "S1"
     assert {o["id"] for o in d["options"]} == {"young_adult", "investor"} and d["closest"] == d["options"][0]["id"]
     assert "Cost of credit" in d["message"] and "not ready yet" in d["message"]
 

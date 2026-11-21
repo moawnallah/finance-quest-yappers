@@ -28,7 +28,7 @@ if str(ML_DIR) not in sys.path:
 
 import analytics  # noqa: E402
 import router as onboarding_router  # noqa: E402
-from router import demo  # noqa: E402
+from router import demo, shadow  # noqa: E402
 from tutor.rules import mask  # noqa: E402
 
 router = APIRouter(tags=["insights"])
@@ -74,14 +74,17 @@ class KnowledgeItem(BaseModel):
 
 
 class SurveyIn(BaseModel):
-    """The 12 survey answers (docs/onboarding_router.md, "Implementation")."""
+    """The survey answers (docs/onboarding_router.md, "Implementation"). The knowledge items may be
+    left out when the quick check was skipped: the other answers still build a path."""
     age_band: Literal["under_18", "18-24", "25-39", "40-54", "55+"]
     decisions: Literal["me", "with_someone", "someone_else"] | None = None
     goal: Literal["buffer", "first_investment", "retirement", "home", "other"]
     horizon: Literal["under_3", "3_10", "over_10"]
     self_rating: Literal["very_high", "quite_high", "average", "quite_low", "very_low", "dont_know"] | None = None
     knowledge: dict[Literal["Q2", "Q3", "Q4", "Q5", "Q6"], "KnowledgeItem"] = Field(
-        description='Per item {"correct": true | false | null (don\'t know), "confidence": 1-5}.')
+        default_factory=dict, description='Per answered item {"correct": true | false | null (don\'t know), "confidence": 1-5}.')
+    experience: Literal["none", "a_little", "quite_a_lot"] | None = Field(
+        default=None, description="How much have you invested before? (the app's onboarding question)")
     buffer: Literal["none", "under_1", "1_3", "3_6", "6_plus"] | None = None
     products: list[Literal["pension", "life_insurance", "non_life_insurance", "mortgage", "consumer_loan",
                            "investment", "crypto", "none"]] | None = None
@@ -105,17 +108,22 @@ def onboarding(body: SurveyIn, user: User = Depends(current_user), db: Session =
                          node=e.get("node"), predicted_m=e.get("predicted_m"), need=e.get("need"),
                          overconfidence_term=e.get("overconfidence_term"), priority=e.get("priority"),
                          reason_term=(e.get("reason_term") or "")[:200] or None, path=e.get("path")))
+    shadow_row = shadow.shadow(survey, result)  # BASAL in shadow mode: logged only, None unless BASAL_URL is set
+    if shadow_row is not None:
+        db.add(RecoEvent(user_id=user.id, router_version=result["router_version"], event_type="shadow_decision",
+                         payload=shadow_row))
     db.add(RecoEvent(user_id=user.id, router_version=result["router_version"], event_type="demo_match",
                      payload={"status": result["demo"]["status"], "path_id": result["demo"]["path_id"],
                               "recommended": result["demo"]["recommended"]}))
     log_event(db, user, "onboarding_done", path=[p["node"] for p in result["path"]])
     db.commit()
-    return {k: result[k] for k in ("router_version", "knowledge_score", "band", "benchmarks", "path", "challenges", "goal",
-                                   "demo")}
+    return {k: result[k] for k in ("router_version", "knowledge_score", "items_answered", "band", "benchmarks", "path",
+                                   "challenges", "goal", "demo")}
 
 
 class ChoosePathIn(BaseModel):
-    path_id: str = Field(description="One of the demo paths offered in the onboarding reply (demo.options[].id).")
+    path_id: str = Field(description="One of the demo paths offered in the onboarding reply (demo.options[].id), "
+                                     "or 'recommended' to go back to the path from the survey.")
 
 
 @router.post("/onboarding/choose-path")
@@ -125,15 +133,18 @@ def choose_path(body: ChoosePathIn, user: User = Depends(current_user), db: Sess
     onb = db.get(Onboarding, user.id)
     if not onb:
         raise ApiError(409, "no_onboarding", "Send the survey first (POST /onboarding)")
-    if body.path_id not in demo.demo_paths():
-        raise ApiError(400, "invalid_request", f"path_id must be one of {sorted(demo.demo_paths())}")
+    if body.path_id not in demo.demo_paths() and body.path_id != "recommended":
+        raise ApiError(400, "invalid_request", f"path_id must be 'recommended' or one of {sorted(demo.demo_paths())}")
     result = dict(onb.result)
-    result["chosen_path"] = body.path_id
+    result["chosen_path"] = None if body.path_id == "recommended" else body.path_id  # the survey's path stays stored
     onb.result = result
     db.add(RecoEvent(user_id=user.id, router_version=onb.router_version, event_type="path_chosen", node=None,
                      payload={"chosen": body.path_id, "recommended": result["demo"]["recommended"],
                               "status": result["demo"]["status"], "closest": result["demo"].get("closest")}))
     db.commit()
+    if body.path_id == "recommended":
+        nodes = [x["node"] for x in result.get("path", [])]
+        return {"path_id": "recommended", "title": "Your path from the survey", "nodes": nodes, "challenges": demo._challenges(nodes)}
     p = demo.demo_paths()[body.path_id]
     return {"path_id": body.path_id, "title": p["title"], "nodes": p["nodes"], "challenges": demo._challenges(p["nodes"])}
 
@@ -148,17 +159,35 @@ class PathFinishIn(BaseModel):
 
 @router.post("/paths/finish")
 def finish_path(body: PathFinishIn, user: User = Depends(current_user), db: Session = Depends(get_db)):
-    """Store the check-in and return the thanks screen: the demo note, the optional feedback ask, the other path."""
-    if body.path_id not in demo.demo_paths() and body.path_id != "personal":
-        raise ApiError(400, "invalid_request", f"path_id must be 'personal' or one of {sorted(demo.demo_paths())}")
+    """Store the check-in and return the thanks screen: the demo note, the optional feedback ask, the other path,
+    and the next nodes to study (router.next_steps, with the check-in's next goal), each marked live or not."""
+    if body.path_id not in demo.demo_paths() and body.path_id not in ("personal", "recommended"):
+        raise ApiError(400, "invalid_request", f"path_id must be 'personal', 'recommended' or one of {sorted(demo.demo_paths())}")
     if any(not 1 <= v <= 5 for v in body.confidence.values()):
         raise ApiError(400, "invalid_request", "confidence values must be 1-5")
     db.add(PathCheckin(user_id=user.id, path_id=body.path_id, answers=body.model_dump(exclude={"path_id"})))
     db.add(RecoEvent(user_id=user.id, router_version=onboarding_router.ROUTER_VERSION, event_type="path_finished",
                      payload={"path_id": body.path_id, "progress": body.progress, "next_goal": body.next_goal}))
     log_event(db, user, "path_finished", path_id=body.path_id)
+    nxt = _next_steps(db, user, body.next_goal)
+    if nxt:
+        db.add(RecoEvent(user_id=user.id, router_version=onboarding_router.ROUTER_VERSION, event_type="next_steps_shown",
+                         path=[x["node"] for x in nxt], payload={"next_goal": body.next_goal}))
     db.commit()
-    return demo.finished(body.path_id)
+    return {**demo.finished(body.path_id), "next_steps": nxt}
+
+
+def _next_steps(db: Session, user: User, next_goal: str) -> list[dict]:
+    onb = db.get(Onboarding, user.id)
+    if not onb:
+        return []
+    cat = catalog()
+    by_node: dict[str, list[Attempt]] = {}
+    for a in _attempts(db, user.id):
+        by_node.setdefault(a.node_id, []).append(a)
+    done = {n for n, rows in by_node.items() if n in cat.nodes and node_status(cat, n, user.id, rows).get("done")}
+    return [{**x, "live": x["node"] in cat.nodes}
+            for x in onboarding_router.next_steps(onb.survey, onb.result, done, next_goal)]
 
 
 @router.get("/me/summary")

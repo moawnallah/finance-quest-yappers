@@ -203,3 +203,59 @@ def test_my_path_follows_the_survey(client, user):
         client.post("/onboarding/choose-path", headers=user, json={"path_id": p["options"][0]["id"]})
         q = client.get("/me/path", headers=user).json()
         assert q["source"] == "chosen" and [s["node"] for s in q["steps"]] == p["options"][0]["nodes"]
+
+
+# ---------------------------------------------------------------- router rules-2 (2026-11-21)
+
+APP_SURVEY = {"age_band": "18-24", "goal": "first_investment", "horizon": "3_10", "self_rating": "average",
+              "experience": "none"}   # what the app's onboarding screens collect before the quick check
+
+
+def test_survey_without_the_quick_check_still_builds_a_path(client, user):
+    # The app lets users skip the quick check; until now that sent nothing, and the Path tab stayed empty.
+    r = client.post("/onboarding", headers=user, json=APP_SURVEY).json()
+    assert r["knowledge_score"] is None and r["items_answered"] == 0 and len(r["path"]) >= 3
+
+
+def test_switching_to_a_ready_path_keeps_the_recommended_one(client, user):
+    # "Change plan" to a predefined path and back: the survey's path is stored, not overwritten.
+    first = client.post("/onboarding", headers=user, json=STUDENT).json()["path"]
+    client.post("/onboarding/choose-path", headers=user, json={"path_id": "investor"})
+    assert client.get("/me/path", headers=user).json()["source"] == "chosen"
+    back = client.post("/onboarding/choose-path", headers=user, json={"path_id": "recommended"}).json()
+    assert back["nodes"] == [p["node"] for p in first]
+    assert [s["node"] for s in client.get("/me/path", headers=user).json()["steps"]] == back["nodes"]
+
+
+def test_finishing_a_path_suggests_next_nodes(client, user):
+    client.post("/onboarding", headers=user, json=YOUNG)
+    end = client.post("/paths/finish", headers=user, json={"path_id": "young_adult", "progress": "yes",
+                                                            "next_goal": "keep_learning"}).json()
+    assert len(end["next_steps"]) == 3 and all({"node", "title", "reason", "live"} <= set(x) for x in end["next_steps"])
+    events = client.get("/admin/reco-events", params={"event_type": "next_steps_shown"}, headers=ADMIN).json()["items"]
+    assert events and events[0]["path"] == [x["node"] for x in end["next_steps"]]
+
+
+def test_shadow_model_is_logged_and_never_breaks_onboarding(client, user, monkeypatch):
+    # BASAL runs in shadow mode: its answers are stored, an outage costs nothing but an error row.
+    from sqlalchemy import select
+    from app.db import SessionLocal
+    from app.models import RecoEvent
+    from router import shadow
+    monkeypatch.setenv("BASAL_URL", "http://basal.test")
+    fake = {"model": "basal-2.0-4.5B", "answers": {"start_S1": {"type": "noul", "noul": 0.9, "confidence": 0.9},
+                                                   "ready_S1": {"type": "noul", "noul": 0.3, "confidence": 0.7}}}
+    monkeypatch.setattr(shadow, "ask", lambda request, base_url: (fake, 120))
+    path = client.post("/onboarding", headers=user, json=YOUNG).json()["path"]
+
+    def boom(request, base_url):
+        raise TimeoutError("no GPU")
+    monkeypatch.setattr(shadow, "ask", boom)
+    assert client.post("/onboarding", headers=user, json=YOUNG).json()["path"] == path
+    with SessionLocal() as db:
+        rows = [r.payload for r in db.scalars(select(RecoEvent).where(RecoEvent.event_type == "shadow_decision")
+                                              .order_by(RecoEvent.id.desc()).limit(2))]
+    assert "TimeoutError" in rows[0]["error"]
+    assert rows[1]["decisions"] == [{"node": "S1", "router_m": rows[1]["decisions"][0]["router_m"], "on_path": True,
+                                     "ready_p": 0.3, "start_p": 0.9, "start_confidence": 0.9, "agrees": True,
+                                     "below_tau": False}]

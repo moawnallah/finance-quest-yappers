@@ -22,18 +22,25 @@ def mask(text: str) -> str:
 
 
 PRODUCT = r"(?:fund|stock|share|etf|bond|bank|broker|crypto|coin|deposit|investment)s?"
+# Decided 2026-11-21: investing may be encouraged at the level of a type of instrument (MiFID II,
+# Delegated Regulation 2017/565, recital 15); a particular company, fund, ticker or provider may not
+# (Art. 9; MAR Art. 20). These words name types, so questions about them reach the model.
+TYPES_EN = r"(?:the )?(?:stock market|stocks?|shares|equities|index funds?|funds|etfs|bonds|the market)\b"
+TYPES_PL = r"(?:akcj|fundusz|etf|obligacj|giełd|rynek|rynk)"
 ADVICE = re.compile("|".join([
     rf"\b(?:which|what) {PRODUCT}\b.{{0,40}}\b(?:buy|choose|pick|invest|best|sell)\b",
     rf"\b(?:which|what) is the best {PRODUCT}\b",
     rf"\bis .{{1,40}} a good (?:stock|share|fund|etf|investment|buy)\b",
-    r"\bshould i (?:buy|sell|invest)\b",
+    r"\bshould i (?:buy|sell)\b",
+    rf"\bshould i invest in (?!{TYPES_EN})",
     r"\bwhat should i (?:buy|invest|put)\b",
     r"\bwhere (?:should|do) i (?:put|invest)\b",
     r"\brecommend (?:me )?(?:a|an|some|any)\b",
     r"\bjak(?:i|ą|ie|a) (?:fundusz\w*|etf\w*|bank\w*|kryptowalut\w*|akcj\w*|obligacj\w*|lokat\w*)",
     r"\bktór(?:y|ą|e|a) (?:bank|fundusz|etf|broker|lokat\w*|akcj\w*)",
     r"\bw co (?:za)?inwestowa[ćc]\b",
-    r"\bczy warto (?:kupi[ćc]|inwestowa[ćc]|sprzeda[ćc])\b",
+    r"\bczy warto (?:kupi[ćc]|sprzeda[ćc])\b",
+    rf"\bczy warto (?:za)?inwestowa[ćc] w (?!{TYPES_PL})",
     r"\bco kupi[ćc]\b|\bczy (?:kupi[ćc]|sprzeda[ćc])\b|\bpolec(?:isz|asz)\b",
 ]), re.I)
 INJECTION = re.compile("|".join([
@@ -57,11 +64,12 @@ def rule_intent(message: str) -> str | None:
 
 TEMPLATES = {
     "advice_request": (
-        "I can't tell you which product to buy, and nobody in this app will. What I can do is show you how "
-        "to compare products yourself: read the 'What are the costs?' and risk sections of their Key "
-        "Information Documents, check the firm in the KNF register, and match the product to your goal "
-        "and horizon. The node 'Information and advisers' (O2) walks through it.",
-        "Which two sections of a KID would you compare first?",
+        "I can't tell you which product to buy, and nobody in this app will. Here is how people usually "
+        "start: first an emergency fund, then they invest money they will not need for several years, often "
+        "in shares through a low-cost, diversified fund, a small amount every month. Before choosing, they "
+        "compare costs and risk in the Key Information Document and check the firm in the KNF register. "
+        "The node 'Funds, ETFs, costs, the KID' (I5) shows how to do that yourself.",
+        "What would you look at in a KID before you invest?",
     ),
     "injection": (
         "I can only help with the learning content in this app: the cards, the tasks and your results.",

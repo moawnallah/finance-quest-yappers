@@ -48,7 +48,7 @@ def _parse(text: str) -> dict | None:
 def answer(req: TutorRequest, ctx: ContextProvider, llm: LLMClient, denylist: list[str] = ()) -> TutorResponse:
     if req.mode not in MODES:
         raise ValueError(f"mode must be one of {MODES}")
-    prompt_version = os.environ.get("PROMPT_VERSION", "tutor-v1")
+    prompt_version = os.environ.get("PROMPT_VERSION", "tutor-v2")
     hint_level = req.hint_level if req.mode == "hint" else None
     event = {
         "event_id": str(uuid.uuid4()), "ts": dt.datetime.now(dt.timezone.utc).isoformat(),

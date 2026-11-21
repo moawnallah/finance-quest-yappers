@@ -14,7 +14,7 @@ def ok_json(text="The fee is part of what you borrow [K1].", cited=("K1",), q="W
 @pytest.fixture(autouse=True)
 def env(monkeypatch):
     monkeypatch.setenv("TUTOR_ENABLED", "true")
-    monkeypatch.setenv("PROMPT_VERSION", "tutor-v1")
+    monkeypatch.setenv("PROMPT_VERSION", "tutor-v2")
 
 
 def hint(**kw):
