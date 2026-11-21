@@ -64,7 +64,7 @@ class _PathScreenState extends State<PathScreen> {
           child: FilledButton.icon(
             style: FilledButton.styleFrom(minimumSize: Size(120, 44)),
             onPressed: () => context.go('/survey'),
-            icon: Icon(Icons.route),
+            icon: Icon(Icons.map),
             label: Text('Start the survey'),
           ),
         ),
@@ -95,7 +95,7 @@ class _PathScreenState extends State<PathScreen> {
             Text(
               [
                 if (d['knowledge_score'] != null) 'Quick check: ${d['knowledge_score']} of 5',
-                if (d['goal'] != null) 'Goal: ${'${d['goal']}'.replaceAll('_', ' ')}',
+                if (d['goal'] != null) 'Goal topic: ${d['goal'] is Map ? (d['goal'] as Map)['title'] : '${d['goal']}'.replaceAll('_', ' ')}',
               ].join(' · '),
               style: TextStyle(color: kMuted),
             ),
