@@ -136,7 +136,7 @@ class _TimeMachineScreenState extends State<TimeMachineScreen> {
           if (stayedCalm)
             Panel(color: kWarnSoft, border: Color(0xFFFDB022), child: Text('Badge earned: Stayed calm in a crash')),
           SizedBox(height: 12),
-          FilledButton(onPressed: () => context.go('/result'), child: Text('See my result')),
+          FilledButton(onPressed: () => context.go('/wheel'), child: Text('Back to the wheel')),
           TextButton(onPressed: run, child: Text('Replay')),
         ],
       ]),

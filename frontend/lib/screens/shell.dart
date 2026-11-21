@@ -10,7 +10,6 @@ class AppShell extends StatelessWidget {
 
   static const tabs = [
     ('/wheel', Icons.donut_large_outlined, Icons.donut_large, 'Explore'),
-    ('/skills', Icons.school_outlined, Icons.school, 'Skills'),
     ('/league', Icons.leaderboard_outlined, Icons.leaderboard, 'League'),
     ('/tutor', Icons.auto_awesome_outlined, Icons.auto_awesome, 'Tutor'),
     ('/progress', Icons.emoji_events_outlined, Icons.emoji_events, 'Progress'),

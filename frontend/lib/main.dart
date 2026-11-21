@@ -8,10 +8,7 @@ import 'package:provider/provider.dart';
 import 'data/app_state.dart';
 import 'screens/onboarding_screen.dart';
 import 'screens/wheel_screen.dart';
-import 'screens/tree_screen.dart';
-import 'screens/mission_screen.dart';
 import 'screens/time_machine_screen.dart';
-import 'screens/result_screen.dart';
 import 'screens/placement_screen.dart';
 import 'screens/progress_screen.dart';
 import 'screens/shell.dart';
@@ -21,13 +18,17 @@ import 'screens/signin_screen.dart';
 import 'screens/skills_screen.dart';
 import 'screens/skill_screen.dart';
 import 'screens/task_screen.dart';
-import 'widgets/common.dart' show appDark;
+import 'widgets/common.dart' show appDark, BadgeWatcher;
 
 void main() {
   runApp(ChangeNotifierProvider(create: (_) => AppState()..load(), child: FinanceQuestApp()));
 }
 
+/// Root navigator, so the badge pop-up can open from anywhere.
+final rootNavigatorKey = GlobalKey<NavigatorState>();
+
 final _router = GoRouter(
+  navigatorKey: rootNavigatorKey,
   initialLocation: '/',
   routes: [
     GoRoute(path: '/', builder: (_, __) => OnboardingScreen()),
@@ -37,21 +38,15 @@ final _router = GoRouter(
       builder: (context, state, child) => AppShell(location: state.uri.path, child: child),
       routes: [
         GoRoute(path: '/wheel', builder: (_, __) => WheelScreen()),
-        GoRoute(path: '/skills', builder: (_, __) => SkillsScreen()),
         GoRoute(path: '/tutor', builder: (_, __) => TutorScreen()),
         GoRoute(path: '/progress', builder: (_, __) => ProgressScreen()),
         GoRoute(path: '/league', builder: (_, __) => LeagueScreen()),
       ],
     ),
-    GoRoute(path: '/slice/:key', builder: (_, s) => TreeScreen(sliceKey: s.pathParameters['key']!)),
-    GoRoute(
-      path: '/mission/:key/:node',
-      builder: (_, s) => MissionScreen(sliceKey: s.pathParameters['key']!, nodeId: s.pathParameters['node']!),
-    ),
+    GoRoute(path: '/skills', builder: (_, __) => SkillsScreen()),
     GoRoute(path: '/skill/:id', builder: (_, s) => SkillScreen(nodeId: s.pathParameters['id']!)),
     GoRoute(path: '/skill-run', builder: (_, s) => TaskRunScreen(run: s.extra as TaskRun)),
     GoRoute(path: '/time-machine', builder: (_, __) => TimeMachineScreen()),
-    GoRoute(path: '/result', builder: (_, __) => ResultScreen()),
   ],
 );
 
@@ -126,7 +121,10 @@ class FinanceQuestApp extends StatelessWidget {
           data: mq.copyWith(textScaler: TextScaler.linear(scale.clamp(1.0, 2.0))),
           child: Center(
             // Phone-width column on desktop browsers, full width on phones.
-            child: ConstrainedBox(constraints: BoxConstraints(maxWidth: 480), child: child),
+            child: ConstrainedBox(
+              constraints: BoxConstraints(maxWidth: 480),
+              child: BadgeWatcher(navigatorKey: rootNavigatorKey, child: child ?? SizedBox()),
+            ),
           ),
         );
       },

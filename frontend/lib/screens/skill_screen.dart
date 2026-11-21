@@ -8,6 +8,7 @@ import '../data/app_state.dart';
 import '../widgets/common.dart';
 import 'skills_screen.dart' show ErrorPanel, panelName;
 import 'task_screen.dart';
+import 'steps_screen.dart';
 
 class SkillScreen extends StatefulWidget {
   final String nodeId;
@@ -18,11 +19,28 @@ class SkillScreen extends StatefulWidget {
 
 class _SkillScreenState extends State<SkillScreen> {
   late Future<Map<String, dynamic>> future;
+  Map<String, dynamic>? stepsTask; // draft "build your plan" block task, if this skill has one
 
   @override
   void initState() {
     super.initState();
     future = _load();
+    loadStepsTask(widget.nodeId).then((t) {
+      if (mounted) setState(() => stepsTask = t);
+    });
+  }
+
+  Future<void> _plan() async {
+    if (stepsTask == null) return;
+    await Navigator.of(context).push(MaterialPageRoute(builder: (_) => StepsScreen(task: stepsTask!)));
+  }
+
+  /// The mission: the questions, then the chart task, then "build your plan".
+  Future<void> _startMission(String title, List<String> ids) async {
+    if (ids.isNotEmpty) await context.push('/skill-run', extra: TaskRun(title: title, taskIds: ids));
+    if (!mounted) return;
+    await _plan();
+    _reload();
   }
 
   Future<Map<String, dynamic>> _load() {
@@ -55,7 +73,7 @@ class _SkillScreenState extends State<SkillScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Skill ${widget.nodeId}')),
+      appBar: AppBar(title: Text('Mission')),
       body: FutureBuilder<Map<String, dynamic>>(
         future: future,
         builder: (context, snap) {
@@ -74,6 +92,12 @@ class _SkillScreenState extends State<SkillScreen> {
             Text(title, style: TextStyle(fontSize: 26, fontWeight: FontWeight.w800, height: 1.2)),
             SizedBox(height: 16),
             _StatusPanel(status: st, hasMedium: medium.isNotEmpty),
+            SizedBox(height: 14),
+            FilledButton.icon(
+              icon: Icon(st['done'] == true ? Icons.replay : Icons.play_arrow_rounded),
+              label: Text(st['done'] == true ? 'Play again' : (st['items_answered'] as num? ?? 0) > 0 ? 'Continue mission' : 'Start mission'),
+              onPressed: () => _startMission(title, [for (final i in items) i['id'] as String, for (final t in medium) t['id'] as String]),
+            ),
             if (cards.isNotEmpty) ...[
               SizedBox(height: 24),
               Text('Learn', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
@@ -96,6 +120,14 @@ class _SkillScreenState extends State<SkillScreen> {
                 title: 'Day X: what happened next?',
                 subtitle: _firstLine(t['brief'] as String),
                 onTap: () => _run(TaskRun(title: 'Chart task', taskIds: [t['id'] as String])),
+              ),
+            SizedBox(height: 16),
+            if (stepsTask != null)
+              _ActionTile(
+                icon: Icons.extension_rounded,
+                title: 'Build your plan',
+                subtitle: 'Snap the right steps together, in order.',
+                onTap: _plan,
               ),
             SizedBox(height: 16),
             Text('Skip ahead', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
