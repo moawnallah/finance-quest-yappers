@@ -33,6 +33,7 @@ class WheelScreen extends StatefulWidget {
 class _WheelScreenState extends State<WheelScreen> {
   static const headerH = 92.0;
   bool _headerVisible = true;
+  bool _kyleAway = false; // Kyle steps aside while the roadmap is scrolled sideways
   Timer? _showAgain;
   DateTime _quietUntil = DateTime.now().add(Duration(milliseconds: 900));
   String? _shownPanel;
@@ -78,6 +79,7 @@ class _WheelScreenState extends State<WheelScreen> {
       // A new topic: show its header and ignore the relayout that follows.
       _shownPanel = s.selectedPanel;
       _headerVisible = true;
+      _kyleAway = false; // a new topic's roadmap starts unscrolled
       _showAgain?.cancel();
       _quietUntil = DateTime.now().add(Duration(milliseconds: 700));
     }
@@ -198,9 +200,9 @@ extension on _WheelScreenState {
       ),
       Expanded(
         child: LayoutBuilder(builder: (context, rc) {
-          // Kyle stands in the roadmap's corner; the roadmap keeps clear of him.
-          // Kyle takes at most ~22% of the width, so the roadmap fits without sideways scrolling.
-          final kyle = math.min((rc.maxHeight * 0.44).clamp(150.0, 340.0), rc.maxWidth * 0.22 / 0.95);
+          // Kyle stands big in the roadmap's corner. The roadmap fits beside him when it can; when it
+          // is wider, it scrolls under his corner and Kyle shrinks away until it is scrolled back.
+          final kyle = (rc.maxHeight * 0.44).clamp(160.0, 340.0);
           final showKyle = rc.maxHeight >= 380 && rc.maxWidth >= 560;
           final kyleW = showKyle ? kyle * 0.95 + 32 : 0.0;
           return Stack(children: [
@@ -210,10 +212,19 @@ extension on _WheelScreenState {
               SizedBox(height: _WheelScreenState.headerH),
               Expanded(
                 child: Stack(children: [
-                  Positioned(left: 0, top: 0, bottom: 0, right: kyleW, child: s.skillsIn(panel).isEmpty
+                  Positioned.fill(child: s.skillsIn(panel).isEmpty
                     ? Center(child: SingleChildScrollView(scrollDirection: Axis.horizontal, child: _Tree(key: ValueKey(panel), panel: panel, horizontal: true)))
-                    : LayoutBuilder(builder: (context, tc) => SingleChildScrollView(child: SingleChildScrollView(
+                    : LayoutBuilder(builder: (context, tc) => NotificationListener<ScrollNotification>(
+                  onNotification: (n) {
+                    if (n.metrics.axis == Axis.horizontal) {
+                      final away = n.metrics.pixels > 16;
+                      if (away != _kyleAway) setState(() => _kyleAway = away);
+                    }
+                    return false;
+                  },
+                  child: SingleChildScrollView(child: SingleChildScrollView(
                   scrollDirection: Axis.horizontal,
+                  padding: EdgeInsets.only(right: kyleW), // the end of the roadmap can scroll out from behind Kyle
                   child: ConstrainedBox(
                     constraints: BoxConstraints(minWidth: tc.maxWidth),
                     child: AnimatedSwitcher(
@@ -227,22 +238,40 @@ extension on _WheelScreenState {
                       child: Align(
                         key: ValueKey(panel),
                         alignment: Alignment.centerLeft,
-                        child: _Tree(panel: panel, horizontal: true, height: tc.maxHeight - 16, width: tc.maxWidth),
+                        child: _Tree(panel: panel, horizontal: true, height: tc.maxHeight - 16, width: tc.maxWidth - kyleW),
                       ),
                     ),
                   ),
-                )))),
+                ))))),
                   // Coming-later topics of this panel, in their own colour.
                   // Kyle points the way, sized to the window.
                   if (showKyle)
                     Positioned(
                       right: 16,
                       bottom: 8,
-                      child: KyleCallout(
+                      child: IgnorePointer(
+                        ignoring: _kyleAway,
+                        child: AnimatedSlide(
+                          offset: _kyleAway ? Offset(0.75, 0.15) : Offset.zero,
+                          duration: Duration(milliseconds: 320),
+                          curve: Curves.easeOutCubic,
+                          child: AnimatedScale(
+                            scale: _kyleAway ? 0.45 : 1,
+                            alignment: Alignment.bottomRight,
+                            duration: Duration(milliseconds: 320),
+                            curve: Curves.easeOutCubic,
+                            child: AnimatedOpacity(
+                              opacity: _kyleAway ? 0.0 : 1,
+                              duration: Duration(milliseconds: 260),
+                              child: KyleCallout(
                           size: kyle,
                           onTap: () => GoRouter.of(context).push('/tutor'),
                           text: s.skillsIn(panel).isEmpty ? 'These missions are coming later. Tap one to see where it fits.' : 'Tap a glowing mission to start, or tap me to ask a question.',
                         ),
+                            ),
+                          ),
+                        ),
+                      ),
                     ),
                 ]),
               ),
