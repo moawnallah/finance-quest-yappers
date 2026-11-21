@@ -1,7 +1,7 @@
 """The parts of a medium task (docs/task_engines.md, "Medium engine"), one registry per part.
 
     STIMULI[kind]    what the user sees            implemented: chart
-    RESPONSES[kind]  what the user gives           implemented: direction
+    RESPONSES[kind]  what the user gives           implemented: direction, choice
     TRUTHS[kind]     where the correct value is    implemented: none (day X), outcome
     reasons          weighted boxes, same for every task
 
@@ -223,7 +223,43 @@ class DirectionResponse:
         return 1.0 if value == truth else 0.0
 
 
-RESPONSES = {"direction": DirectionResponse()}
+class ChoiceResponse:
+    """One option from a list, e.g. a decision on day X. Scored 1 / 0 when a truth exists;
+    day X tasks have truth none, so the choice is recorded and only the reasons are graded.
+
+    kind: choice
+    options:
+      - {id: deposit, text: "A 12-month deposit, renewed each year"}
+      - {id: indexed, text: "..."}
+    """
+
+    def validate(self, spec: dict, r: Report):
+        options = spec.get("options")
+        if not isinstance(options, list) or len(options) < 2:
+            r.error("choice.options must list at least 2 options")
+            return
+        ids = [o.get("id") if isinstance(o, dict) else None for o in options]
+        if len(set(ids)) != len(ids) or not all(isinstance(i, str) and ID_RE.match(i) for i in ids):
+            r.error("choice.options: ids must be unique lowercase ids")
+        for o in options:
+            if not isinstance(o, dict) or not is_text(o.get("text")):
+                r.error(f"choice.options: option {o.get('id') if isinstance(o, dict) else o!r} needs text")
+
+    def public(self, spec: dict, ctx: dict) -> dict:
+        return {"kind": "choice", "options": [{"id": o["id"], "text": o["text"]} for o in spec["options"]]}
+
+    def outcome(self, spec: dict, ctx: dict, r: Report) -> dict | None:
+        return None  # what happened is shown by the stimulus reveal (e.g. the chart after the cutoff)
+
+    def check(self, spec: dict, value) -> str | None:
+        ids = [o["id"] for o in spec["options"]]
+        return None if value in ids else f"response must be one of {ids}"
+
+    def score(self, spec: dict, value, truth) -> float:
+        return 1.0 if value == truth else 0.0
+
+
+RESPONSES = {"direction": DirectionResponse(), "choice": ChoiceResponse()}
 
 
 # ---------------------------------------------------------------- truths

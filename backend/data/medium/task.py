@@ -109,6 +109,9 @@ def validate(task: dict, store: SeriesStore, today: dt.date | None = None,
         return r
     visible = {"brief": task["brief"]}
     visible.update({f"reasons.{b['id']}": b["text"] for b in task["reasons"]["boxes"]})
+    for o in response.get("options", []):
+        if isinstance(o, dict):
+            visible[f"response.{o.get('id')}"] = o.get("text")
     # Boxes with negative weight may be hindsight on purpose, so they skip the hindsight check.
     hindsight_ok = {f"reasons.{b['id']}" for b in task["reasons"]["boxes"] if b["weight"] < 0}
     # A task may also list fields where such a word states a fact known on day X, for example a
