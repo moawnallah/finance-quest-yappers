@@ -123,7 +123,8 @@ class _LeagueScreenState extends State<LeagueScreen> {
           ),
         ),
         Padding(
-          padding: EdgeInsets.fromLTRB(12, 4, 12, 12),
+          // Room on the right for the round tutor button, so it never covers "Next page".
+          padding: EdgeInsets.fromLTRB(12, 4, 88, 12),
           child: Row(children: [
             IconButton(tooltip: 'Previous page', onPressed: _page > 0 ? () => _go(_page - 1) : null, icon: Icon(Icons.chevron_left)),
             Expanded(

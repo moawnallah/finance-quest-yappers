@@ -131,6 +131,17 @@ class _WelcomeState extends State<_Welcome> {
       final a = _create ? await s.api.register(email, _password.text) : await s.api.login(email, _password.text);
       s.useAccount(a);
       _password.clear();
+      // Returning learners who already sent the starting survey go straight to the app.
+      if (!_create) {
+        try {
+          final path = await s.api.path(s.profile.name);
+          if (path['survey_done'] == true) {
+            s.surveyAt = DateTime.now();
+            if (mounted) GoRouter.of(context).go('/wheel');
+            return;
+          }
+        } catch (_) {}
+      }
       widget.onStart();
     } on ApiException catch (e) {
       setState(() => _error = e.message);
