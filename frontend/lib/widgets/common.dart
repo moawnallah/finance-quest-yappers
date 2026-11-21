@@ -54,7 +54,12 @@ Color riskColor(int risk) => [
 
 /// Web on a wide screen (desktop browser): use the whole window. Phones and
 /// narrow windows keep the phone layout.
-bool isWideWeb(BuildContext context) => kIsWeb && MediaQuery.sizeOf(context).width >= 900;
+bool isWideWeb(BuildContext context) {
+  // Wide layout (wheel on the left, tabs in the top bar): large windows, and
+  // any landscape screen at least 560 px wide (phones turned sideways).
+  final size = MediaQuery.sizeOf(context);
+  return size.width >= 900 || (size.width > size.height && size.width >= 560);
+}
 
 /// Centres a page in a readable column on wide web; no change on phones.
 class PageWidth extends StatelessWidget {
