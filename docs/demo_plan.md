@@ -40,7 +40,7 @@ told.
 
 | Step | Node | Content | Status |
 |---|---|---|---|
-| 1 | Survey | 12 answers (docs/onboarding_router.md) | spec done; router not in code |
+| 1 | Survey | 12 answers (docs/onboarding_router.md) | router in code with tests (2026-11-21); survey screen and API wiring left |
 | 2 | F1 | 2-item test-out (prerequisite of S1) | items to write |
 | 3 | S1 Emergency fund | 4 cards; easy items; medium: a persona's 24-month balance, estimate the buffer in months; hard (if S1 is chosen) | cards draft; rest to do |
 | 4 | I1 Risk as a spread | 3 cards; easy; medium: histogram of yearly returns, estimate losing years and the worst year | cards draft |
@@ -67,7 +67,7 @@ Each has an owner and a "done when" check.
 | # | When | Milestone | Owner | Done when |
 |---|---|---|---|---|
 | M1 | Sat 10:00 | **Content for 8 nodes.** Cards reviewed; 3-4 easy items per node, each with `check: true` where it feeds a test-out; test-out items for F1, F2, F3, S4 | Claude drafts, Mateusz reviews (+ second AI check) | Every card and item has a reviewer; `kb.ingest` accepts them |
-| M2 | Sat 12:00 | **Router in code** (`backend/ml/router`): survey scoring as in EB525, ability, mastery, needs, priority, path, test-outs, `reco_events` | Mateusz | The two demo personas get exactly the paths above, in tests |
+| M2 | Sat 12:00 | **Router in code** (`backend/ml/router`): survey scoring as in EB525, ability, mastery, needs, priority, path, challenges, `reco_events`. **Done 2026-11-21**; left: `POST /onboarding` in the API and the survey screen | Mateusz (code), Mohamed (API), Michał (screen) | The two demo personas get exactly the paths above, in tests |
 | M3 | Sat 14:00 | **Medium tasks on real data** for I1, I2, I5, P4. Engine kinds needed beyond chart + direction: `number` response with `calculator` truth (I1, I5, P1), `choice` response (I2) | Yurii (engine and data), Mateusz (task text) | `python -m medium.build --strict` passes with no synthetic series on the demo paths |
 | M4 | Sat 18:00 | **One hard task** in the block engine, on the shared simulation core `sim/`. **S1 "Ania's buffer rule" engine and content done 2026-11-21** (docs/hard_engine.md); the Blockly screen is left | Mateusz (engine), Michał (screen) | Reference program accepted, known-bad rejected, score shown with a histogram that includes baseline bots |
 | M5 | Sat 18:00 | **Tutor on a real model** at Mo's machine | Mateusz, Mohamed | `python -m eval.run --set model_choice`: at least 18 of 20 pass the checks, about 10 s per answer; the red-team run has been read |
@@ -85,7 +85,9 @@ Each has an owner and a "done when" check.
   - test-outs.
 - **Checked** in a scratch simulation and on 5 hand-written personas
   (RESEARCH.md; docs/onboarding_router.md).
-- **Not in the repo:** no code, no tests, no `reco_events`. That is M2.
+- **In code since 2026-11-21:** `backend/ml/router`, with the four
+  personas as tests and `reco_events` rows. Left: the API route and the
+  survey screen.
 - **Licence:** EB525 is under the European Commission reuse notice
   (Decision 2011/833/EU), so we may reuse the questions and the Polish
   tables with credit and without distorting the meaning.

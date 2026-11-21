@@ -1,0 +1,35 @@
+# The skills tree in machine-readable form (docs/skills_tree.md). The router reads this file;
+# tests check that node files in backend/content/nodes agree with it (title, after).
+# level: E | M | H (the node's overall difficulty); after: prerequisite nodes.
+F1: {title: "Budget and cash flow", panel: FOUNDATIONS, level: E, after: []}
+F2: {title: "Inflation and real value", panel: FOUNDATIONS, level: E, after: [F1]}
+F3: {title: "Compound interest", panel: FOUNDATIONS, level: E, after: [F1]}
+F4: {title: "Cost of credit", panel: FOUNDATIONS, level: M, after: [F3]}
+S1: {title: "Emergency fund", panel: SAFETY, level: E, after: [F1]}
+S2: {title: "Pay off debt or invest", panel: SAFETY, level: M, after: [S1, F4]}
+S3: {title: "Insurance", panel: SAFETY, level: M, after: [S1]}
+S4: {title: "Goals and horizon", panel: SAFETY, level: M, after: [F3]}
+I1: {title: "Risk as a spread of outcomes", panel: INSTRUMENTS, level: E, after: [F3]}
+I2: {title: "Deposits and retail bonds", panel: INSTRUMENTS, level: M, after: [I1, F2]}
+I3: {title: "Bond prices and rates", panel: INSTRUMENTS, level: H, after: [I2]}
+I4: {title: "One stock vs an index", panel: INSTRUMENTS, level: M, after: [I1]}
+I5: {title: "Funds, ETFs, costs, the KID", panel: INSTRUMENTS, level: M, after: [I4, F3]}
+I6: {title: "Currency risk", panel: INSTRUMENTS, level: M, after: [I1]}
+I7: {title: "Leverage: options, futures, CFDs", panel: INSTRUMENTS, level: H, after: [I4]}
+P1: {title: "Diversification and correlation", panel: PORTFOLIO, level: M, after: [I2, I4]}
+P2: {title: "Allocation by horizon", panel: PORTFOLIO, level: M, after: [P1, S4]}
+P3: {title: "Lump sum vs instalments", panel: PORTFOLIO, level: M, after: [I1]}
+P4: {title: "Rebalancing and discipline in a crash", panel: PORTFOLIO, level: H, after: [P2]}
+P5: {title: "When correlations break, 2022", panel: PORTFOLIO, level: H, after: [P1, I3]}
+D1: {title: "What moves a price", panel: DECISIONS, level: E, after: [I4]}
+D2: {title: "Reading a company's numbers", panel: DECISIONS, level: M, after: [D1]}
+D3: {title: "Macro news: CPI, rate decisions", panel: DECISIONS, level: M, after: [F2]}
+D4: {title: "Biases: FOMO, loss aversion, overconfidence", panel: DECISIONS, level: E, after: []}
+D5: {title: "Decision vs outcome", panel: DECISIONS, level: M, after: [I1, D4]}
+L1: {title: "PPK, IKE, IKZE", panel: LONG_HORIZON, level: M, after: [F3, S4]}
+L2: {title: "Mortgage: fixed or variable", panel: LONG_HORIZON, level: H, after: [F4, I1]}
+L3: {title: "Withdrawals, sequence risk", panel: LONG_HORIZON, level: H, after: [P2]}
+O1: {title: "Scams and the KNF register", panel: PROTECTION, level: E, after: []}
+O2: {title: "Information and advisers", panel: PROTECTION, level: E, after: []}
+O3: {title: "Tax on investment income", panel: PROTECTION, level: M, after: [I5]}
+O4: {title: "Guarantees and complaints", panel: PROTECTION, level: E, after: [O2]}

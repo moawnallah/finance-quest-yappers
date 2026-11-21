@@ -8,8 +8,9 @@ Readers:
 Purpose: how the first survey places a user in the skills tree
 ([skills_tree.md](skills_tree.md)) with few questions.
 
-Status: draft on branch `skills-tree`, 2026-11-20. A reference run on
-personas is reported below. The parameters are to tune.
+Status: implemented 2026-11-21 in `backend/ml/router` (section
+"Implementation"), with the personas as tests. The parameters are to tune
+once real first-item outcomes exist.
 
 ## Idea in one paragraph
 
@@ -249,6 +250,77 @@ user.
 - **Now:** log the full survey, the router output (m, n, priority, path,
   reasons) and every first attempt from day one. The attempt record in
   task_engines.md already has the fields. Add `router_version`.
+
+## Implementation (backend/ml/router, 2026-11-21)
+
+```python
+from router import route
+result = route(survey, user_pseudo_id)
+```
+
+| Part | File | Notes |
+|---|---|---|
+| Tree | `router/tree.yaml` | The 32 nodes with title, panel, level and prerequisites. The machine-readable copy of docs/skills_tree.md; a test checks that every node file in `backend/content/nodes` has the same `title` and `after` |
+| Benchmarks | `router/benchmarks.yaml` | EB525 vol. C Poland, weighted: items correct, knowledge bands, self-rating "high", buffer under one month; all ages and by age group |
+| Algorithm | `router/router.py` | Ability (EAP, flat prior), mastery, needs, priority, path, challenges, goal, `reco_events` rows |
+
+**Survey input:**
+
+```json
+{"age_band": "25-39", "decisions": "me", "goal": "first_investment", "horizon": "over_10",
+ "self_rating": "quite_high", "buffer": "under_1", "products": ["life_insurance"],
+ "knowledge": {"Q2": {"correct": true, "confidence": 3}, "Q4": {"correct": null}}}
+```
+
+- `age_band`: `under_18`, `18-24`, `25-39`, `40-54`, `55+`.
+- `decisions`: `me`, `with_someone`, `someone_else`.
+- `goal`: `buffer`, `first_investment`, `retirement`, `home`, `other`.
+- `horizon`: `under_3`, `3_10`, `over_10`.
+- `self_rating`: `very_high`, `quite_high`, `average`, `quite_low`,
+  `very_low`, `dont_know`.
+- `buffer` (Q8): `none`, `under_1`, `1_3`, `3_6`, `6_plus`, or `null` if
+  skipped.
+- `products` (Q9): any of `pension`, `life_insurance`,
+  `non_life_insurance`, `mortgage`, `consumer_loan`, `investment`,
+  `crypto`, `none`; or `null` if skipped.
+- `knowledge`: Q2-Q6 with `correct` (`true`, `false`, or `null` for "don't
+  know", which counts as wrong) and `confidence` 1-5.
+
+**Output:**
+- `knowledge_score` (0-5) and `band`;
+- `benchmarks` (you vs Poland vs your age group);
+- `theta`, `mastery`, `needs`, `priority` per node;
+- `path`: up to 5 nodes, each with a reason;
+- `challenges`: nodes offered as a 2-question challenge, each with a reason;
+- `goal`: a higher-priority node, often H, shown as the path's goal;
+- `events`: `reco_events` rows, one `path_issued`, then one per path node
+  and one per challenge;
+- `router_version`.
+
+**Mastery thresholds for prerequisites:**
+- m < 0.4: the prerequisite becomes a full node on the path;
+- 0.4-0.6: it becomes a challenge;
+- 0.6 or more: it is met;
+- 0.8 or more: the node is "probably known", and if it is an ancestor of
+  the path it is offered as a challenge.
+
+**Persona results (tests in `backend/ml/tests/test_router.py`):**
+
+| Persona | Path | Challenges | Goal |
+|---|---|---|---|
+| Young adult (demo): under a month of savings, wants to invest; Q2, Q3 right | S1 → I1 → I2 → I4 → P1 | F1 | - |
+| Investor (demo): holds funds, 5 of 5 | I4 → I5 | F1, F3, I1 (+ other known ancestors) | - |
+| Student: consumer loan, someone else manages money, 1 of 5 | F4 → S2 | F3, S1 | - |
+| Pre-retiree: goal retirement, 3 of 5 | O1 → L1 | S4 | L3 |
+
+**First run vs hand-written expectations.** Two personas differed from
+the hand calculation. The hand calculation had used the dropped age and
+education prior. With the flat prior:
+- the young adult's θ is −0.18, so F2 is met;
+- the student's F3 (m 0.43) is a challenge.
+
+The expectations were revised, with the reason in the test file. The demo
+paths did not change.
 
 ## Shadow decision model: BASAL (experiment, planned 2026-11-21)
 

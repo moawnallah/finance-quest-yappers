@@ -216,6 +216,10 @@ flowchart TD
 O1, O2 and D4 are open from the start. [E]/[M]/[H] is the node's overall
 difficulty. Every node has easy, medium and hard items.
 
+The machine-readable copy of this tree is `backend/ml/router/tree.yaml`.
+The router uses it, and a test keeps the node files in
+`backend/content/nodes` consistent with it. Change both together.
+
 ---
 
 ## 1. FOUNDATIONS
