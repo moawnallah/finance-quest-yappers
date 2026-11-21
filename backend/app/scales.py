@@ -38,14 +38,15 @@ def level_of(scales: int) -> str:
 
 
 def leagues(db: Session, me: User, per_level: int = 50) -> dict:
-    """Real learners per level, ranked by Scales. Admin accounts and learners with no Scales are left out."""
+    """Registered learners per level, ranked by Scales. Guests (no account), admin accounts and learners
+    with no Scales are left out; a guest still sees their own row, so they know where they would stand."""
     rows = db.execute(select(User.id, User.display_name, func.sum(ScaleEvent.amount).label("n"))
                       .join(ScaleEvent, ScaleEvent.user_id == User.id)
-                      .where(User.is_admin.is_(False))
+                      .where(User.is_admin.is_(False), User.email.is_not(None))
                       .group_by(User.id, User.display_name)).all()
     totals = {uid: (name, int(n)) for uid, name, n in rows}
     if me.id not in totals and not me.is_admin:
-        totals[me.id] = (me.display_name, 0)
+        totals[me.id] = (me.display_name, total(db, me.id))
     out = []
     for i, (name, floor) in enumerate(LEVELS):
         ceiling = LEVELS[i + 1][1] if i + 1 < len(LEVELS) else None

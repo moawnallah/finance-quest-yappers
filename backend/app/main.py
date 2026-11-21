@@ -347,7 +347,10 @@ LEAGUE_SIZE = 10
 @app.get("/leaderboard", response_model=s.LeaderboardOut)
 def leaderboard(user: User = Depends(current_user), db: Session = Depends(get_db)):
     """Small weekly leagues: users are grouped in sign-up order into leagues of 10, ranked by XP earned this week."""
-    ids = list(db.scalars(select(User.id).order_by(User.created_at, User.id)))
+    # Weekly leagues of 10 registered learners (guests are not ranked; a guest sees their own row).
+    ids = list(db.scalars(select(User.id).where(User.email.is_not(None)).order_by(User.created_at, User.id)))
+    if user.id not in ids:
+        ids.append(user.id)
     league = ids.index(user.id) // LEAGUE_SIZE
     members = db.scalars(select(User).where(User.id.in_(ids[league * LEAGUE_SIZE:(league + 1) * LEAGUE_SIZE]))).all()
     since = progress.week_start()

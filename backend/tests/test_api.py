@@ -99,7 +99,9 @@ def test_badges_awarded(client, auth):
 
 
 def test_leaderboard(client, auth):
-    other = client.post("/auth/session", json={"display_name": "Marek"}).json()
+    client.post("/auth/session", json={"display_name": "A guest"})  # guests are never ranked
+    other = client.post("/auth/register", json={"email": "marek@example.com", "password": "a-long-password",
+                                                "display_name": "Marek"}).json()
     board = client.get("/leaderboard", headers=auth).json()
     assert board["league"] == 1 and len(board["entries"]) == 2
     first = board["entries"][0]
@@ -235,3 +237,17 @@ def test_hard_task_code_panel_run_and_submit(client):
     sub = client.post(f"/tasks/{tid}/attempts", headers=h, json={"response": {"code": code}}).json()
     assert sub["accepted"] is True and 51 <= sub["points"] <= 100
     assert len(sub["reveal"]["result"]["optional"]) == panel["hidden_tests"] + 1
+
+
+def test_guests_are_not_ranked_in_leagues(client):
+    from app.engines import catalog
+    item = next(i for i in catalog().items.values() if i["kind"] == "single" and i["scored"])
+    g = {"Authorization": f"Bearer {client.post('/auth/session', json={'display_name': 'Some guest'}).json()['token']}"}
+    client.post(f"/tasks/{item['id']}/attempts", headers=g, json={"response": item["reveal"]["answer"]})
+    a = client.post("/auth/register", json={"email": "ranked@example.com", "password": "a-long-password", "display_name": "Ranked"}).json()
+    h = {"Authorization": f"Bearer {a['token']}"}
+    client.post(f"/tasks/{item['id']}/attempts", headers=h, json={"response": item["reveal"]["answer"]})
+    names = lambda hdr: [e["display_name"] for l in client.get("/leagues", headers=hdr).json()["levels"] for e in l["entries"]]
+    assert "Ranked" in names(h) and "Some guest" not in names(h)
+    seen_by_guest = names(g)
+    assert "Some guest" in seen_by_guest and seen_by_guest.count("Some guest") == 1  # only their own row
