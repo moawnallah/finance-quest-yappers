@@ -57,7 +57,11 @@ def basal_path(result: dict, decisions: list[dict], live: set[str] | None = None
             break
         if p["node"] not in {d["node"] for d in chosen}:
             chosen.append({"node": p["node"], "start_p": None})
-    chosen.sort(key=lambda d: (_depth(d["node"], t), -(d.get("start_p") or 0)))
+    # The router's first step answers the goal and leads (an emergency fund is step 1 for a buffer
+    # goal, as in the router); the rest follow prerequisites first, then by start_p.
+    head = [d for d in chosen if d["node"] == first]
+    rest = sorted((d for d in chosen if d["node"] != first), key=lambda d: (_depth(d["node"], t), -(d.get("start_p") or 0)))
+    chosen = head + rest
     out = []
     for d in chosen:
         k = d["node"]
@@ -67,8 +71,32 @@ def basal_path(result: dict, decisions: list[dict], live: set[str] | None = None
     return out
 
 
+def ensure_playable(result: dict, live: set[str], decisions: list[dict] | None = None) -> dict:
+    """A path made only of planned (coming later) missions is a dead end: add the best playable one,
+    by BASAL's start_p when there are answers, else by the router's priority; prerequisites stay first."""
+    path = result["path"]
+    if not path or any(p["node"] in live for p in path):
+        return result
+    t = tree()
+    score = {d["node"]: d.get("start_p") or 0 for d in decisions or []}
+    pool = [k for k in result.get("priority", {}) if k in live and k in t and k not in {p["node"] for p in path}]
+    if not pool:
+        return result
+    best = max(pool, key=lambda k: (score.get(k, 0), result["priority"].get(k, 0)))
+    extra = {"node": best, "title": t[best]["title"], "reason": "Something you can start now while the rest is being written."}
+    rest = sorted(path[1:] + [extra], key=lambda p: _depth(p["node"], t))  # the goal step keeps its place
+    return {**result, "path": [path[0]] + rest}
+
+
 def decide(survey: dict, result: dict) -> tuple[dict, dict]:
     """Return (result with the chosen path, decision row). Never raises; the router is the fallback."""
+    from app.engines import catalog  # here, not at import time: app.engines loads the content
+    live = set(catalog().nodes)
+    result, row = _decide(survey, result, live)
+    return ensure_playable(result, live, row.get("decisions")), row
+
+
+def _decide(survey: dict, result: dict, live: set[str]) -> tuple[dict, dict]:
     row: dict = {"mode": mode(), "decided_by": "rules"}
     if row["mode"] != "primary":
         return result, row
@@ -94,8 +122,7 @@ def decide(survey: dict, result: dict) -> tuple[dict, dict]:
     if not answered or len(confident) / len(answered) < MIN_CONFIDENT_SHARE:
         row["fallback"] = "low_confidence"
         return result, row
-    from app.engines import catalog  # here, not at import time: app.engines loads the content
-    path = basal_path(result, decisions, set(catalog().nodes))
+    path = basal_path(result, decisions, live)
     if not path:
         row["fallback"] = "no_node_to_study"
         return result, row

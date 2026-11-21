@@ -304,7 +304,7 @@ def test_basal_decides_the_path_and_the_router_is_the_fallback(client, user, mon
     # first step; that step answers the learner's goal, so it stays.
     monkeypatch.setattr(shadow, "ask", lambda r, b: (answers({"F1": 0.7, "F3": 0.9, router_path[0]: 0.1}, 0.9), 80))
     got = [p["node"] for p in client.post("/onboarding", headers=user, json=YOUNG).json()["path"]]
-    assert set(got) == {"F1", "F3", router_path[0]} and got.index("F1") < got.index("F3") and got != router_path
+    assert got[0] == router_path[0] and set(got) == {"F1", "F3", router_path[0]} and got.index("F1") < got.index("F3")
 
     path_decider._cache.clear()  # unsure: the router decides
     monkeypatch.setattr(shadow, "ask", lambda r, b: (answers({"F1": 0.7, "F3": 0.9}, 0.4), 80))
@@ -328,4 +328,27 @@ def test_a_thin_basal_path_is_topped_up_from_the_router():
     result = {"path": [{"node": "S1", "title": "Emergency fund", "reason": "goal"}, {"node": "F1", "title": "x", "reason": "r"},
                        {"node": "I2", "title": "y", "reason": "r"}]}
     got = [p["node"] for p in basal_path(result, [{"node": "S1", "start_p": 0.9}])]
-    assert len(got) == 3 and set(got) == {"S1", "F1", "I2"} and got.index("F1") < got.index("S1")  # F1 is S1's prerequisite
+    assert len(got) == 3 and set(got) == {"S1", "F1", "I2"} and got[0] == "S1"  # the goal step leads, as in the router
+
+
+def test_a_path_of_only_planned_missions_gets_a_playable_one():
+    from app.path_decider import ensure_playable
+    result = {"path": [{"node": "F4", "title": "Cost of credit", "reason": "r"}, {"node": "L1", "title": "PPK", "reason": "r"}],
+              "priority": {"F4": 3, "L1": 2, "P2": 1.5, "S1": 1.0}}
+    got = [p["node"] for p in ensure_playable(result, {"P2", "S1"})["path"]]
+    assert "P2" in got and len(got) == 3
+    assert ensure_playable(result, {"F4"})["path"] == result["path"]  # already playable: unchanged
+
+
+def test_buffer_goal_keeps_emergency_fund_first_when_basal_decides(client, user, monkeypatch):
+    """Master prompt A1 holds in BASAL mode too: "An emergency buffer" puts Emergency fund at step 1."""
+    from app import path_decider
+    from router import shadow
+    monkeypatch.setenv("BASAL_URL", "http://basal.test")
+    monkeypatch.setenv("BASAL_MODE", "primary")
+    path_decider._cache.clear()
+    fake = {"answers": {f"start_{k}": {"noul": p, "confidence": 0.9} for k, p in {"F1": 0.9, "F3": 0.8, "S1": 0.6}.items()}}
+    monkeypatch.setattr(shadow, "ask", lambda r, b: (fake, 50))
+    survey = {**YOUNG, "goal": "buffer", "buffer": "none"}
+    path = client.post("/onboarding", headers=user, json=survey).json()["path"]
+    assert path[0]["node"] == "S1"
