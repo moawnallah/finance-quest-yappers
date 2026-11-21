@@ -711,22 +711,6 @@ class KyleCallout extends StatelessWidget {
   }
 }
 
-class _DashedRRect extends CustomPainter {
-  final Color color;
-  _DashedRRect(this.color);
-  @override
-  void paint(Canvas canvas, Size size) {
-    final path = Path()..addRRect(RRect.fromRectAndRadius(Offset.zero & size, Radius.circular(size.width * 0.3)));
-    final paint = Paint()..color = color..style = PaintingStyle.stroke..strokeWidth = 2;
-    for (final m in path.computeMetrics()) {
-      for (double d = 0; d < m.length; d += 9) {
-        canvas.drawPath(m.extractPath(d, math.min(d + 5, m.length)), paint);
-      }
-    }
-  }
-  @override
-  bool shouldRepaint(covariant _DashedRRect old) => old.color != color;
-}
 
 /// Rounded white card used for panels.
 class Panel extends StatelessWidget {

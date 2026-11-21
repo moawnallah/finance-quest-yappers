@@ -122,8 +122,6 @@ class _WheelScreenState extends State<WheelScreen> {
                         child: _Tree(key: ValueKey(panel), panel: panel),
                       ),
                     ),
-                    if (s.skillsIn(panel).isNotEmpty && s.plannedIn(panel).isNotEmpty)
-                      Padding(padding: EdgeInsets.fromLTRB(16, 0, 16, 8), child: _PlannedStrip(panel: panel)),
                     Padding(
                       padding: EdgeInsets.fromLTRB(16, 0, 16, 6),
                       child: MascotPlaceholder(
@@ -233,8 +231,6 @@ extension on _WheelScreenState {
                   ),
                 )))),
                   // Coming-later topics of this panel, in their own colour.
-                  if (s.skillsIn(panel).isNotEmpty && s.plannedIn(panel).isNotEmpty)
-                    Positioned(left: 16, right: kyleW, bottom: 10, child: _PlannedStrip(panel: panel)),
                   // Kyle points the way, sized to the window.
                   if (showKyle)
                     Positioned(
@@ -366,9 +362,32 @@ class _Tree extends StatelessWidget {
     for (final k in ks) {
       rows.putIfAbsent(depth[k['id']]!, () => []).add(k);
     }
+    // Planned missions of this panel sit in the tree too, after the missions they build on.
+    final planned = s.plannedIn(panel);
+    final allIds = {...ids, for (final p in planned) p['id'] as String};
+    final pAfter = {for (final p in planned) p['id'] as String: [for (final a in (p['after'] as List? ?? [])) if (allIds.contains(a)) a as String]};
+    final pById = {for (final p in planned) p['id'] as String: p};
+    int pd(String id) => depth[id] ??= (pAfter[id] ?? []).isEmpty ? 0 : 1 + pAfter[id]!.map((a) => pById.containsKey(a) ? pd(a) : depth[a] ?? 0).fold(0, math.max);
+    for (final p in planned) {
+      rows.putIfAbsent(pd(p['id'] as String), () => []).add({...p, 'planned': true});
+    }
     final maxDepth = rows.keys.fold(0, math.max);
-    if (horizontal) return _horizontal(context, s, ks, rows, maxDepth, inPanel);
-    final h = pad * 2 + maxDepth * rowH + 70;
+    if (horizontal) return _horizontal(context, s, ks, rows, maxDepth, inPanel, planned, pAfter);
+    // Phones: planned missions get their own row just above the missions they follow, so a row
+    // never holds more nodes than fit side by side.
+    final split = <int, List<Map<String, dynamic>>>{};
+    for (final MapEntry(key: r, value: list) in rows.entries) {
+      final live = [for (final k in list) if (k['planned'] != true) k];
+      final plan = [for (final k in list) if (k['planned'] == true) k];
+      if (live.isNotEmpty) split[r * 2] = live;
+      if (plan.isNotEmpty) split[r * 2 + 1] = plan;
+    }
+    final keys = split.keys.toList()..sort();
+    rows
+      ..clear()
+      ..addAll({for (final (i, k) in keys.indexed) i: split[k]!});
+    final rowCount = rows.keys.fold(0, math.max);
+    final h = pad * 2 + rowCount * rowH + 70;
 
     return LayoutBuilder(builder: (context, c) {
       final w = c.maxWidth;
@@ -383,6 +402,7 @@ class _Tree extends StatelessWidget {
         width: w,
         height: h,
         child: Stack(clipBehavior: Clip.none, children: [
+          Positioned.fill(child: CustomPaint(painter: _PlannedEdges(pos, pAfter, Offset(w / 2, h + 8), false))),
           Positioned.fill(child: CustomPaint(painter: _PathsPainter(ks, pos, s, inPanel, Offset(w / 2, h + 8)))),
           for (final k in ks)
             Positioned(
@@ -391,13 +411,15 @@ class _Tree extends StatelessWidget {
               width: 112,
               child: _MissionNode(skill: k),
             ),
+          for (final p in planned)
+            Positioned(left: pos[p['id']]!.dx - 65, top: pos[p['id']]!.dy - 30, width: 130, child: _PlannedNode(node: p)),
         ]),
       );
     });
   }
 
   Widget _horizontal(BuildContext context, AppState s, List<Map<String, dynamic>> ks, Map<int, List<Map<String, dynamic>>> rows,
-      int maxDepth, List<String> Function(Map<String, dynamic>) inPanel) {
+      int maxDepth, List<String> Function(Map<String, dynamic>) inPanel, List<Map<String, dynamic>> planned, Map<String, List<String>> pAfter) {
     const colW = 210.0, lead = 120.0;
     // At least ~125 px per mission in a column, so short (landscape) screens never overlap; the area scrolls.
     final perCol = rows.values.map((l) => l.length).fold(1, math.max);
@@ -414,9 +436,12 @@ class _Tree extends StatelessWidget {
       width: w,
       height: h,
       child: Stack(clipBehavior: Clip.none, children: [
+        Positioned.fill(child: CustomPaint(painter: _PlannedEdges(pos, pAfter, Offset(-12, h / 2), true))),
         Positioned.fill(child: CustomPaint(painter: _PathsPainter(ks, pos, s, inPanel, Offset(-12, h / 2), horizontal: true))),
         for (final k in ks)
           Positioned(left: pos[k['id']]!.dx - 56, top: pos[k['id']]!.dy - 30, width: 112, child: _MissionNode(skill: k)),
+        for (final p in planned)
+          Positioned(left: pos[p['id']]!.dx - 65, top: pos[p['id']]!.dy - 30, width: 130, child: _PlannedNode(node: p)),
       ]),
     );
   }
@@ -956,7 +981,7 @@ void showDailyQuestion(BuildContext context) {
 class _Planned extends StatelessWidget {
   final String panel;
   final bool horizontal;
-  _Planned({super.key, required this.panel, this.horizontal = false});
+  _Planned({required this.panel, this.horizontal = false});
 
   @override
   Widget build(BuildContext context) {
@@ -1011,25 +1036,45 @@ class _PlannedNode extends StatelessWidget {
       );
 }
 
-/// Planned missions of a panel that already has some: small chips in the coming-later colour.
-class _PlannedStrip extends StatelessWidget {
-  final String panel;
-  _PlannedStrip({required this.panel});
+/// Dashed paths in the coming-later colour into planned missions, from the missions they build on
+/// (or from the start of the roadmap when they build on nothing in this panel).
+class _PlannedEdges extends CustomPainter {
+  final Map<String, Offset> pos;
+  final Map<String, List<String>> after;
+  final Offset start;
+  final bool horizontal;
+  _PlannedEdges(this.pos, this.after, this.start, this.horizontal);
 
   @override
-  Widget build(BuildContext context) {
-    final s = context.watch<AppState>();
-    return Wrap(spacing: 6, runSpacing: 6, crossAxisAlignment: WrapCrossAlignment.center, children: [
-      Text('Coming later:', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: kWarnText)),
-      for (final n in s.plannedIn(panel))
-        ActionChip(
-          avatar: Icon(Icons.hourglass_top_rounded, size: 16, color: kWarnIcon),
-          label: Text('${n['title']}', style: TextStyle(fontSize: 12, color: kInk)),
-          backgroundColor: kWarnSoft,
-          side: BorderSide(color: kWarnBorder),
-          visualDensity: VisualDensity.compact,
-          onPressed: () => GoRouter.of(context).push('/coming-later?node=${n['id']}'),
-        ),
-    ]);
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = kWarnBorder
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 4
+      ..strokeCap = StrokeCap.round;
+    for (final MapEntry(key: id, value: from) in after.entries) {
+      final to = pos[id];
+      if (to == null) continue;
+      for (final a in from.isEmpty ? [null] : from) {
+        final f = a == null ? start : pos[a];
+        if (f == null) continue;
+        final path = Path()..moveTo(f.dx, f.dy);
+        if (horizontal) {
+          final mx = (f.dx + to.dx) / 2;
+          path.cubicTo(mx, f.dy, mx, to.dy, to.dx, to.dy);
+        } else {
+          final my = (f.dy + to.dy) / 2;
+          path.cubicTo(f.dx, my, to.dx, my, to.dx, to.dy);
+        }
+        for (final m in path.computeMetrics()) {
+          for (double d = 0; d < m.length; d += 14) {
+            canvas.drawPath(m.extractPath(d, math.min(d + 8, m.length)), paint);
+          }
+        }
+      }
+    }
   }
+
+  @override
+  bool shouldRepaint(_PlannedEdges old) => old.pos != pos || old.after != after;
 }
