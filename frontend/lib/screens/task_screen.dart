@@ -44,6 +44,7 @@ class _TaskRunScreenState extends State<TaskRunScreen> {
   final List<double> scores = [];
   Map<String, dynamic>? lastStatus;
   bool completedNode = false;
+  int earned = 0; // Scales earned in this run
 
   @override
   void initState() {
@@ -87,10 +88,15 @@ class _TaskRunScreenState extends State<TaskRunScreen> {
       );
       final score = (r['score'] as num?)?.toDouble();
       if (score != null) scores.add(score);
-      if (score == 1) s.addXp(Rewards.correctAnswer);
+      if (score == 1) {
+        s.addXp(Rewards.correctAnswer);
+        earned += Rewards.correctAnswer;
+      }
       if (r['node_completed'] == true) {
         completedNode = true;
         s.addXp(Rewards.missionDone);
+        earned += Rewards.missionDone;
+        s.earn('first_steps');
       }
       setState(() {
         result = r;
@@ -123,7 +129,18 @@ class _TaskRunScreenState extends State<TaskRunScreen> {
         title: Text(widget.run.title),
         leading: IconButton(icon: Icon(Icons.close), tooltip: 'Close', onPressed: () => context.pop()),
       ),
-      body: FutureBuilder<Map<String, dynamic>>(
+      body: AnimatedSwitcher(
+        duration: Duration(milliseconds: 320),
+        switchInCurve: Curves.easeOutCubic,
+        switchOutCurve: Curves.easeInCubic,
+        transitionBuilder: (child, a) {
+          final incoming = child.key == ValueKey(index);
+          return SlideTransition(
+            position: Tween(begin: Offset(incoming ? 1 : -1, 0), end: Offset.zero).animate(a),
+            child: child,
+          );
+        },
+        child: KeyedSubtree(key: ValueKey(index), child: FutureBuilder<Map<String, dynamic>>(
         future: current,
         builder: (context, snap) {
           if (snap.connectionState != ConnectionState.done) return Center(child: CircularProgressIndicator());
@@ -162,6 +179,7 @@ class _TaskRunScreenState extends State<TaskRunScreen> {
               ),
           ]);
         },
+      )),
       ),
     );
   }
@@ -346,6 +364,20 @@ class _TaskRunScreenState extends State<TaskRunScreen> {
         SizedBox(height: 8),
         if (avg != null)
           Text('Average score: ${(avg * 100).round()}%', textAlign: TextAlign.center, style: TextStyle(fontSize: 16, color: kBody)),
+        if (earned > 0) ...[
+          SizedBox(height: 12),
+          Center(
+            child: Container(
+              padding: EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+              decoration: BoxDecoration(color: kPrimarySoft, borderRadius: BorderRadius.circular(999)),
+              child: Row(mainAxisSize: MainAxisSize.min, children: [
+                ScaleIcon(size: 20),
+                SizedBox(width: 6),
+                Text('+$earned Scales', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: kPrimaryText)),
+              ]),
+            ),
+          ),
+        ],
         if (st != null && !completedNode) ...[
           SizedBox(height: 16),
           Panel(
