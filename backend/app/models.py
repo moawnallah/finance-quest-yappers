@@ -203,6 +203,7 @@ class Attempt(Base):
     duration_ms: Mapped[int | None] = mapped_column(Integer, nullable=True)       # engine time to score
     __table_args__ = (
         Index("ix_attempts_user_node", "user_id", "node_id"),
+        Index("ix_attempts_submitted_at", "submitted_at"),
         CheckConstraint("level IN ('easy','medium','hard')", name="ck_attempt_level"),
         CheckConstraint("context IN ('practice','prerequisite','test_out')", name="ck_attempt_context"),
         CheckConstraint("confidence IS NULL OR confidence BETWEEN 1 AND 5", name="ck_attempt_confidence"),
@@ -288,6 +289,7 @@ class Feedback(Base):
     __table_args__ = (
         CheckConstraint("status IN ('new','triaged','fixed','wont_fix')", name="ck_feedback_status"),
         CheckConstraint("rating IS NULL OR rating BETWEEN 1 AND 5", name="ck_feedback_rating"),
+        Index("ix_feedback_status", "status"),
     )
 
 
