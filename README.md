@@ -10,7 +10,7 @@ real-data decisions, scored on their reasons, with a guarded AI tutor.**
 Flutter (Dart) for web, iOS and Android from one codebase; Python 3 and FastAPI backend; SQLAlchemy and Alembic
 (SQLite, PostgreSQL-ready); deployed on Oracle Virtual Server behind Cloudflare (HTTPS, DDoS protection, CDN); content
 as YAML compiled to JSON by our own engines; Blockly-style block programs for hard tasks; AI tutor on Gemma
-(gemma4:12b) served by Ollama locally on our machine; BASAL as a shadow decision model for the router; pytest and
+(gemma4:12b) served by Ollama locally on our machine; BASAL as the decision model that picks the path, with the rule router as fallback; pytest and
 flutter test.
 
 ## The problem
@@ -57,13 +57,19 @@ Implemented and working today (crococash.xyz):
 - two hard block tasks: "Ania's first two years" and "Marek over ten years", scored on obligatory and optional
   scenarios with a result histogram;
 - progress with a confidence-vs-score chart, Scales points, daily goal and leagues;
-- accounts, an admin panel (overview, item quality, tutor calls, recommender events) and a study mode for user tests;
+- **the adviser view for the bank**, the centre of the admin panel. It shows which learners are ready for a
+  conversation with an adviser and why: for example "ready to talk about index funds: finished I5 and P1, goal
+  retirement, horizon over 10 years, confidence 4/5". Signals appear only for learners who consented to share their
+  profile (others are counted only in totals), and they name only types of instruments, never a product, since
+  the adviser does the suitability check. Charts show how many learners are ready and which product types they
+  already hold, by age group, with sorting and filters by topic and age;
+- the rest of the admin panel: logs, statistics, errors and user data (learners, question quality, confidence,
+  alerts, tutor calls, recommender and event logs, export), plus a study mode for user tests;
 - the AI tutor endpoint with a fallback to stored explanations.
 
 In progress / not yet validated:
 - the full tutor pipeline on Gemma is wired behind a flag and has been tested with fake model calls; the real-model
   red-team run is pending;
-- BASAL runs only in shadow mode and does not change any user's path;
 - more missions (32 on the tree) are visible but locked.
 
 ## Behind the build
@@ -73,14 +79,17 @@ In progress / not yet validated:
   hidden chart, a missing source or an unlicensed series.
 - **Human expert in the loop.** Every card, question, Day-X task, explanation and block-task scenario records its
   author, its reviewer and its sources. The build checks each fact's source against a source register. A task with no
-  named reviewer cannot go live.
+  named reviewer is marked as not live. In production it would not be shown; in this prototype the tasks still
+  waiting for review are shown so the demo paths can be played end to end.
 - **Three engines, one contract.** Easy, medium and hard engines share one interface (validate, compile, question
   view, score, reveal view) and a small shared kernel; none imports another. The question view never contains answers,
   truth values or weights, so neither the browser nor the tutor model can leak them.
 - **Simulation core.** Hard tasks run a household and market simulation month by month; user block programs are
   parsed and interpreted, never executed as code.
 - **Router.** A Rasch ability estimate from five items, Polish Eurobarometer benchmarks and explicit need rules; every
-  path step carries a reason. BASAL can run beside it in shadow mode for comparison.
+  path step carries a reason. BASAL is the primary decision model: for each candidate mission it says whether the
+  learner should study it now and how sure it is; the router's path is used whenever BASAL is unsure or unreachable.
+  Nothing personal is sent to BASAL.
 - **Tutor.** One model call per message, context fetched by the backend, output checked in code (no answer leak, no
   product advice, no invented numbers) before it is shown.
 - **Data.** Downloaded once by hand from licensed public sources (GUS, NBP, OECD, Eurostat, Damodaran), one CSV per
@@ -113,7 +122,7 @@ In progress / not yet validated:
 ## Results and next steps
 
 **Achieved:** a deployed app with two complete demo paths, real-data Day-X tasks, block-based hard tasks, an
-explainable router and a guarded tutor.
+explainable router, a guarded tutor and a consent-based adviser view for the bank.
 
 **Validated:** automated tests across the engines, router, tutor checks and the API; router persona tests for the two
 demo learners; a security check of the block-code endpoints with hostile inputs; content checked against its sources.
@@ -125,7 +134,7 @@ hindsight.
 yet passed its red-team run on the real model; router parameters are not tuned on real outcomes.
 
 **Next:** more missions and real-data tasks, the red-team run and tutor caching, tuning the router on first-question
-outcomes, a consent-based adviser view for the bank, and a pilot with real learners.
+outcomes, connecting the adviser view to the bank's own adviser tools, and a pilot with real learners.
 
 ## Repository
 
