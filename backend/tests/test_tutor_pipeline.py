@@ -83,6 +83,8 @@ def test_advice_question_gets_the_template_without_a_model_call(client, user, mo
     r = client.post("/tutor", headers=user, json={"mode": "explain_concept", "message": "Which ETF should I buy?"})
     assert calls == [] and r.json()["text"].startswith("I can't tell you which product to buy")
     assert _last_event(client)["intent"] == "advice_request"
+    assert r.json()["template"] == "advice_request"
+    assert _last_event(client)["model"] == "template"  # no model ran, so the event must not name one
 
 
 def test_an_invented_number_falls_back_and_is_logged(client, user, model):

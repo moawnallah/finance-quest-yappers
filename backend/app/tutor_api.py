@@ -216,7 +216,7 @@ def tutor(body: TutorIn, user=Depends(viewer), db: Session = Depends(get_db)):
         return {"text": hit.text, "mermaid": hit.mermaid, "fallback": False, "cached": True}
     if tutor_pipeline.handles(body.mode):  # TUTOR_PIPELINE=true: server-side context and output checks
         out = tutor_pipeline.run(body, user, db, call_model, TUTOR_MODEL, visual, clean_mermaid)
-        if not out.get("fallback"):
+        if not out.get("fallback") and not out.get("template"):  # templates are instant, keep them out of the cache
             cache_put(db, key, body, out.get("text") or "", out.get("mermaid"))
             db.commit()
         return out
@@ -315,7 +315,7 @@ def tutor_stream(body: TutorIn, user=Depends(viewer)):
         def checked():
             with SessionLocal() as db:
                 out = tutor_pipeline.run(body, user, db, call_model, TUTOR_MODEL, visual, clean_mermaid)
-                if not out.get("fallback"):
+                if not out.get("fallback") and not out.get("template"):
                     cache_put(db, key, body, out.get("text") or "", out.get("mermaid"))
                     db.commit()
             if not out["fallback"]:
