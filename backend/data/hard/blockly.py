@@ -18,7 +18,7 @@ from .dsl import BLOCKS, VARS
 PREFIX = "fq_"
 ROOT = PREFIX + "every_month"
 COLOURS = {"root": 45, "statement": 210, "condition": 120, "number": 230, "action": 290}
-ACTIONS = ("save_to_buffer", "invest", "pay_debt", "sell_investments")
+ACTIONS = ("save_to_buffer", "invest", "pay_debt", "sell_investments", "rebalance")
 
 # Our slot name -> (Blockly arg type, Blockly name, type check)
 SLOTS = {
@@ -33,7 +33,8 @@ SLOTS = {
     "var": {"name": ("field_dropdown", "NAME", None)},
     "math": {"left": ("input_value", "LEFT", "Number"), "op": ("field_dropdown", "OP", None),
              "right": ("input_value", "RIGHT", "Number")},
-    **{a: {"amount": ("input_value", "AMOUNT", "Number")} for a in ACTIONS},
+    **{a: {"amount": ("input_value", "AMOUNT", "Number")} for a in ACTIONS if a != "rebalance"},
+    "rebalance": {},
 }
 
 
@@ -134,6 +135,8 @@ def _statements(block: dict | None, where: str) -> list[dict]:
             out.append({"block": "if_else", "if": _value(_child(block, "IF"), w + ".if"),
                         "then": _statements(_child(block, "THEN"), w + ".then"),
                         "else": _statements(_child(block, "ELSE"), w + ".else")})
+        elif b == "rebalance":
+            out.append({"block": "rebalance"})
         elif b in ACTIONS:
             out.append({"block": b, "amount": _value(_child(block, "AMOUNT"), w + ".amount")})
         else:
@@ -178,6 +181,8 @@ def _to_chain(nodes: list[dict]) -> dict | None:
                 chain = _to_chain(n.get(key, []))
                 if chain:
                     blk["inputs"][name] = {"block": chain}
+        elif n["block"] == "rebalance":
+            blk = {"type": PREFIX + "rebalance"}
         else:
             blk = {"type": PREFIX + n["block"], "inputs": {"AMOUNT": {"block": _to_value(n["amount"])}}}
         if head:

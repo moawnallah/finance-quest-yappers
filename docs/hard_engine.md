@@ -10,10 +10,12 @@ Purpose: how the hard engine works, what a task file contains, what goes
 in and out, and how Blockly connects.
 
 Status: 2026-11-21.
-- Engine, Blockly side, two-dimensional score and the S1 task are done.
+- Engine, Blockly side, two-dimensional score and two tasks are done: S1
+  "Ania's buffer rule" (young adult) and P4 "Rebalancing in a crash"
+  (investor).
 - The household half of the simulation runs the tasks. The market half
   ([market_sim.md](market_sim.md)) supplies the fund's returns.
-- 110 tests in `backend/data`.
+- 113 tests in `backend/data`.
 - One submission takes about 150 ms.
 
 Architecture: [architecture.md](architecture.md). Spec it implements:
@@ -43,8 +45,8 @@ Architecture: [architecture.md](architecture.md). Spec it implements:
    - `without_card_debt`: in how many futures the rule never needed the
      card;
    - `growth_index`: the median net worth at the end, as an index where
-     the reference solution = 100. This is the **second axis**, decided
-     2026-11-21.
+     the reference solution = 100, with one decimal. This is the **second
+     axis**, decided 2026-11-21.
 
 **Why two axes.** One number rewarded the biggest buffer. Two axes show the
 trade-off, like LeetCode's separate runtime and memory percentiles.
@@ -55,6 +57,22 @@ trade-off, like LeetCode's separate runtime and memory percentiles.
 | Bot: 6-month buffer, then invest | 100 | 98 | 182 / 200 |
 | Bot: 2-month buffer, then invest | 91 | 97 | 90 / 200 |
 | Bot: invest everything | not accepted | - | - |
+
+| P4 program | Resilience | Growth |
+|---|---|---|
+| Reference: rebalance when more than 5 points off 60/40 | 100 | 100.0 |
+| Bot: rebalance every month | 100 | 100.2 |
+| Bot: rebalance once a year | 93 | 100.0 |
+| Bot: rebalance when 10 points off | not accepted: leaves the 50-70% band in the rally test | - |
+| Bot: never rebalance | not accepted | - |
+| Known bad: panic seller (sells everything after a 15% fall) | not accepted: the crash test | - |
+
+**Finding (P4):** how often you rebalance barely changes growth. With a
+0.1% cost, the bots differ by 0.2 index points. The lesson of P4 is
+discipline: stay in the band and do not sell in a crash.
+P4's optional
+tests therefore score whether the mix stayed in the 50-70% band
+(`optional_metric: band`), not card use.
 
 The bots and the reference are scored at build time and shipped in the
 question, so the scatter (resilience × growth) and the histograms have
@@ -68,17 +86,20 @@ tests fail.
    Essential costs (times the price level) and any shock are paid. This
    gives the month's `cash`.
 2. **The policy runs.** Its actions are:
-   - `sell_investments`;
+   - `sell_investments` (pro rata over the holdings);
    - `pay_debt`;
    - `save_to_buffer`;
-   - `invest`.
+   - `invest` (in the `target` mix, or the single fund);
+   - `rebalance` (back to `target`; `trade_fee` on both legs of the money
+     moved).
 
    Each action is capped by what is available.
 3. **Shortfalls.** Still short: the buffer pays, then the credit card.
 4. **Leftovers.** Cash left over is spent: what you do not assign, you
    spend.
-5. **Interest and returns.** Buffer interest, card interest and the fund's
-   return from the market path are applied.
+5. **Interest and returns.** Buffer interest, card interest and each
+   asset's return from the market path are applied. Investments are
+   holdings per asset: one fund in S1, shares and bonds in P4.
 
 ## The block language (hard/dsl.py)
 
@@ -93,7 +114,7 @@ tests fail.
 
 | Kind | Blocks |
 |---|---|
-| Statements | `if_else`, actions `save_to_buffer`, `invest`, `pay_debt`, `sell_investments` (each with an `amount`) |
+| Statements | `if_else`, actions `save_to_buffer`, `invest`, `pay_debt`, `sell_investments` (each with an `amount`), `rebalance` (no input) |
 | Conditions | `compare` (`<`, `>`), `and`, `or`, `not` |
 | Numbers | `number`, `var`, `math` (`*`, `+`, `-`, `min` = "but at most") |
 
@@ -106,7 +127,9 @@ tests fail.
 - `card_debt`;
 - `invested`;
 - `employed`;
-- `month`.
+- `month`;
+- for multi-asset tasks: `shares_weight`, `drift`, `drawdown`,
+  `months_since_rebalance`.
 
 Each has an English label in `VARS`.
 
@@ -135,19 +158,21 @@ engine accepts both formats.
 
 ## A task file (`hard:` in the node file)
 
-See `backend/content/nodes/S1.yaml`.
+See `backend/content/nodes/S1.yaml` (one fund) and `P4.yaml` (shares and
+bonds).
 
 | Field | Meaning |
 |---|---|
 | `id`, `level`, `content_version`, `author`, `reviewer`, `sources` | As for the other engines; `id` is `<node>.h<n>` |
 | `brief`, `editorial` | Text before and after |
 | `palette`, `vars`, `limits`, `starter_program` | What the user can build with |
-| `household` | `income`, `costs`, `buffer`, optional `invested`, `card_debt`, `buffer_rate`, `card_rate` |
-| `world` | `months`; `market`: any kind from market_sim.md, plus `asset` (which asset is the household's fund) |
+| `household` | `income`, `costs`, `buffer`, `invested` (a number for one fund, or `{asset: value}`), `target` (`{asset: weight}`), `trade_fee`, `card_debt`, `buffer_rate`, `card_rate` |
+| `world` | `months`; `market`: any kind from market_sim.md. With `asset`, only that asset is the fund (S1); without it, every asset on the path is held (P4) |
 | `assumptions` | Shown on screen; every illustrative number is listed |
-| `obligatory` | `{name, override, check}`. `check` is `no_card_debt`, `contributed_at_least` or `net_worth_at_least` |
+| `obligatory` | `{name, override, check}`. `check` is `no_card_debt`, `contributed_at_least`, `net_worth_at_least`, `weight_between: {asset, low, high}` or `weight_at_least: {asset, value}` (weights at every month end) |
 | `optional` | `{name, probability, override}` |
-| `override` | `job_loss: [[month, length]]`, `shocks: {month: amount}`, `price_rise: [month, +x]` |
+| `optional_metric` | Default: card use. `{band: {asset, low, high}}` scores whether the mix stayed in the band |
+| `override` | `job_loss: [[month, length]]`, `shocks: {month: amount}`, `price_rise: [month, +x]`, `returns: {asset: {month: r}}`, `trend: [{asset, from, to, r}]` |
 | `futures` | `n`, `months` (may be longer than the tests), `seed`, `job_loss_per_month`, `job_loss_months: [min, max]`, `shock_per_month`, `shock_amount: [min, max]` |
 | `reference_program`, `known_bad_programs` (with `fails`), `baseline_bots` | The golden checks, and the points for the scatter and histograms |
 
@@ -181,8 +206,11 @@ A test checks this.
 
 ## Not yet
 
-- **A multi-asset household** and a `rebalance` action, for P4
-  (market_sim.md, "Next for P4").
+- **P4 on real data:** switch `world.market` to `replay` (2020) or
+  `bootstrap` once the monthly series are in the store (market_sim.md).
+- **Tax on realised gains** (19%) when rebalancing outside IKE/IKZE. This
+  would make frequent rebalancing visibly costly; today P4 assumes an
+  IKE-like account.
 - **A JSON schema** for `output/hard_tasks.json`.
 - **API wiring** (Mohamed):
   - `Catalog.find` loads `hard.load_records`;

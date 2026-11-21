@@ -22,8 +22,8 @@ from sim import KINDS, Household, Scenario, build_path, metrics, run
 from .blockly import ConversionError, block_definitions, program_to_workspace, toolbox, workspace_to_program
 from .dsl import BLOCKS, VARS, check, compile_program
 
-CHECKS = {"no_card_debt", "contributed_at_least", "net_worth_at_least"}
-OVERRIDES = {"job_loss", "shocks", "price_rise"}
+CHECKS = {"no_card_debt", "contributed_at_least", "net_worth_at_least", "weight_between", "weight_at_least"}
+OVERRIDES = {"job_loss", "shocks", "price_rise", "returns", "trend"}
 PASS_SCORE, MAX_SCORE = 51, 100
 
 
@@ -41,25 +41,45 @@ def _store() -> SeriesStore:
     return SeriesStore(SERIES / "series.csv", SERIES / "catalog.yaml")
 
 
-def _returns(world: dict, seed_offset: int = 0) -> list[float]:
-    """The household's fund returns: one asset of a market path (docs/market_sim.md).
-    world.market: {kind: synthetic | replay | bootstrap | fictional, asset: <key>, ...}."""
+def _returns(world: dict, seed_offset: int = 0) -> dict[str, list[float]]:
+    """Per-asset returns from a market path (docs/market_sim.md). world.market: {kind: synthetic |
+    replay | bootstrap | fictional, ...}. With `asset` set, only that asset is the household's fund."""
     m = dict(world.get("market") or {"kind": "synthetic"})
     path = build_path(m, world["months"], seed_offset, _store())
-    asset = m.get("asset") or path.assets[0]
-    return path.returns[asset]
+    if m.get("asset"):
+        return {m["asset"]: path.returns[m["asset"]]}
+    return path.returns
 
 
-def _scenario(world: dict, override: dict | None, returns: list[float]) -> Scenario:
+def _scenario(world: dict, override: dict | None, returns: dict[str, list[float]]) -> Scenario:
+    """A test's scenario: the base market path with the test's overrides applied.
+    returns: {asset: {month: r}} sets single months; trend: [{asset, from, to, r}] sets a range."""
     o = override or {}
+    returns = {a: list(r) for a, r in returns.items()}
+    for asset, by_month in (o.get("returns") or {}).items():
+        for month, r in by_month.items():
+            returns[asset][int(month) - 1] = float(r)
+    for t in o.get("trend") or []:
+        for month in range(int(t["from"]), int(t["to"]) + 1):
+            returns[t["asset"]][month - 1] = float(t["r"])
     return Scenario(months=world["months"], returns=returns,
                     job_loss=[tuple(x) for x in o.get("job_loss", [])],
                     shocks={int(k): float(v) for k, v in (o.get("shocks") or {}).items()},
                     price_rise=tuple(o["price_rise"]) if o.get("price_rise") else None)
 
 
-def _passes(check_spec: dict, m: dict) -> bool:
+def _weights(rows: list[dict], asset: str) -> list[float]:
+    return [r["weights"].get(asset, 0.0) for r in rows]
+
+
+def _passes(check_spec: dict, m: dict, rows: list[dict]) -> bool:
     ok = True
+    if "weight_between" in check_spec:
+        c = check_spec["weight_between"]
+        ok &= all(c["low"] <= w <= c["high"] for w in _weights(rows, c["asset"]))
+    if "weight_at_least" in check_spec:
+        c = check_spec["weight_at_least"]
+        ok &= all(w >= c["value"] for w in _weights(rows, c["asset"]))
     if check_spec.get("no_card_debt"):
         ok &= m["card_debt_max"] == 0
     if "contributed_at_least" in check_spec:
@@ -69,8 +89,13 @@ def _passes(check_spec: dict, m: dict) -> bool:
     return bool(ok)
 
 
-def _optional_metric(m: dict) -> float:
-    """1 = never needed the card; 0.5 = needed it but repaid it by the end; 0 = still in debt."""
+def _optional_metric(m: dict, rows: list[dict], spec: dict | None) -> float:
+    """Default (card): 1 = never needed the card; 0.5 = needed it but repaid it; 0 = still in debt.
+    band: 1 = the mix stayed in the band every month; 0.5 = out of it for at most 2 months; 0 = more."""
+    if spec and "band" in spec:
+        b = spec["band"]
+        out = sum(1 for w in _weights(rows, b["asset"]) if not b["low"] <= w <= b["high"])
+        return 1.0 if out == 0 else 0.5 if out <= 2 else 0.0
     if m["card_debt_max"] == 0:
         return 1.0
     return 0.5 if m["card_debt_end"] == 0 else 0.0
@@ -104,7 +129,7 @@ def evaluate(meta: dict, program: dict, with_futures: bool = True) -> dict:
     obligatory, story = [], None
     for t in meta["obligatory"]:
         rows = run(_household(meta), policy, _scenario(meta["world"], t.get("override"), base_returns))
-        passed = _passes(t["check"], metrics(rows))
+        passed = _passes(t["check"], metrics(rows), rows)
         obligatory.append({"name": t["name"], "passed": passed})
         if not passed and story is None:
             story = {"test": t["name"], "months": rows}
@@ -113,7 +138,8 @@ def evaluate(meta: dict, program: dict, with_futures: bool = True) -> dict:
     if accepted:
         for t in meta["optional"]:
             rows = run(_household(meta), policy, _scenario(meta["world"], t.get("override"), base_returns))
-            optional.append({"name": t["name"], "probability": t["probability"], "metric": _optional_metric(metrics(rows))})
+            optional.append({"name": t["name"], "probability": t["probability"],
+                             "metric": _optional_metric(metrics(rows), rows, meta.get("optional_metric"))})
         weight = sum(t["probability"] for t in optional)
         share = sum(t["probability"] * t["metric"] for t in optional) / weight if weight else 1.0
         score = round(PASS_SCORE + (MAX_SCORE - PASS_SCORE) * share)
@@ -124,7 +150,7 @@ def evaluate(meta: dict, program: dict, with_futures: bool = True) -> dict:
         med = result["futures"]["median_net_worth"]
         # Second axis (decided 2026-11-21): growth = median end net worth over the futures, as an
         # index where the reference solution = 100. Shown next to the 51-100 resilience points.
-        result["growth_index"] = round(100 * med / ref) if ref and med is not None else None
+        result["growth_index"] = round(100 * med / ref, 1) if ref and med is not None else None
     return result
 
 
@@ -209,7 +235,7 @@ def validate(task: dict, sources: dict) -> Report:
 
 def _meta(task: dict) -> dict:
     return {"household": task["household"], "world": task["world"], "obligatory": task["obligatory"],
-            "optional": task.get("optional") or [],
+            "optional": task.get("optional") or [], "optional_metric": task.get("optional_metric"),
             "futures": task.get("futures") or {"n": 0, "seed": 0, "job_loss_per_month": 0, "job_loss_months": [1, 1],
                                                 "shock_per_month": 0, "shock_amount": [0, 0]}}
 

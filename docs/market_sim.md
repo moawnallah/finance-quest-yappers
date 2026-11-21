@@ -84,14 +84,21 @@ illustrative".
 
 | Feature | Path | Portfolio | Scoring |
 |---|---|---|---|
-| Hard tasks (S1) | `world.market` in the task: any kind; the household fund uses `asset` | not yet (one fund in the household ledger) | 51-100 resilience and a growth index (docs/hard_engine.md) |
+| Hard tasks | `world.market` in the task: any kind. S1 uses one asset as its fund; P4 holds shares and bonds | the household ledger holds per-asset investments, with a target mix and a `rebalance` block (done 2026-11-21) | 51-100 resilience and a growth index (docs/hard_engine.md) |
 | **Time machine** | `replay` of an episode (2008, March 2020, 2022) with checkpoints | the user's choices at each checkpoint become `trades` or `target` | none; show the result next to "held" and "sold at the bottom" |
 | **Sandbox** | `fictional` with a shared seed per week | the user's portfolio | none, or a weekly challenge on the same seed. No money, prizes or exchangeable points |
-| P4 hard task (next) | `replay` and `bootstrap` | the rebalancing rule as a policy | the hard engine's tests |
+| P4 hard task | synthetic today; `replay` (2020) and `bootstrap` once the data is in | the rebalancing rule as a block program | the hard engine's tests |
 
-**Next for P4:** a `rebalance` action in the block language, and household
-holdings with more than one asset. This is the change to `sim/household`
-that is still open.
+**Switching P4 to real data** is one change in `P4.yaml`, once the series
+are in the store:
+
+```yaml
+world:
+  months: 36
+  market: {kind: bootstrap, series: {shares: oecd_pl_share_prices, bonds: pl_bond_index}, block: 12, seed: 2026112102}
+```
+
+The series ids are examples; they must match `catalog.yaml`.
 
 ## Data needed
 

@@ -2,6 +2,946 @@
   "schema_version": 1,
   "tasks": [
     {
+      "id": "p4.h1",
+      "node": "P4",
+      "level": "hard",
+      "content_version": 1,
+      "live": false,
+      "question": {
+        "brief": "Marek, 35, has 100,000 PLN invested: 60% in a broad share fund and 40% in a bond fund. He adds 1,000 PLN every month. Write his rule for the next 36 months. Two tests must pass: in a long rally his mix stays between 50% and 70% shares, and in a crash he never drops below 40% shares, so no panic selling. Rebalancing costs 0.1% of the money moved. Then we test your rule in other markets.",
+        "palette": [
+          {
+            "block": "if_else",
+            "type": "statement",
+            "text": "If {if} then {then} otherwise {else}"
+          },
+          {
+            "block": "compare",
+            "type": "condition",
+            "text": "{left} {op} {right}",
+            "ops": {
+              "<": "is less than",
+              ">": "is more than"
+            }
+          },
+          {
+            "block": "and",
+            "type": "condition",
+            "text": "{a} and {b}"
+          },
+          {
+            "block": "or",
+            "type": "condition",
+            "text": "{a} or {b}"
+          },
+          {
+            "block": "not",
+            "type": "condition",
+            "text": "not {a}"
+          },
+          {
+            "block": "math",
+            "type": "number",
+            "text": "{left} {op} {right}",
+            "ops": {
+              "*": "times",
+              "+": "plus",
+              "-": "minus",
+              "min": "but at most"
+            }
+          },
+          {
+            "block": "number",
+            "type": "number",
+            "text": "{value}"
+          },
+          {
+            "block": "invest",
+            "type": "statement",
+            "text": "Invest {amount} PLN in a broad share fund"
+          },
+          {
+            "block": "rebalance",
+            "type": "statement",
+            "text": "Rebalance back to my target mix"
+          },
+          {
+            "block": "sell_investments",
+            "type": "statement",
+            "text": "Sell {amount} PLN of my investments"
+          }
+        ],
+        "vars": [
+          {
+            "name": "cash",
+            "label": "money left this month"
+          },
+          {
+            "name": "shares_weight",
+            "label": "the share of shares in my investments (0 to 1)"
+          },
+          {
+            "name": "drift",
+            "label": "how far my mix is from its target (0 to 1)"
+          },
+          {
+            "name": "drawdown",
+            "label": "how far my investments are below their peak (0 to 1)"
+          },
+          {
+            "name": "months_since_rebalance",
+            "label": "months since I last rebalanced"
+          },
+          {
+            "name": "month",
+            "label": "the month number"
+          },
+          {
+            "name": "invested",
+            "label": "my investments"
+          }
+        ],
+        "limits": {
+          "max_blocks": 25,
+          "max_depth": 4
+        },
+        "starter_program": {
+          "every_month": [
+            {
+              "block": "invest",
+              "amount": {
+                "block": "var",
+                "name": "cash"
+              }
+            }
+          ]
+        },
+        "household": {
+          "income": 7000,
+          "costs": 6000,
+          "buffer": 36000,
+          "invested": {
+            "shares": 60000,
+            "bonds": 40000
+          },
+          "target": {
+            "shares": 0.6,
+            "bonds": 0.4
+          },
+          "trade_fee": 0.001,
+          "buffer_rate": 0.04,
+          "card_rate": 0.2
+        },
+        "months": 36,
+        "assumptions": [
+          "Fund returns are synthetic (shares about 0.6% a month on average, bonds about 0.3%, with ups and downs). Not a forecast; real history replaces them once the data is loaded.",
+          "New money is invested in the 60/40 target mix. Rebalancing moves money back to 60/40 and costs 0.1% of what is moved.",
+          "Marek has a 6-month buffer, so the tests are about his investments, not his budget.",
+          "The market scenarios and their likelihoods are illustrative, chosen for teaching.",
+          "After the tests, your rule also runs through 200 random 10-year futures: growth compared with the reference solution = 100."
+        ],
+        "obligatory": [
+          "A long rally: shares +2% a month for 36 months; keep shares between 50% and 70%",
+          "A crash: shares -15% in months 3 and 4, then a recovery; never below 40% shares"
+        ],
+        "optional_count": 6,
+        "bots": [
+          {
+            "name": "Reference solution",
+            "accepted": true,
+            "score": 100,
+            "growth_index": 100,
+            "reference": true
+          },
+          {
+            "name": "Never rebalances",
+            "accepted": false,
+            "score": null,
+            "growth_index": null
+          },
+          {
+            "name": "Rebalances every month",
+            "accepted": true,
+            "score": 100,
+            "growth_index": 100.2
+          },
+          {
+            "name": "Rebalances once a year",
+            "accepted": true,
+            "score": 93,
+            "growth_index": 100.0
+          },
+          {
+            "name": "Rebalances when 10 points off",
+            "accepted": false,
+            "score": null,
+            "growth_index": null
+          }
+        ],
+        "blockly": {
+          "blocks": [
+            {
+              "type": "fq_every_month",
+              "message0": "Every month %1",
+              "args0": [
+                {
+                  "type": "input_statement",
+                  "name": "DO"
+                }
+              ],
+              "colour": 45,
+              "deletable": false,
+              "tooltip": "Your rule runs once at the start of every month."
+            },
+            {
+              "type": "fq_if_else",
+              "message0": "If %1 then %2 otherwise %3",
+              "args0": [
+                {
+                  "type": "input_value",
+                  "name": "IF",
+                  "check": "Boolean"
+                },
+                {
+                  "type": "input_statement",
+                  "name": "THEN"
+                },
+                {
+                  "type": "input_statement",
+                  "name": "ELSE"
+                }
+              ],
+              "inputsInline": false,
+              "previousStatement": null,
+              "nextStatement": null,
+              "colour": 210
+            },
+            {
+              "type": "fq_compare",
+              "message0": "%1 %2 %3",
+              "args0": [
+                {
+                  "type": "input_value",
+                  "name": "LEFT",
+                  "check": "Number"
+                },
+                {
+                  "type": "field_dropdown",
+                  "name": "OP",
+                  "options": [
+                    [
+                      "is less than",
+                      "<"
+                    ],
+                    [
+                      "is more than",
+                      ">"
+                    ]
+                  ]
+                },
+                {
+                  "type": "input_value",
+                  "name": "RIGHT",
+                  "check": "Number"
+                }
+              ],
+              "inputsInline": true,
+              "output": "Boolean",
+              "colour": 120
+            },
+            {
+              "type": "fq_and",
+              "message0": "%1 and %2",
+              "args0": [
+                {
+                  "type": "input_value",
+                  "name": "A",
+                  "check": "Boolean"
+                },
+                {
+                  "type": "input_value",
+                  "name": "B",
+                  "check": "Boolean"
+                }
+              ],
+              "inputsInline": true,
+              "output": "Boolean",
+              "colour": 120
+            },
+            {
+              "type": "fq_or",
+              "message0": "%1 or %2",
+              "args0": [
+                {
+                  "type": "input_value",
+                  "name": "A",
+                  "check": "Boolean"
+                },
+                {
+                  "type": "input_value",
+                  "name": "B",
+                  "check": "Boolean"
+                }
+              ],
+              "inputsInline": true,
+              "output": "Boolean",
+              "colour": 120
+            },
+            {
+              "type": "fq_not",
+              "message0": "not %1",
+              "args0": [
+                {
+                  "type": "input_value",
+                  "name": "A",
+                  "check": "Boolean"
+                }
+              ],
+              "inputsInline": true,
+              "output": "Boolean",
+              "colour": 120
+            },
+            {
+              "type": "fq_math",
+              "message0": "%1 %2 %3",
+              "args0": [
+                {
+                  "type": "input_value",
+                  "name": "LEFT",
+                  "check": "Number"
+                },
+                {
+                  "type": "field_dropdown",
+                  "name": "OP",
+                  "options": [
+                    [
+                      "times",
+                      "*"
+                    ],
+                    [
+                      "plus",
+                      "+"
+                    ],
+                    [
+                      "minus",
+                      "-"
+                    ],
+                    [
+                      "but at most",
+                      "min"
+                    ]
+                  ]
+                },
+                {
+                  "type": "input_value",
+                  "name": "RIGHT",
+                  "check": "Number"
+                }
+              ],
+              "inputsInline": true,
+              "output": "Number",
+              "colour": 230
+            },
+            {
+              "type": "fq_number",
+              "message0": "%1",
+              "args0": [
+                {
+                  "type": "field_number",
+                  "name": "VALUE",
+                  "value": 0
+                }
+              ],
+              "inputsInline": true,
+              "output": "Number",
+              "colour": 230
+            },
+            {
+              "type": "fq_invest",
+              "message0": "Invest %1 PLN in a broad share fund",
+              "args0": [
+                {
+                  "type": "input_value",
+                  "name": "AMOUNT",
+                  "check": "Number"
+                }
+              ],
+              "inputsInline": true,
+              "previousStatement": null,
+              "nextStatement": null,
+              "colour": 290
+            },
+            {
+              "type": "fq_rebalance",
+              "message0": "Rebalance back to my target mix",
+              "args0": [],
+              "inputsInline": true,
+              "previousStatement": null,
+              "nextStatement": null,
+              "colour": 290
+            },
+            {
+              "type": "fq_sell_investments",
+              "message0": "Sell %1 PLN of my investments",
+              "args0": [
+                {
+                  "type": "input_value",
+                  "name": "AMOUNT",
+                  "check": "Number"
+                }
+              ],
+              "inputsInline": true,
+              "previousStatement": null,
+              "nextStatement": null,
+              "colour": 290
+            },
+            {
+              "type": "fq_var",
+              "message0": "%1",
+              "args0": [
+                {
+                  "type": "field_dropdown",
+                  "name": "NAME",
+                  "options": [
+                    [
+                      "money left this month",
+                      "cash"
+                    ],
+                    [
+                      "the share of shares in my investments (0 to 1)",
+                      "shares_weight"
+                    ],
+                    [
+                      "how far my mix is from its target (0 to 1)",
+                      "drift"
+                    ],
+                    [
+                      "how far my investments are below their peak (0 to 1)",
+                      "drawdown"
+                    ],
+                    [
+                      "months since I last rebalanced",
+                      "months_since_rebalance"
+                    ],
+                    [
+                      "the month number",
+                      "month"
+                    ],
+                    [
+                      "my investments",
+                      "invested"
+                    ]
+                  ]
+                }
+              ],
+              "inputsInline": true,
+              "output": "Number",
+              "colour": 230
+            }
+          ],
+          "toolbox": {
+            "kind": "categoryToolbox",
+            "contents": [
+              {
+                "kind": "category",
+                "name": "Rules",
+                "contents": [
+                  {
+                    "kind": "block",
+                    "type": "fq_if_else"
+                  }
+                ]
+              },
+              {
+                "kind": "category",
+                "name": "Conditions",
+                "contents": [
+                  {
+                    "kind": "block",
+                    "type": "fq_compare"
+                  },
+                  {
+                    "kind": "block",
+                    "type": "fq_and"
+                  },
+                  {
+                    "kind": "block",
+                    "type": "fq_or"
+                  },
+                  {
+                    "kind": "block",
+                    "type": "fq_not"
+                  }
+                ]
+              },
+              {
+                "kind": "category",
+                "name": "Numbers",
+                "contents": [
+                  {
+                    "kind": "block",
+                    "type": "fq_number"
+                  },
+                  {
+                    "kind": "block",
+                    "type": "fq_math"
+                  },
+                  {
+                    "kind": "block",
+                    "type": "fq_var",
+                    "fields": {
+                      "NAME": "cash"
+                    }
+                  },
+                  {
+                    "kind": "block",
+                    "type": "fq_var",
+                    "fields": {
+                      "NAME": "shares_weight"
+                    }
+                  },
+                  {
+                    "kind": "block",
+                    "type": "fq_var",
+                    "fields": {
+                      "NAME": "drift"
+                    }
+                  },
+                  {
+                    "kind": "block",
+                    "type": "fq_var",
+                    "fields": {
+                      "NAME": "drawdown"
+                    }
+                  },
+                  {
+                    "kind": "block",
+                    "type": "fq_var",
+                    "fields": {
+                      "NAME": "months_since_rebalance"
+                    }
+                  },
+                  {
+                    "kind": "block",
+                    "type": "fq_var",
+                    "fields": {
+                      "NAME": "month"
+                    }
+                  },
+                  {
+                    "kind": "block",
+                    "type": "fq_var",
+                    "fields": {
+                      "NAME": "invested"
+                    }
+                  }
+                ]
+              },
+              {
+                "kind": "category",
+                "name": "Actions",
+                "contents": [
+                  {
+                    "kind": "block",
+                    "type": "fq_invest"
+                  },
+                  {
+                    "kind": "block",
+                    "type": "fq_sell_investments"
+                  },
+                  {
+                    "kind": "block",
+                    "type": "fq_rebalance"
+                  }
+                ]
+              }
+            ]
+          },
+          "starter": {
+            "blocks": {
+              "languageVersion": 0,
+              "blocks": [
+                {
+                  "type": "fq_every_month",
+                  "x": 20,
+                  "y": 20,
+                  "inputs": {
+                    "DO": {
+                      "block": {
+                        "type": "fq_invest",
+                        "inputs": {
+                          "AMOUNT": {
+                            "block": {
+                              "type": "fq_var",
+                              "fields": {
+                                "NAME": "cash"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              ]
+            }
+          }
+        }
+      },
+      "reveal": {
+        "reference_program": {
+          "every_month": [
+            {
+              "block": "if_else",
+              "if": {
+                "block": "compare",
+                "op": ">",
+                "left": {
+                  "block": "var",
+                  "name": "drift"
+                },
+                "right": {
+                  "block": "number",
+                  "value": 0.05
+                }
+              },
+              "then": [
+                {
+                  "block": "rebalance"
+                }
+              ],
+              "else": []
+            },
+            {
+              "block": "invest",
+              "amount": {
+                "block": "var",
+                "name": "cash"
+              }
+            }
+          ]
+        },
+        "reference_workspace": {
+          "blocks": {
+            "languageVersion": 0,
+            "blocks": [
+              {
+                "type": "fq_every_month",
+                "x": 20,
+                "y": 20,
+                "inputs": {
+                  "DO": {
+                    "block": {
+                      "type": "fq_if_else",
+                      "inputs": {
+                        "IF": {
+                          "block": {
+                            "type": "fq_compare",
+                            "fields": {
+                              "OP": ">"
+                            },
+                            "inputs": {
+                              "LEFT": {
+                                "block": {
+                                  "type": "fq_var",
+                                  "fields": {
+                                    "NAME": "drift"
+                                  }
+                                }
+                              },
+                              "RIGHT": {
+                                "block": {
+                                  "type": "fq_number",
+                                  "fields": {
+                                    "VALUE": 0.05
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        },
+                        "THEN": {
+                          "block": {
+                            "type": "fq_rebalance"
+                          }
+                        }
+                      },
+                      "next": {
+                        "block": {
+                          "type": "fq_invest",
+                          "inputs": {
+                            "AMOUNT": {
+                              "block": {
+                                "type": "fq_var",
+                                "fields": {
+                                  "NAME": "cash"
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            ]
+          }
+        },
+        "editorial": "The reference rule rebalances only when the mix is more than 5 points away from 60/40, and invests new money in the target mix. In a rally it sells some shares at high prices; in a crash it buys shares at low prices, which is the opposite of panic selling. Rebalancing every month keeps the mix tightest but pays the most fees. Waiting for 10 points lets the mix leave the 50-70% band before acting. A rule decided in calm times is what keeps you from selling at the bottom.",
+        "optional": [
+          {
+            "name": "A strong year: shares +3% a month in months 1-12",
+            "probability": 0.2
+          },
+          {
+            "name": "A V-shaped crash: shares -30% in month 6, then +10% in months 7-9",
+            "probability": 0.15
+          },
+          {
+            "name": "A 2008-style slide: shares -4% a month for 12 months",
+            "probability": 0.1
+          },
+          {
+            "name": "A 2022-style year: shares -1.5% and bonds -1.2% a month for 12 months",
+            "probability": 0.1
+          },
+          {
+            "name": "A bond sell-off: bonds -2% a month in months 10-15",
+            "probability": 0.1
+          },
+          {
+            "name": "Choppy markets: shares +6% and -6% in turn for 12 months",
+            "probability": 0.1
+          }
+        ],
+        "sources": [
+          "damodaran_histret",
+          "ecb_fsr_2022_corr"
+        ]
+      },
+      "meta": {
+        "household": {
+          "income": 7000,
+          "costs": 6000,
+          "buffer": 36000,
+          "invested": {
+            "shares": 60000,
+            "bonds": 40000
+          },
+          "target": {
+            "shares": 0.6,
+            "bonds": 0.4
+          },
+          "trade_fee": 0.001,
+          "buffer_rate": 0.04,
+          "card_rate": 0.2
+        },
+        "world": {
+          "months": 36,
+          "market": {
+            "kind": "synthetic",
+            "seed": 2026112102,
+            "assets": {
+              "shares": {
+                "mean": 0.006,
+                "sd": 0.045
+              },
+              "bonds": {
+                "mean": 0.003,
+                "sd": 0.012
+              }
+            }
+          }
+        },
+        "obligatory": [
+          {
+            "name": "A long rally: shares +2% a month for 36 months; keep shares between 50% and 70%",
+            "override": {
+              "trend": [
+                {
+                  "asset": "shares",
+                  "from": 1,
+                  "to": 36,
+                  "r": 0.02
+                },
+                {
+                  "asset": "bonds",
+                  "from": 1,
+                  "to": 36,
+                  "r": 0.002
+                }
+              ]
+            },
+            "check": {
+              "weight_between": {
+                "asset": "shares",
+                "low": 0.5,
+                "high": 0.7
+              }
+            }
+          },
+          {
+            "name": "A crash: shares -15% in months 3 and 4, then a recovery; never below 40% shares",
+            "override": {
+              "returns": {
+                "shares": {
+                  "3": -0.15,
+                  "4": -0.15
+                }
+              },
+              "trend": [
+                {
+                  "asset": "shares",
+                  "from": 5,
+                  "to": 36,
+                  "r": 0.015
+                },
+                {
+                  "asset": "bonds",
+                  "from": 1,
+                  "to": 36,
+                  "r": 0.002
+                }
+              ]
+            },
+            "check": {
+              "weight_at_least": {
+                "asset": "shares",
+                "value": 0.4
+              }
+            }
+          }
+        ],
+        "optional": [
+          {
+            "name": "A strong year: shares +3% a month in months 1-12",
+            "probability": 0.2,
+            "override": {
+              "trend": [
+                {
+                  "asset": "shares",
+                  "from": 1,
+                  "to": 12,
+                  "r": 0.03
+                }
+              ]
+            }
+          },
+          {
+            "name": "A V-shaped crash: shares -30% in month 6, then +10% in months 7-9",
+            "probability": 0.15,
+            "override": {
+              "returns": {
+                "shares": {
+                  "6": -0.3,
+                  "7": 0.1,
+                  "8": 0.1,
+                  "9": 0.1
+                }
+              }
+            }
+          },
+          {
+            "name": "A 2008-style slide: shares -4% a month for 12 months",
+            "probability": 0.1,
+            "override": {
+              "trend": [
+                {
+                  "asset": "shares",
+                  "from": 1,
+                  "to": 12,
+                  "r": -0.04
+                }
+              ]
+            }
+          },
+          {
+            "name": "A 2022-style year: shares -1.5% and bonds -1.2% a month for 12 months",
+            "probability": 0.1,
+            "override": {
+              "trend": [
+                {
+                  "asset": "shares",
+                  "from": 1,
+                  "to": 12,
+                  "r": -0.015
+                },
+                {
+                  "asset": "bonds",
+                  "from": 1,
+                  "to": 12,
+                  "r": -0.012
+                }
+              ]
+            }
+          },
+          {
+            "name": "A bond sell-off: bonds -2% a month in months 10-15",
+            "probability": 0.1,
+            "override": {
+              "trend": [
+                {
+                  "asset": "bonds",
+                  "from": 10,
+                  "to": 15,
+                  "r": -0.02
+                }
+              ]
+            }
+          },
+          {
+            "name": "Choppy markets: shares +6% and -6% in turn for 12 months",
+            "probability": 0.1,
+            "override": {
+              "returns": {
+                "shares": {
+                  "1": 0.06,
+                  "2": -0.06,
+                  "3": 0.06,
+                  "4": -0.06,
+                  "5": 0.06,
+                  "6": -0.06,
+                  "7": 0.06,
+                  "8": -0.06,
+                  "9": 0.06,
+                  "10": -0.06,
+                  "11": 0.06,
+                  "12": -0.06
+                }
+              }
+            }
+          }
+        ],
+        "optional_metric": {
+          "band": {
+            "asset": "shares",
+            "low": 0.5,
+            "high": 0.7
+          }
+        },
+        "futures": {
+          "n": 200,
+          "months": 120,
+          "seed": 13,
+          "job_loss_per_month": 0,
+          "job_loss_months": [
+            1,
+            1
+          ],
+          "shock_per_month": 0,
+          "shock_amount": [
+            0,
+            0
+          ]
+        },
+        "reference_growth": 365923.53,
+        "author": "draft by Claude (AI), 2026-11-21",
+        "reviewer": null,
+        "content_file": "P4.yaml"
+      }
+    },
+    {
       "id": "s1.h1",
       "node": "S1",
       "level": "hard",
@@ -151,13 +1091,13 @@
             "name": "Buffer of 2 months, then invests",
             "accepted": true,
             "score": 91,
-            "growth_index": 97
+            "growth_index": 97.1
           },
           {
             "name": "Buffer of 6 months, then invests",
             "accepted": true,
             "score": 100,
-            "growth_index": 98
+            "growth_index": 98.0
           }
         ],
         "blockly": {
@@ -890,6 +1830,7 @@
             }
           }
         ],
+        "optional_metric": null,
         "futures": {
           "n": 200,
           "months": 120,

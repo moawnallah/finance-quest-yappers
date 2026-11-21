@@ -113,3 +113,39 @@ def test_a_known_bad_program_that_passes_is_a_content_error():
     task["known_bad_programs"].append({"name": "Actually good", "program": task["reference_program"]})
     r = validate(task, load_sources())
     assert any("is accepted" in e for e in r.errors)
+
+
+# ---------------------------------------------------------------- multi-asset household (P4)
+
+def test_multi_asset_ledger_by_hand():
+    # P4 depends on these three moves: buy in the target mix, rebalance with a fee, sell pro rata.
+    h = Household(income=1000, costs=0.0001, buffer=0, invested={"shares": 700, "bonds": 300},
+                  target={"shares": 0.6, "bonds": 0.4}, trade_fee=0.01, buffer_rate=0, card_rate=0)
+    sc = Scenario(months=2, returns={"shares": [0, 0], "bonds": [0, 0]})
+    plan = [[("rebalance", 0), ("invest", 1000)], [("sell_investments", 400)]]
+    rows = run(h, lambda ctx: plan[ctx["month"] - 1], sc)
+    # month 1: rebalance 700/300 -> 600/400 moves 100, fee 2 x 100 x 1% = 2 (split 60/40); invest 1000 at 60/40
+    assert rows[0]["holdings"] == pytest.approx({"shares": 600 - 1.2 + 600, "bonds": 400 - 0.8 + 400}, abs=0.01)
+    # month 2: sell 400 pro rata, keeping the 60/40 mix
+    assert rows[1]["weights"]["shares"] == pytest.approx(0.6, abs=1e-3)
+    assert rows[1]["invested"] == pytest.approx(1998 - 400, abs=0.01)
+
+
+@pytest.fixture(scope="module")
+def p4():
+    rec, r = {tid: (rec, r) for tid, rec, r, _ in build()}["p4.h1"]
+    assert rec, r.errors
+    return rec
+
+
+def test_p4_panic_seller_fails_the_crash_test(p4):
+    panic = [t for t in load_tasks() if t["id"] == "p4.h1"][0]["known_bad_programs"][1]["program"]
+    res = score(p4, panic)
+    failed = [t["name"] for t in res["obligatory"] if not t["passed"]]
+    assert not res["accepted"] and any(name.startswith("A crash") for name in failed)
+
+
+def test_p4_waiting_for_10_points_leaves_the_band(p4):
+    # The rally test is what separates "act at 5 points" from "act at 10 points".
+    bots = {b["name"]: b for b in p4["question"]["bots"]}
+    assert not bots["Rebalances when 10 points off"]["accepted"] and bots["Reference solution"]["score"] == 100

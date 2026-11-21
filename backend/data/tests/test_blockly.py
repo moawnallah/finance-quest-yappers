@@ -16,9 +16,10 @@ def s1():
 
 def test_every_content_program_survives_the_round_trip(s1):
     # The app sends Blockly JSON; if the converter changed a program, the user's rule would be scored wrongly.
-    _, task = s1
-    programs = [task["reference_program"], task["starter_program"]]
-    programs += [b["program"] for b in task["known_bad_programs"] + task["baseline_bots"]]
+    programs = []
+    for task in load_tasks():  # every hard task, so new blocks (e.g. rebalance) are covered
+        programs += [task["reference_program"], task["starter_program"]]
+        programs += [b["program"] for b in task["known_bad_programs"] + task["baseline_bots"]]
     for p in programs:
         assert workspace_to_program(program_to_workspace(p)) == p
 

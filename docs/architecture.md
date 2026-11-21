@@ -149,8 +149,8 @@ schema needs a review from the owners of the packages that use it.
 | Today | Step | When |
 |---|---|---|
 | `easy/`, `medium/` and `hard/` each have their own build | **Done 2026-11-21:** one `build.py` runs all three. **Open:** the `Engine` protocol in `common.py` and an API registry | Before the API |
-| Simulator | **Done 2026-11-21:** `sim/household`; `sim/market` with all four path sources (synthetic, replay, bootstrap, fictional) and `sim/portfolio` (multi-asset, rebalancing), see [market_sim.md](market_sim.md). The series store moved into the kernel. **Open:** real series in the store; a multi-asset household for P4 | Data first |
-| Hard engine | **Done 2026-11-21 for S1** ([hard_engine.md](hard_engine.md)): block language, Blockly definitions, toolbox and converter, golden checks in the build, two-dimensional score (resilience × growth), futures, bots. **Open:** P4, the JSON schema, API wiring | M4 |
+| Simulator | **Done 2026-11-21:** `sim/household`; `sim/market` with all four path sources (synthetic, replay, bootstrap, fictional) and `sim/portfolio` (multi-asset, rebalancing), see [market_sim.md](market_sim.md). The series store moved into the kernel. Multi-asset household with a target mix and rebalancing (done 2026-11-21). **Open:** real series in the store | Data first |
+| Hard engine | **Done 2026-11-21 for S1 and P4** ([hard_engine.md](hard_engine.md)): block language with `rebalance`, Blockly definitions, toolbox and converter, golden checks in the build, two-dimensional score (resilience × growth), futures, bots. **Open:** real data for P4, the JSON schema, API wiring | M4 |
 | Router only specified | `backend/ml/router` with the persona tests and `reco_events` | M2 |
 | No API code | `backend/api` with the engine registry and the endpoints in skills_tree.md and tutor_agent.md | M6 |
 | Time machine, sandbox, free play: not started | Build in this order, one at a time: (1) **time machine** on `sim/market` replay, with real, licensed data and the existing screen; (2) **sandbox** = the same market player with a fictional path source; (3) free play, only if 1 and 2 work | After the demo |

@@ -58,7 +58,7 @@ told.
 | 4 | I5 Funds and costs | 4 cards; easy; medium: two KIDs with 2% and 0.3% costs, estimate the difference after 20 years (calculator) | cards draft |
 | 5 | P1 | shared with path A | cards draft |
 | 6 | P2 Allocation by horizon | 3 cards; test-out (prerequisite of P4) | cards draft |
-| 7 | P4 Rebalancing in a crash | 3 cards; easy; medium: day X March 2020 on a real monthly index; hard (if P4 is chosen) | cards draft |
+| 7 | P4 Rebalancing in a crash | 3 cards; easy; medium: day X March 2020 on a real monthly index; **hard: "Marek's 60/40 rule" (engine and content done 2026-11-21, synthetic market until the data is in)** | cards and hard draft |
 
 ## Milestones
 

@@ -71,3 +71,100 @@ items:  # draft by Yurii (with Claude), 2026-11-20, based on the cards above
       - "That is the point of a rule: it protects you from deciding in a panic."
       - "Selling after a fall locks in the loss. In 2020, those who sold in March missed the recovery."
       - "Acting without a plan is the same problem in the other direction. A written rule is calmer."
+
+hard:  # draft by Claude (AI), 2026-11-21. Engine: docs/hard_engine.md
+  - id: p4.h1
+    level: hard
+    content_version: 1
+    author: "draft by Claude (AI), 2026-11-21"
+    reviewer: null
+    sources: [damodaran_histret, ecb_fsr_2022_corr]
+    brief: >-
+      Marek, 35, has 100,000 PLN invested: 60% in a broad share fund and 40%
+      in a bond fund. He adds 1,000 PLN every month. Write his rule for the
+      next 36 months. Two tests must pass: in a long rally his mix stays
+      between 50% and 70% shares, and in a crash he never drops below 40%
+      shares, so no panic selling. Rebalancing costs 0.1% of the money moved.
+      Then we test your rule in other markets.
+    palette: [if_else, compare, and, or, not, math, number, invest, rebalance, sell_investments]
+    vars: [cash, shares_weight, drift, drawdown, months_since_rebalance, month, invested]
+    limits: {max_blocks: 25, max_depth: 4}
+    starter_program:
+      every_month: [{block: invest, amount: {block: var, name: cash}}]
+    household: {income: 7000, costs: 6000, buffer: 36000, invested: {shares: 60000, bonds: 40000},
+                target: {shares: 0.6, bonds: 0.4}, trade_fee: 0.001, buffer_rate: 0.04, card_rate: 0.20}
+    world:
+      months: 36
+      market: {kind: synthetic, seed: 2026112102, assets: {shares: {mean: 0.006, sd: 0.045}, bonds: {mean: 0.003, sd: 0.012}}}
+    assumptions:
+      - "Fund returns are synthetic (shares about 0.6% a month on average, bonds about 0.3%, with ups and downs). Not a forecast; real history replaces them once the data is loaded."
+      - "New money is invested in the 60/40 target mix. Rebalancing moves money back to 60/40 and costs 0.1% of what is moved."
+      - "Marek has a 6-month buffer, so the tests are about his investments, not his budget."
+      - "The market scenarios and their likelihoods are illustrative, chosen for teaching."
+      - "After the tests, your rule also runs through 200 random 10-year futures: growth compared with the reference solution = 100."
+    obligatory:
+      - name: "A long rally: shares +2% a month for 36 months; keep shares between 50% and 70%"
+        override: {trend: [{asset: shares, from: 1, to: 36, r: 0.02}, {asset: bonds, from: 1, to: 36, r: 0.002}]}
+        check: {weight_between: {asset: shares, low: 0.5, high: 0.7}}
+      - name: "A crash: shares -15% in months 3 and 4, then a recovery; never below 40% shares"
+        override: {returns: {shares: {3: -0.15, 4: -0.15}}, trend: [{asset: shares, from: 5, to: 36, r: 0.015}, {asset: bonds, from: 1, to: 36, r: 0.002}]}
+        check: {weight_at_least: {asset: shares, value: 0.4}}
+    optional_metric: {band: {asset: shares, low: 0.5, high: 0.7}}
+    optional:
+      - {name: "A strong year: shares +3% a month in months 1-12", probability: 0.20, override: {trend: [{asset: shares, from: 1, to: 12, r: 0.03}]}}
+      - {name: "A V-shaped crash: shares -30% in month 6, then +10% in months 7-9", probability: 0.15, override: {returns: {shares: {6: -0.30, 7: 0.10, 8: 0.10, 9: 0.10}}}}
+      - {name: "A 2008-style slide: shares -4% a month for 12 months", probability: 0.10, override: {trend: [{asset: shares, from: 1, to: 12, r: -0.04}]}}
+      - {name: "A 2022-style year: shares -1.5% and bonds -1.2% a month for 12 months", probability: 0.10, override: {trend: [{asset: shares, from: 1, to: 12, r: -0.015}, {asset: bonds, from: 1, to: 12, r: -0.012}]}}
+      - {name: "A bond sell-off: bonds -2% a month in months 10-15", probability: 0.10, override: {trend: [{asset: bonds, from: 10, to: 15, r: -0.02}]}}
+      - name: "Choppy markets: shares +6% and -6% in turn for 12 months"
+        probability: 0.10
+        override: {returns: {shares: {1: 0.06, 2: -0.06, 3: 0.06, 4: -0.06, 5: 0.06, 6: -0.06, 7: 0.06, 8: -0.06, 9: 0.06, 10: -0.06, 11: 0.06, 12: -0.06}}}
+    futures: {n: 200, months: 120, seed: 13, job_loss_per_month: 0, job_loss_months: [1, 1], shock_per_month: 0, shock_amount: [0, 0]}
+    reference_program:
+      every_month:
+        - block: if_else
+          if: {block: compare, op: ">", left: {block: var, name: drift}, right: {block: number, value: 0.05}}
+          then: [{block: rebalance}]
+          else: []
+        - {block: invest, amount: {block: var, name: cash}}
+    known_bad_programs:
+      - name: "Never rebalance"
+        fails: "A long rally: shares +2% a month for 36 months; keep shares between 50% and 70%"
+        program: {every_month: [{block: invest, amount: {block: var, name: cash}}]}
+      - name: "Panic seller"
+        fails: "A crash: shares -15% in months 3 and 4, then a recovery; never below 40% shares"
+        program:
+          every_month:
+            - block: if_else
+              if: {block: compare, op: ">", left: {block: var, name: drawdown}, right: {block: number, value: 0.15}}
+              then: [{block: sell_investments, amount: {block: var, name: invested}}]
+              else: [{block: invest, amount: {block: var, name: cash}}]
+    baseline_bots:
+      - name: "Never rebalances"
+        program: {every_month: [{block: invest, amount: {block: var, name: cash}}]}
+      - name: "Rebalances every month"
+        program: {every_month: [{block: rebalance}, {block: invest, amount: {block: var, name: cash}}]}
+      - name: "Rebalances once a year"
+        program:
+          every_month:
+            - block: if_else
+              if: {block: compare, op: ">", left: {block: var, name: months_since_rebalance}, right: {block: number, value: 11}}
+              then: [{block: rebalance}]
+              else: []
+            - {block: invest, amount: {block: var, name: cash}}
+      - name: "Rebalances when 10 points off"
+        program:
+          every_month:
+            - block: if_else
+              if: {block: compare, op: ">", left: {block: var, name: drift}, right: {block: number, value: 0.10}}
+              then: [{block: rebalance}]
+              else: []
+            - {block: invest, amount: {block: var, name: cash}}
+    editorial: >-
+      The reference rule rebalances only when the mix is more than 5 points
+      away from 60/40, and invests new money in the target mix. In a rally it
+      sells some shares at high prices; in a crash it buys shares at low
+      prices, which is the opposite of panic selling. Rebalancing every month
+      keeps the mix tightest but pays the most fees. Waiting for 10 points lets
+      the mix leave the 50-70% band before acting. A rule decided in calm times
+      is what keeps you from selling at the bottom.

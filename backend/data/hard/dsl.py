@@ -25,6 +25,10 @@ VARS = {
     "invested": "my investments",
     "employed": "I have a job (1 = yes, 0 = no)",
     "month": "the month number",
+    "shares_weight": "the share of shares in my investments (0 to 1)",
+    "drift": "how far my mix is from its target (0 to 1)",
+    "drawdown": "how far my investments are below their peak (0 to 1)",
+    "months_since_rebalance": "months since I last rebalanced",
 }
 
 # Sentence templates for the app (Blockly toolbox). {x} marks an input slot.
@@ -42,6 +46,7 @@ BLOCKS = {
     "invest": {"type": "statement", "text": "Invest {amount} PLN in a broad share fund"},
     "pay_debt": {"type": "statement", "text": "Pay {amount} PLN off my card"},
     "sell_investments": {"type": "statement", "text": "Sell {amount} PLN of my investments"},
+    "rebalance": {"type": "statement", "text": "Rebalance back to my target mix"},
 }
 assert set(ACTIONS) <= set(BLOCKS)
 
@@ -118,6 +123,8 @@ def check(program, palette: list[str], allowed_vars: list[str], max_blocks: int,
                 condition(node.get("if"), w + ".if", depth + 1)
                 statements(node.get("then", []), w + ".then", depth + 1)
                 statements(node.get("else", []), w + ".else", depth + 1)
+            elif b == "rebalance":
+                pass
             elif b in ACTIONS:
                 number(node.get("amount"), w + ".amount", depth + 1)
             elif b is not None:
@@ -158,6 +165,8 @@ def compile_program(program: dict):
         for n in nodes:
             if n["block"] == "if_else":
                 run(n["then"] if cond(n["if"], ctx) else n.get("else", []), ctx, out)
+            elif n["block"] == "rebalance":
+                out.append(("rebalance", 0.0))
             else:
                 out.append((n["block"], num(n["amount"], ctx)))
         return out
