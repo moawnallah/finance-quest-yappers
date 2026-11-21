@@ -101,6 +101,16 @@ def parse_reply(content: str) -> dict:
     return {"text": text, "mermaid": None}
 
 
+def _ollama_headers() -> dict:
+    """Content type plus OLLAMA_HEADERS (JSON), e.g. a Cloudflare Access service token or a bearer token
+    for a proxy in front of Ollama, which has no authentication of its own."""
+    try:
+        extra = json.loads(os.getenv("OLLAMA_HEADERS") or "{}")
+    except ValueError:
+        extra = {}
+    return {"Content-Type": "application/json", **{str(k): str(v) for k, v in (extra if isinstance(extra, dict) else {}).items()}}
+
+
 _last = threading.local()  # Ollama timings of the last call on this thread (call_model keeps its signature)
 
 
@@ -151,7 +161,7 @@ def call_model(messages: list[dict]) -> tuple[dict, int, int, int]:
     # think=False: Gemma 4 otherwise reasons privately for ~50 s before answering.
     body = json.dumps({"model": TUTOR_MODEL, "messages": messages, "stream": False, "think": False,
                        "keep_alive": "30m", "options": {"temperature": 0.3}}).encode()
-    req = urllib.request.Request(f"{OLLAMA_API_BASE}/api/chat", data=body, headers={"Content-Type": "application/json"})
+    req = urllib.request.Request(f"{OLLAMA_API_BASE}/api/chat", data=body, headers=_ollama_headers())
     t0 = time.monotonic()
     with urllib.request.urlopen(req, timeout=TUTOR_TIMEOUT) as r:
         out = json.loads(r.read())
@@ -332,7 +342,7 @@ def tutor_stream(body: TutorIn, user=Depends(viewer)):
             f"{OLLAMA_API_BASE}/api/chat",
             data=json.dumps({"model": TUTOR_MODEL, "messages": _stream_messages(body, visual), "stream": True, "think": False,
                              "keep_alive": "30m", "options": {"temperature": 0.3}}).encode(),
-            headers={"Content-Type": "application/json"})
+            headers=_ollama_headers())
         full, sent, t0, t_in, t_out, timings = "", 0, time.monotonic(), 0, 0, {}
         try:
             with urllib.request.urlopen(req, timeout=TUTOR_TIMEOUT) as r:

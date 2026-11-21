@@ -59,8 +59,15 @@ def build_request(survey: dict, result: dict, with_router: bool = True) -> dict:
 
 def ask(request: dict, base_url: str, timeout: float = TIMEOUT_S) -> tuple[dict, int]:
     """POST the request; returns (response, latency in ms). Raises on any error: the caller logs it."""
+    # basal-serve --api-keys checks "Authorization: Bearer <key>" or "X-API-Key: <key>".
+    # BASAL_AUTH_HEADER, e.g. "Authorization: Bearer abc" or "X-API-Key: abc"; unset = no header.
+    headers = {"Content-Type": "application/json"}
+    extra = os.getenv("BASAL_AUTH_HEADER", "")
+    if ":" in extra:
+        name, value = extra.split(":", 1)
+        headers[name.strip()] = value.strip()
     req = urllib.request.Request(base_url.rstrip("/") + "/v1/systemone", data=json.dumps(request).encode(),
-                                 headers={"Content-Type": "application/json"}, method="POST")
+                                 headers=headers, method="POST")
     t0 = time.monotonic()
     with urllib.request.urlopen(req, timeout=timeout) as r:
         body = json.loads(r.read())

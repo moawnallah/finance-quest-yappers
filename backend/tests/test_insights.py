@@ -259,3 +259,27 @@ def test_shadow_model_is_logged_and_never_breaks_onboarding(client, user, monkey
     assert rows[1]["decisions"] == [{"node": "S1", "router_m": rows[1]["decisions"][0]["router_m"], "on_path": True,
                                      "ready_p": 0.3, "start_p": 0.9, "start_confidence": 0.9, "agrees": True,
                                      "below_tau": False}]
+
+
+def test_shadow_sends_the_basal_auth_header(monkeypatch):
+    import json
+    import urllib.request
+    from router import shadow
+    seen = {}
+
+    class Resp:
+        def __enter__(self): return self
+        def __exit__(self, *a): return False
+        def read(self): return json.dumps({"model": "basal", "answers": {}}).encode()
+
+    def fake_urlopen(req, timeout=None):
+        seen.update({k.lower(): v for k, v in req.header_items()})
+        return Resp()
+    monkeypatch.setattr(urllib.request, "urlopen", fake_urlopen)
+    monkeypatch.setenv("BASAL_AUTH_HEADER", "Authorization: Bearer test-key")
+    shadow.ask({"q": 1}, "http://basal.test")
+    assert seen.get("authorization") == "Bearer test-key"
+    monkeypatch.delenv("BASAL_AUTH_HEADER")
+    seen.clear()
+    shadow.ask({"q": 1}, "http://basal.test")
+    assert "authorization" not in seen

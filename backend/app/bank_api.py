@@ -113,7 +113,7 @@ def ai_quality(db: Session = Depends(get_db)):
             k = (r.payload or {}).get("chosen") or "?"
             chosen[k] = chosen.get(k, 0) + 1
     shadow = [r.payload or {} for r in recos if r.event_type == "shadow_decision"]
-    agree = [p.get("agreement") for p in shadow if isinstance(p.get("agreement"), (int, float))]
+    agree = [d["agrees"] for p in shadow for d in (p.get("decisions") or []) if isinstance(d.get("agrees"), bool)]
     llm = [{"ts": e.ts, "intent": e.intent, "checks_failed": e.checks_failed or [], "fallback_used": e.fallback_used,
             "flagged_for_review": e.flagged_for_review, "latency_ms": e.latency_ms, "model": e.model} for e in db.scalars(select(LlmEvent))]
     synthetic = db.scalar(select(User.id).where(User.synthetic.is_(True)).limit(1)) is not None
