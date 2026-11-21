@@ -29,5 +29,5 @@ flutter:
     - assets/eu_benchmark.json
     - assets/steps.json
     - assets/sfx/
-    - assets/mascot/
+    - assets/mascot/kyle/
     - assets/logo.png

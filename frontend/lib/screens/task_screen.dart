@@ -410,7 +410,7 @@ class _TaskRunScreenState extends State<TaskRunScreen> {
     return Scaffold(
       appBar: AppBar(title: Text(widget.run.title), automaticallyImplyLeading: false),
       body: ListView(padding: EdgeInsets.all(24), children: [
-        Center(child: MascotPlaceholder(size: 140, pose: (avg ?? 1) >= 0.8 || completedNode ? 'cheer' : 'oops')),
+        Center(child: MascotPlaceholder(size: 220, pose: (avg ?? 1) >= 0.8 || completedNode ? 'cheer' : 'oops')),
         SizedBox(height: 16),
         Text(
           completedNode ? 'Skill complete!' : drawn ? (passed ? 'Check passed' : 'Not this time') : 'Round done',

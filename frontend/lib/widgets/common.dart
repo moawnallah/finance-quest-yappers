@@ -538,23 +538,30 @@ class _EyesPainter extends CustomPainter {
 
 /// Placeholder for the future mascot, so we can see how much space it takes.
 /// A dashed outline with a simple face; swap the inside for the real artwork.
-/// The CrocoCash mascot (assets/mascot, drawn by docs/mascot/make_mascot.py).
-/// Poses: wave (hello), teach (explaining), think, cheer (success), oops (mistake), read.
+/// The CrocoCash mascot: Kyle, drawn by Paulina (docs/mascot/original).
+/// Large sizes show the full figure, small ones his head; the white-shirt art
+/// is used in light mode and the dark-shirt art in dark mode.
+/// New poses: add assets/mascot/kyle/<pose>_light.png and <pose>_dark.png,
+/// then list the pose in [kylePoses]; until then every pose shows the main art.
 class MascotPlaceholder extends StatelessWidget {
   final double size;
   final String? say; // optional speech bubble
-  final String pose;
+  final String pose; // wave | teach | think | cheer | oops | read
   MascotPlaceholder({super.key, this.size = 64, this.say, this.pose = 'wave'});
 
-  static const poses = ['wave', 'teach', 'think', 'cheer', 'oops', 'read'];
+  static const kylePoses = <String>{}; // poses Paulina has drawn so far
 
   @override
   Widget build(BuildContext context) {
+    final theme = appDark ? 'dark' : 'light';
+    final small = size < 90;
+    final file = small ? 'head_$theme' : (kylePoses.contains(pose) ? '${pose}_$theme' : 'full_$theme');
+    final img = Image.asset('assets/mascot/kyle/$file.png',
+        width: small ? size : size * 0.85, height: small ? size : size, fit: BoxFit.contain, filterQuality: FilterQuality.medium);
     final face = Semantics(
-      label: 'CrocoCash mascot',
+      label: 'Kyle, the CrocoCash mascot',
       image: true,
-      child: Image.asset('assets/mascot/${poses.contains(pose) ? pose : 'wave'}.png',
-          width: size, height: size, fit: BoxFit.contain, filterQuality: FilterQuality.medium),
+      child: small ? ClipOval(child: ColoredBox(color: kPrimarySoft, child: img)) : img,
     );
     if (say == null) return face;
     return Row(crossAxisAlignment: CrossAxisAlignment.center, children: [

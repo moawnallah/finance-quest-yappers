@@ -443,7 +443,16 @@ class _TutorScreenState extends State<TutorScreen> {
     final conv = s.currentConversation;
     final wide = isWideWeb(context);
     final appBar = widget.fromQuestion ? AppBar(title: Text('Ask the tutor')) : StatsBar(title: 'Tutor');
-    if (conv == null) return Scaffold(appBar: appBar, body: SizedBox());
+    if (conv == null) {
+      // Saved chats load in the background and may replace the list; once they
+      // are in and nothing is open, start a fresh chat instead of a blank page.
+      if (s.conversationsLoaded) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted && s.currentConversation == null) setState(() => _start(s, null));
+        });
+      }
+      return Scaffold(appBar: appBar as PreferredSizeWidget, body: Center(child: CircularProgressIndicator()));
+    }
     return Scaffold(
       appBar: appBar as PreferredSizeWidget,
       body: wide
