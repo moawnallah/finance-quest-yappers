@@ -729,9 +729,9 @@ class _AdminScreenState extends State<AdminScreen> {
   // Adviser panel: sort and filter state for the signal rows.
   String _sigSort = 'confidence';
   String? _sigAge, _sigTopic;
-  static const _ageBands = ['18-24', '25-39', '40-54', '55+', 'unknown'];
-  static const _ageColors = [Color(0xFF0F766E), Color(0xFF2563EB), Color(0xFFD97706), Color(0xFF7C3AED), Color(0xFF8A8F98)];
-  Color _ageColor(String band) => _ageColors[_ageBands.indexOf(band) < 0 ? 4 : _ageBands.indexOf(band)];
+  static const _ageBands = ['under_18', '18-24', '25-39', '40-54', '55+', 'unknown'];
+  static const _ageColors = [Color(0xFFDB2777), Color(0xFF0F766E), Color(0xFF2563EB), Color(0xFFD97706), Color(0xFF7C3AED), Color(0xFF8A8F98)];
+  Color _ageColor(String band) => _ageColors[_ageBands.contains(band) ? _ageBands.indexOf(band) : _ageBands.length - 1];
 
   Widget _signals(Map<String, dynamic> d) {
     final all = (d['signals'] as List).cast<Map<String, dynamic>>();
@@ -803,7 +803,7 @@ class _AdminScreenState extends State<AdminScreen> {
                 ],
               ))),
               SizedBox(height: 6),
-              Wrap(spacing: 12, children: [for (final b in _ageBands) if (products.values.any((m) => (m as Map)[b] != null)) _legend(_ageColor(b), b)]),
+              Wrap(spacing: 12, children: [for (final b in _ageBands) if (products.values.any((m) => (m as Map)[b] != null)) _legend(_ageColor(b), b.replaceAll('_', ' '))]),
             ]),
     ));
     return ListView(padding: EdgeInsets.all(16), children: [
@@ -814,7 +814,7 @@ class _AdminScreenState extends State<AdminScreen> {
       SizedBox(height: 12),
       Wrap(spacing: 10, runSpacing: 8, crossAxisAlignment: WrapCrossAlignment.center, children: [
         _drop<String>('Sort by', _sigSort, {'confidence': 'Confidence (high first)', 'age': 'Age group', 'topic': 'Topic'}, (v) => setState(() => _sigSort = v ?? 'confidence')),
-        _drop<String?>('Age', _sigAge, {null: 'All ages', for (final b in _ageBands) b: b}, (v) => setState(() => _sigAge = v)),
+        _drop<String?>('Age', _sigAge, {null: 'All ages', for (final b in _ageBands) b: b.replaceAll('_', ' ')}, (v) => setState(() => _sigAge = v)),
         _drop<String?>('Topic', _sigTopic, {null: 'All topics', for (final t in topics) t: t}, (v) => setState(() => _sigTopic = v)),
         Text('${sig.length} of ${all.length} signals', style: TextStyle(color: kMuted)),
       ]),
