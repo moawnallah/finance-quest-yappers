@@ -272,3 +272,4 @@ class AttemptOut(BaseModel):
     accepted: bool | None = Field(default=None, description="Hard only: all obligatory tests passed.")
     points: int | None = Field(default=None, description="Hard only: resilience points 51-100 when accepted.")
     growth_index: float | None = Field(default=None, description="Hard only: growth vs the reference solution = 100.")
+    scales_total: int | None = Field(default=None, description="The learner's Scales after this answer.")

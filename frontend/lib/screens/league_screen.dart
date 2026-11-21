@@ -1,7 +1,7 @@
-// Weekly leagues: one per level (Beginner, Intermediate, Expert). You compete
-// in your level's league; the others can be viewed. Swipe sideways through
-// pages of 10 learners. Ranks Scales earned from learning only. The other
-// learners are demo data until the backend serves real rankings.
+// Leagues: one per level (Beginner, Intermediate, Expert). You compete in your
+// level's league; the others can be viewed. Swipe sideways through pages of 10
+// learners. Real learners from GET /leagues, ranked by the Scales the server
+// recorded for them (app/scales.py).
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -20,10 +20,29 @@ class _LeagueScreenState extends State<LeagueScreen> {
   int _page = 0;
   String? _viewing; // league shown; null = your own
 
-  // 29 demo learners per league, scored inside that level's range.
-  static List<(String, int)> _demo(int li) {
-    final top = [290, 990, 2400][li], floor = [0, 300, 1000][li];
-    return [for (var i = 0; i < 29; i++) ('Learner ${li * 29 + i + 1}', (top - i * (top - floor) ~/ 31 - (i % 3) * 2).clamp(floor, top))];
+  Map<String, dynamic>? _data; // GET /leagues
+  String? _error;
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  Future<void> _load() async {
+    final s = context.read<AppState>();
+    try {
+      final d = await s.api.leagues(s.profile.name);
+      s.syncScales(((d['me'] as Map?)?['scales'] as num?)?.toInt());
+      if (mounted) setState(() { _data = d; _error = null; });
+    } catch (_) {
+      if (mounted) setState(() => _error = "Can't load the league right now.");
+    }
+  }
+
+  List<(String, int, bool)> _rows(String level) {
+    final lv = (_data?['levels'] as List? ?? []).cast<Map>().firstWhere((l) => l['name'] == level, orElse: () => {});
+    return [for (final e in (lv['entries'] as List? ?? []).cast<Map>()) (e['display_name'] as String, (e['scales'] as num).toInt(), e['is_me'] == true)];
   }
 
   @override
@@ -39,11 +58,10 @@ class _LeagueScreenState extends State<LeagueScreen> {
     final s = context.watch<AppState>();
     final mine = s.level.name;
     final viewing = _viewing ?? mine;
-    final li = levels.indexWhere((l) => l.name == viewing);
     final own = viewing == mine;
-    final rows = [..._demo(li), if (own) ('You', s.xp)]..sort((a, b) => b.$2.compareTo(a.$2));
-    final myRank = rows.indexWhere((r) => r.$1 == 'You');
-    final pageCount = (rows.length / perPage).ceil();
+    final rows = _rows(viewing);
+    final myRank = rows.indexWhere((r) => r.$3);
+    final pageCount = (rows.length / perPage).ceil().clamp(1, 999);
     return Scaffold(
       appBar: StatsBar(title: '$viewing league', subtitle: own ? 'Your league' : null),
       body: PageWidth(max: 1000, child: Column(children: [
@@ -64,7 +82,13 @@ class _LeagueScreenState extends State<LeagueScreen> {
             }),
           ),
         ),
-        if (own)
+        if (_data == null && _error == null) Expanded(child: Center(child: CircularProgressIndicator())),
+        if (_error != null) Expanded(child: Center(child: Column(mainAxisSize: MainAxisSize.min, children: [
+          Text(_error!, style: TextStyle(color: kMuted)),
+          TextButton(onPressed: () { setState(() => _error = null); _load(); }, child: Text('Try again')),
+        ]))),
+        if (_data != null) ...[
+        if (own && myRank >= 0)
         Padding(
           padding: EdgeInsets.fromLTRB(20, 0, 20, 8),
           child: Panel(
@@ -89,9 +113,11 @@ class _LeagueScreenState extends State<LeagueScreen> {
             onPageChanged: (p) => setState(() => _page = p),
             itemBuilder: (context, p) {
               final start = p * perPage;
-              final slice = rows.sublist(start, (start + perPage).clamp(0, rows.length));
+              final slice = rows.isEmpty ? <(String, int, bool)>[] : rows.sublist(start, (start + perPage).clamp(0, rows.length));
               return ListView(padding: EdgeInsets.symmetric(horizontal: 20), children: [
-                for (final (i, r) in slice.indexed) _Row(rank: start + i + 1, name: r.$1, scales: r.$2, me: r.$1 == 'You'),
+                if (rows.isEmpty)
+                  Padding(padding: EdgeInsets.all(24), child: Center(child: Text('No learners in this league yet.', style: TextStyle(color: kMuted)))),
+                for (final (i, r) in slice.indexed) _Row(rank: start + i + 1, name: r.$3 ? '${r.$1} (you)' : r.$1, scales: r.$2, me: r.$3),
               ]);
             },
           ),
@@ -113,13 +139,14 @@ class _LeagueScreenState extends State<LeagueScreen> {
                     ),
                 ]),
                 SizedBox(height: 4),
-                Text('$viewing league · ranks ${_page * perPage + 1}-${((_page + 1) * perPage).clamp(0, rows.length)} · demo players',
+                Text('$viewing league · ranks ${rows.isEmpty ? 0 : _page * perPage + 1}-${((_page + 1) * perPage).clamp(0, rows.length)} of ${rows.length}',
                     style: TextStyle(fontSize: 11, color: kMuted)),
               ]),
             ),
             IconButton(tooltip: 'Next page', onPressed: _page < pageCount - 1 ? () => _go(_page + 1) : null, icon: Icon(Icons.chevron_right)),
           ]),
         ),
+        ],
       ])),
     );
   }

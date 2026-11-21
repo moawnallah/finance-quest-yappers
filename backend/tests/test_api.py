@@ -192,3 +192,24 @@ def test_accounts_register_login_and_admin(client):
     assert client.get("/admin/summary", headers={"Authorization": f"Bearer {adm['token']}"}).status_code == 200
     assert client.get("/admin/summary", headers={"Authorization": f"Bearer {anon['token']}"}).status_code == 403
     assert client.get("/me", headers={"Authorization": f"Bearer {adm['token']}"}).json()["email"] == "admin@crocoash.xyz"
+
+
+def test_scales_are_kept_on_the_server_and_leagues_are_real(client):
+    from app.engines import catalog
+    a = client.post("/auth/register", json={"email": "zofia.nowak@example.com", "password": "a-long-password"}).json()
+    h = {"Authorization": f"Bearer {a['token']}"}
+    assert client.get("/me/scales", headers=h).json() == {"scales": 0, "level": "Beginner"}
+    item = next(i for i in catalog().items.values() if i["kind"] == "single" and i["scored"])
+    right = item["reveal"]["answer"]
+    r = client.post(f"/tasks/{item['id']}/attempts", headers=h, json={"response": right, "confidence": 4}).json()
+    assert r["score"] == 1 and r["scales_total"] >= 10
+    again = client.post(f"/tasks/{item['id']}/attempts", headers=h, json={"response": right, "confidence": 4}).json()
+    assert again["scales_total"] == r["scales_total"]  # a task pays once
+    d1 = client.post("/me/scales", headers=h, json={"source": "daily_right"}).json()
+    d2 = client.post("/me/scales", headers=h, json={"source": "daily_tried"}).json()
+    assert d1["awarded"] == 15 and d2["awarded"] == 0  # one daily scenario a day
+    assert client.post("/me/scales", headers=h, json={"source": "bonus"}).status_code == 422
+    lg = client.get("/leagues", headers=h).json()
+    assert [l["name"] for l in lg["levels"]] == ["Beginner", "Intermediate", "Expert"]
+    me = [e for l in lg["levels"] for e in l["entries"] if e["is_me"]]
+    assert len(me) == 1 and me[0]["scales"] == lg["me"]["scales"] == d1["scales"]

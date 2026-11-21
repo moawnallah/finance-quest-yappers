@@ -166,6 +166,14 @@ class Api {
 
   // ---------- skills (task engines) ----------
 
+  /// Scales kept on the server (GET /me/scales) and the rewards earned outside a task.
+  Future<Map<String, dynamic>> scales(String name) async => Map<String, dynamic>.from(await _authed('GET', '/me/scales', name));
+  Future<Map<String, dynamic>> awardScales(String name, String source) async =>
+      Map<String, dynamic>.from(await _authed('POST', '/me/scales', name, body: {'source': source}));
+
+  /// Real leagues per level, ranked by Scales.
+  Future<Map<String, dynamic>> leagues(String name) async => Map<String, dynamic>.from(await _authed('GET', '/leagues', name));
+
   Future<List<Map<String, dynamic>>> skills(String name) async =>
       [for (final s in await _authed('GET', '/skills', name) as List) Map<String, dynamic>.from(s)];
 

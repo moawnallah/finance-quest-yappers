@@ -3,6 +3,7 @@ import random
 import secrets
 import uuid
 from statistics import mean
+from typing import Literal
 
 from fastapi import Depends, FastAPI, Request
 from fastapi.exceptions import RequestValidationError
@@ -10,9 +11,11 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
+from pydantic import BaseModel, Field
 
 from datetime import datetime, timezone
 
+from app import scales
 from app import auth, badges, progress
 from app.catalog import CATALOG
 from app.config import AB_VARIANTS, DATABASE_URL, ON_VERCEL
@@ -306,6 +309,36 @@ def my_badges(user: User = Depends(current_user), db: Session = Depends(get_db))
     got = {b.badge_key: b.awarded_at for b in db.scalars(select(UserBadge).where(UserBadge.user_id == user.id))}
     return [s.MyBadgeOut(**badges.public(k), earned=k in got, awarded_at=got[k].isoformat() if k in got else None)
             for k in badges.BADGES]
+
+
+class ScaleAwardIn(BaseModel):
+    source: Literal["daily_right", "daily_tried", "quick_check"] = Field(
+        description="daily_right / daily_tried: today's daily scenario (once a day); quick_check: the placement check (once).")
+
+
+@app.get("/me/scales")
+def my_scales(user: User = Depends(current_user), db: Session = Depends(get_db)):
+    """The learner's Scales (kept on the server) and level."""
+    n = scales.total(db, user.id)
+    return {"scales": n, "level": scales.level_of(n)}
+
+
+@app.post("/me/scales")
+def award_scales(body: ScaleAwardIn, user: User = Depends(current_user), db: Session = Depends(get_db)):
+    """Rewards earned outside a task: the daily scenario and the quick check. Correct answers and finished
+    missions are awarded by POST /tasks/{id}/attempts."""
+    ref = "once" if body.source == "quick_check" else datetime.now(timezone.utc).date().isoformat()
+    added = scales.award(db, user.id, body.source, ref)
+    db.commit()
+    n = scales.total(db, user.id)
+    return {"awarded": added, "scales": n, "level": scales.level_of(n)}
+
+
+@app.get("/leagues")
+def leagues(user: User = Depends(current_user), db: Session = Depends(get_db)):
+    """Real leagues: learners grouped by level (Beginner 0-299, Intermediate 300-999, Expert 1000+ Scales),
+    ranked by Scales. Admin accounts are left out."""
+    return scales.leagues(db, user)
 
 
 LEAGUE_SIZE = 10

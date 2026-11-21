@@ -414,6 +414,25 @@ class AppState extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// The server keeps the real total (app/scales.py); take its number whenever it sends one.
+  void syncScales(int? total) {
+    if (total == null || total == xp) return;
+    xp = total;
+    notifyListeners();
+  }
+
+  Future<void> refreshScales() async {
+    try {
+      syncScales(((await api.scales(profile.name))['scales'] as num?)?.toInt());
+    } catch (_) {}
+  }
+
+  Future<void> _award(String source) async {
+    try {
+      syncScales(((await api.awardScales(profile.name, source))['scales'] as num?)?.toInt());
+    } catch (_) {}
+  }
+
   void addXp(int amount) {
     xp += amount;
     xpToday += amount;
@@ -448,6 +467,7 @@ class AppState extends ChangeNotifier {
     if (badges.add('placement')) {
       pendingBadge = 'placement';
       addXp(Rewards.quickCheck);
+      _award('quick_check');
     }
     notifyListeners();
   }
@@ -456,6 +476,7 @@ class AppState extends ChangeNotifier {
     if (dailyAnswered) return;
     dailyAnswered = true;
     addXp(correct ? Rewards.dailyRight : Rewards.dailyTried);
+    _award(correct ? 'daily_right' : 'daily_tried');
   }
 
   void earnBadge(String id) { badges.add(id); notifyListeners(); }
@@ -484,6 +505,7 @@ class AppState extends ChangeNotifier {
     guest = false;
     signInMethod = 'email';
     signIn((a['display_name'] as String?) ?? (email ?? 'You').split('@').first);
+    refreshScales();
   }
 
   /// On start: if this device still has an account session, restore it.
@@ -513,6 +535,8 @@ class AppState extends ChangeNotifier {
     email = null;
     signInMethod = null;
     profile.name = 'You';
+    xp = 0; // the next account brings its own Scales from the server
+    xpToday = 0;
     api.reset();
     notifyListeners();
   }

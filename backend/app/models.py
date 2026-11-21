@@ -161,6 +161,21 @@ class UserBadge(Base):
     awarded_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
 
 
+class ScaleEvent(Base):
+    """One award of Scales (app/scales.py). (user, source, ref) is unique, so an award is given once."""
+    __tablename__ = "scale_events"
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    user_id: Mapped[str] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"))
+    source: Mapped[str] = mapped_column(String(20))   # correct | mission | daily | quick_check
+    ref: Mapped[str] = mapped_column(String(60))      # task id, node id, date, or "once"
+    amount: Mapped[int] = mapped_column(Integer)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
+    __table_args__ = (
+        UniqueConstraint("user_id", "source", "ref", name="uq_scale_once"),
+        Index("ix_scale_events_user_created", "user_id", "created_at"),
+    )
+
+
 class Event(Base):
     __tablename__ = "events"
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)

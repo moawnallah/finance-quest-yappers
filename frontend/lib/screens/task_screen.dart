@@ -113,6 +113,7 @@ class _TaskRunScreenState extends State<TaskRunScreen> {
         earned += Rewards.missionDone;
         s.earn('first_steps');
       }
+      s.syncScales((r['scales_total'] as num?)?.toInt());
       setState(() {
         result = r;
         lastStatus = r['status'] as Map<String, dynamic>;

@@ -8,6 +8,7 @@ from fastapi import APIRouter, Depends
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from app import scales
 from app import schemas as s
 from app.db import get_db
 from app.deps import ApiError, current_user, log_event
@@ -146,9 +147,14 @@ def submit_attempt(task_id: str, body: s.AttemptIn, lang: str = "en",
     completed = status["done"] and not was_done
     if completed:
         log_event(db, user, "skill_completed", node_id=node_id)
+    if result["score"] is not None and result["score"] >= 1:
+        scales.award(db, user.id, "correct", task_id)
+    if completed:
+        scales.award(db, user.id, "mission", node_id)
+    scales_total = scales.total(db, user.id)
     db.commit()
     return s.AttemptOut(attempt_id=attempt.id, task_id=task_id, level=level, score=result["score"],
                         score_estimate=result["score_estimate"], score_reasons=result["score_reasons"],
                         confidence=result["confidence"], p=result["p"], reveal=reveal, status=status,
                         node_completed=completed, accepted=result.get("accepted"), points=result.get("points"),
-                        growth_index=result.get("growth_index"))
+                        growth_index=result.get("growth_index"), scales_total=scales_total)
