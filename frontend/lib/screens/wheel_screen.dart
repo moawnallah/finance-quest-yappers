@@ -125,6 +125,7 @@ class _WheelScreenState extends State<WheelScreen> {
                     Padding(
                       padding: EdgeInsets.fromLTRB(16, 0, 16, 6),
                       child: MascotPlaceholder(
+                        onTap: () => GoRouter.of(context).push('/tutor'),
                         size: 44,
                         say: s.skillsIn(panel).isEmpty ? 'These missions are coming later. Tap one to see where it fits.' : 'Tap a glowing mission to start, or tap me to ask a question.',
                       ),

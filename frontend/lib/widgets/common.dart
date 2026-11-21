@@ -574,7 +574,8 @@ class MascotPlaceholder extends StatelessWidget {
   final String? say; // optional speech bubble
   final String pose; // point | teach | read | wave | cheer | thumbs | think | oops
   final bool headOnPhone; // on narrow screens show the head avatar instead of the figure
-  MascotPlaceholder({super.key, this.size = 64, this.say, this.pose = 'point', this.headOnPhone = false});
+  final VoidCallback? onTap; // e.g. open the tutor
+  MascotPlaceholder({super.key, this.size = 64, this.say, this.pose = 'point', this.headOnPhone = false, this.onTap});
 
   static const _ai = {'wave': 'wave', 'hello': 'wave', 'cheer': 'thumbs', 'thumbs': 'thumbs', 'oops': 'think', 'think': 'think'};
   static const _files = ['point_light.webp', 'point_dark.webp', 'wave_light.webp', 'wave_dark.webp', 'thumbs_light.webp',
@@ -610,8 +611,8 @@ class MascotPlaceholder extends StatelessWidget {
       image: true,
       child: asHead ? ClipOval(child: ColoredBox(color: kPrimarySoft, child: img)) : img,
     );
-    if (say == null) return face;
-    return Row(crossAxisAlignment: CrossAxisAlignment.center, children: [
+    if (say == null) return _tappable(face);
+    return _tappable(Row(crossAxisAlignment: CrossAxisAlignment.center, children: [
       face,
       SizedBox(width: 8),
       Flexible(
@@ -628,8 +629,16 @@ class MascotPlaceholder extends StatelessWidget {
           child: Text(say!, style: TextStyle(fontSize: 13, color: kBody, height: 1.3)),
         ),
       ),
-    ]);
+    ]));
   }
+
+  Widget _tappable(Widget w) => onTap == null
+      ? w
+      : Semantics(
+          button: true,
+          label: 'Ask Kyle, the tutor',
+          child: MouseRegion(cursor: SystemMouseCursors.click, child: GestureDetector(behavior: HitTestBehavior.opaque, onTap: onTap, child: w)),
+        );
 }
 
 /// The tutor, one tap away on every tab: a round button at the bottom right with Kyle's face.
