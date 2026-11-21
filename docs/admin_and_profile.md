@@ -10,7 +10,7 @@ Purpose: agree what the admin panel and the profile show, where each number
 comes from, and what we must log now so that a "what next" model can be
 trained later.
 
-Status: proposal for review, 2026-11-21. Nothing here is built yet. The
+Status: decisions taken 2026-11-21 (end of file); nothing built yet. The
 existing pieces are named where they exist:
 - Mo's tables: `users`, `profiles`, `attempts`, `events`,
   `benchmark_answers`, `user_badges`;
@@ -38,7 +38,8 @@ handover). Until then every number below resets on a cold start.
 
 | Table or field | Columns | Why |
 |---|---|---|
-| `reco_events` | from the router (docs/tutor_agent.md, section 6), plus `shown_rank`, `exploration` | Router overview; training data for the next-step model |
+| `reco_events` | from the router (docs/tutor_agent.md, section 6) | Router overview and calibration |
+| `node_opened` (in `events`) | `node, source (recommended / self_chosen / explore_wheel / tutor_link)` | Self-chosen clicks for the next-step model |
 | `llm_events` | from the tutor (docs/tutor_agent.md, section 5) | AI overview, advice watch |
 | `feedback` | `id, ts, user_pseudo_id, where (item, card, task, tutor_answer, screen), target_id, kind (wrong_fact, unclear, bug, idea, other), text (max 500 chars, masked), status (new, triaged, fixed, wont_fix), resolved_by, resolved_at` | Bug reports and feedback |
 | `attempts.duration_ms` | engine time to check, convert and score | Hard-task timing |
@@ -172,8 +173,9 @@ there are outcomes.
 - **Queue.** Reports are newest first, with filters by kind, node and
   status. Statuses go new → triaged → fixed or won't fix; each change is
   written to `admin_audit`.
-- **Auto-flag.** An item with 2 or more open "wrong fact" reports is shown
-  as a draft until reviewed (proposal).
+- **Red alert (decided 2026-11-21).** An item with 2 or more open "wrong
+  fact" reports raises a red alert on the overview and is highlighted in
+  view B. It stays live; a person decides.
 
 ### H. Study (hallway test)
 
@@ -195,42 +197,88 @@ which node should come next?
 - Later, a model can learn it from data, **if we log the right things from
   day one**.
 
+**The end-of-path screen is the decision point.**
+- It congratulates the user and recommends 3 next nodes, for example
+  "You finished your path. To grow further we recommend: x, y, z", each
+  with a one-line reason.
+- It always offers "Something else" (opens the tree and the Explore
+  wheel).
+- Optionally it asks a 30-second check-in of 3 short questions:
+  - "Has your goal changed?" (same answer set as the survey);
+  - "How sure do you feel about money decisions now?" (1-5);
+  - "What would you like next?" (protect / grow / understand the
+    markets / not sure).
+
+  The answers update the needs, and the confidence answer gives a
+  before/after pair for the study view.
+
+**Signals we collect for the next step:**
+
+| Signal | Source | Why it matters |
+|---|---|---|
+| Scores and initial answers | the survey, every first attempt, the mastery per node | What the user can do now |
+| The check-in | the end-of-path screen | What the user wants now, and confidence after the path |
+| **Self-chosen clicks** | every node, card or Explore slice the user opens **without** it being recommended (`node_opened` with `source: recommended / self_chosen / explore_wheel / tutor_link`) | What interests the user, beyond our suggestions |
+| The pick on the end-of-path screen | one of x, y, z, "something else", or leaving | The label for the next-step model |
+| The outcome of that pick | first-item success, node completed, back within 7 days | Whether the pick was a good one |
+
+**Why the self-chosen clicks matter.** If we log only picks from our own 3
+suggestions, a model can only learn our rules back. Nodes users open on
+their own are the alternatives the rules did not offer. They show what a
+better recommender could have suggested, without us changing anything for
+the user.
+- Optional later, not for the demo: occasionally show one random unlocked
+  node among the 3 suggestions. That would add alternatives faster, but
+  self-chosen clicks are enough to start.
+
 **One row per decision point** (`next_step_events`):
 
 | Field | Content |
 |---|---|
-| `ts, user_pseudo_id, router_version` | when, who (pseudonymous), which rules |
+| `ts, user_pseudo_id, decider, decider_version` | when, who (pseudonymous), which model made the suggestion (`rules-1` today) |
 | `trigger` | `path_finished` or `node_finished` |
-| `state` | mastery per node, calibration gap, needs, goal, horizon, age band, days since start, recent scores, Explore-wheel slices viewed in the last 7 days |
-| `candidates` | every node shown as a next option, each with its rank, priority and the rule's reason |
-| `shown_rank`, `exploration` | where each candidate was shown, and whether its position was randomised |
-| `chosen` | the node the user opened, or none |
+| `state` | mastery per node, calibration gap, needs, goal, horizon, age band, days since start, recent scores, check-in answers, self-chosen clicks in the last 7 days |
+| `candidates` | the 3 suggested nodes with rank, priority and reason; also the shadow model's suggestions, if one runs |
+| `chosen` | x, y, z, a node picked through "something else", or none |
 | `outcome` | filled later: first-item success in the chosen node, node completed (yes or no), back within 7 days, confidence change |
 
-**Why log the shown candidates and a little randomness.** If we log only
-what users chose from the router's own list, a model can only learn the
-router back. The fix:
-- show the router's top 3;
-- with a small probability (proposal: 10%), swap one position for another
-  unlocked node, and mark it `exploration: true`.
+Every `node_opened` event (with its `source`) is also kept, so self-chosen
+learning outside a decision point is not lost.
 
-That gives the model a fair view of alternatives. It also lets us evaluate
-a new policy offline before it reaches users, by weighting the logged
-outcomes by the chance each option had of being shown.
-
-**When a model makes sense:**
-- a few hundred decision points with outcomes;
-- first as a logistic regression on "first-item success and completion"
-  per candidate;
-- compared with the rule router on held-out users, as in
-  docs/onboarding_router.md, "Replacing the rules".
+**A decision model in shadow at the end of the path** (documentation only;
+the demo has only two prepared paths):
+- BASAL (a `choice` question over the unlocked nodes, plus the state as
+  JSON) or Gemma (the same prompt with a JSON answer) proposes x, y, z
+  next to the rules.
+- The rules decide; the shadow proposal is logged in `candidates`.
+- This is the same set-up as the onboarding shadow experiment
+  (onboarding_router.md).
 
 **Admin view:**
-- dataset size;
-- the share of rows with an outcome;
-- the exploration rate;
+- dataset size and the share of rows with an outcome;
+- the share of picks that were self-chosen;
+- agreement between the rules and the shadow model;
 - class balance;
 - an anonymised CSV export.
+
+### Replacing a model with our own (router and next step)
+
+The same logs serve the **onboarding router now** (calibration: predicted
+vs observed first items) and **a replacement later**.
+- The rules stay until a model beats them on held-out users.
+- The decider's name and version are on every logged row, so results can
+  be compared by version.
+
+| Step | What | Pass criterion |
+|---|---|---|
+| 1. Collect | `reco_events`, `next_step_events`, `node_opened`, attempts | a few hundred decision points with outcomes; first items per node for the router |
+| 2. Candidates | (a) **our own classifier**: logistic regression or gradient boosting predicting "first-item success and completion" per candidate node; (b) **segments**: k-means on the state (mastery, calibration, goal, horizon), then per segment the nodes with the best outcomes; (c) the shadow decision model (BASAL or Gemma) | — |
+| 3. Offline comparison | the same held-out users; the router's metric is log loss and Brier of predicted first-item success; the next-step metric is the outcome rate of the suggested nodes, measured where the user's pick matched the suggestion | better than the rules by an agreed margin, decided before looking |
+| 4. Shadow | the candidate runs next to the rules, logged only | it agrees where the rules are good, and disagrees where outcomes say the rules were wrong |
+| 5. Switch | A/B on a share of new users (Mo's variants), with a new `decider_version` | the outcome rate does not drop; the advice and leak checks stay clean |
+
+k-means alone does not predict anything. It groups similar users. It earns
+its place only if per-segment suggestions beat the rules in step 3.
 
 ### J. Also worth having
 
@@ -301,18 +349,22 @@ growth_index, percentiles), `activity` and `privacy`.
 | `tutor_overview(llm_events)` | llm events | view D | counts by check type |
 | `hard_overview(attempts)` | hard attempts | view B hard panel, view F timing | the most failed test is found |
 | `study_report(before, after)` | paired rows | view H | paired change on hand-made pairs |
-| `next_step_candidates(router_result, unlocked, rng)` | router output | shown list with ranks and exploration flags | 10% exploration over many draws, always unlocked nodes |
+| `next_steps(state, unlocked)` | mastery, needs, check-in answers, self-chosen clicks | the 3 end-of-path suggestions (x, y, z) with reasons, from the rules; only unlocked, not-done nodes | hand-made states give the expected 3; a self-chosen topic raises its related nodes |
+| `click_signals(node_opened)` | `node_opened` events | self-chosen share, top self-chosen nodes per user and overall | recommended clicks are not counted as self-chosen |
 | `profile_summary(user_rows, router_result)` | one user's rows | `GET /me/summary` | bands and gap from hand-made rows |
 | `participant_id(existing)` | existing ids | a new unique code | no 0/O/1/I, unique |
 
-## For review
+## Decisions (2026-11-21)
 
-1. Is the list of views right? What should be cut for the 48 hours? My
-   proposal for Sunday:
-   - A, B (easy and medium only), C, D (advice watch), G, H;
-   - the rest after the demo.
-2. Exploration at 10% in the next-step suggestions: acceptable for the
-   demo, or off until after?
-3. The auto-flag rule: 2 "wrong fact" reports turn an item back into a
-   draft.
-4. The consent text wording.
+1. **For Sunday:** views A, B (easy and medium), C, D (advice watch), G and
+   H. The rest comes after the demo.
+2. **No random suggestions.** Self-chosen clicks, scores, initial answers
+   and an optional end-of-path check-in are the signals. The end-of-path
+   screen congratulates the user and recommends x, y, z. A shadow decision
+   model (BASAL or Gemma) at the end of the path is documented, not built
+   for the demo. The logs serve the router now and a replacement later
+   (own classifier or k-means segments, only if it beats the rules).
+3. **Reports:** a red alert at 2 "wrong fact" reports; the item stays live.
+4. **The consent text** is accepted for now.
+
+The code status of each piece is in "The analytics module".
