@@ -37,6 +37,26 @@ class _HardTaskScreenState extends State<HardTaskScreen> with SingleTickerProvid
   void initState() {
     super.initState();
     _load();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _smallScreenNotice());
+  }
+
+  static const _largeScreen = 'This task can take a while and works best on a large screen (laptop or tablet).';
+
+  Future<void> _smallScreenNotice() async {
+    if (!mounted || MediaQuery.sizeOf(context).width >= 1000) return;
+    final go = await showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (d) => AlertDialog(
+        title: Text('Best on a large screen'),
+        content: Text(_largeScreen),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(d, false), child: Text('Back')),
+          FilledButton(style: FilledButton.styleFrom(minimumSize: Size(120, 44)), onPressed: () => Navigator.pop(d, true), child: Text('Continue anyway')),
+        ],
+      ),
+    );
+    if (go != true && mounted) context.pop();
   }
 
   Future<void> _load() async {
@@ -167,6 +187,10 @@ class _HardTaskScreenState extends State<HardTaskScreen> with SingleTickerProvid
     final pub = (_panel['public_tests'] as List? ?? []).cast<Map>();
     final ran = {for (final r in (_run?['tests'] as List? ?? []).cast<Map>()) r['name']: r};
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      if (MediaQuery.sizeOf(context).width >= 1000) ...[
+        Text(_largeScreen, style: TextStyle(fontSize: 12, color: kMuted, fontStyle: FontStyle.italic)),
+        SizedBox(height: 10),
+      ],
       Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Expanded(child: Text('Task description', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: kInk))),
         MascotPlaceholder(size: 40, pose: 'point'),
@@ -202,7 +226,7 @@ class _HardTaskScreenState extends State<HardTaskScreen> with SingleTickerProvid
         child: Row(children: [
           Icon(Icons.lock_outline, size: 18, color: kPrimaryText),
           SizedBox(width: 8),
-          Expanded(child: Text('${_panel['hidden_tests'] ?? 0} hidden events and 200 possible futures are revealed only when you submit.',
+          Expanded(child: Text('${_panel['hidden_tests'] ?? 0} hidden events${_panel['futures'] != null ? ' and ${_panel['futures']} possible futures' : ''} are revealed only when you submit.',
               style: TextStyle(fontSize: 12, color: kPrimaryText))),
         ]),
       ),
@@ -315,9 +339,9 @@ class _HardTaskScreenState extends State<HardTaskScreen> with SingleTickerProvid
       Text('Tap a block to add it where the cursor is.', style: TextStyle(fontSize: 12, color: kMuted)),
       SizedBox(height: 8),
       section('Control', _cControl, [
-        _block('if … :', _cControl, 'if cash > 0:\n    ', 'Do the lines under it only when the condition is true', line: true),
-        _block('elif … :', _cControl, 'elif cash > 0:\n    ', 'Otherwise, if another condition is true', line: true),
-        _block('else:', _cControl, 'else:\n    ', 'Otherwise', line: true),
+        _block('if … :', _cControl, 'if ___:', 'Do the lines under it only when the condition is true. Fill the gap with a value, < or > and a number.', line: true),
+        _block('elif … :', _cControl, 'elif ___:', 'Otherwise, if another condition is true', line: true),
+        _block('else:', _cControl, 'else:', 'Otherwise', line: true),
       ]),
       section('Actions', _cAction, [for (final a in actions) _block(a.$1, _cAction, a.$2, a.$3, line: true)]),
       section('Conditions', _cCond, [
@@ -364,32 +388,78 @@ class _HardTaskScreenState extends State<HardTaskScreen> with SingleTickerProvid
 
   /// Insert a block's code. Statements go on a new line with the right indent; parts of an
   /// expression go where the cursor is.
+  static const _gap = '___';
+
+  /// Insert a block. Statements go on their own line with the right indent (`elif` and `else` line up
+  /// with their `if`; anything after a line ending in ':' goes inside it). `if` and `elif` leave a gap
+  /// (___) selected; values, comparisons and maths fill the selected gap, or go where the cursor is
+  /// inside a condition or an action's brackets. Elsewhere they are refused with a hint.
   void _insert(String code, {bool line = false}) {
     final t = _code.text;
-    var at = _code.selection.isValid ? _code.selection.end : t.length;
-    if (!line) {
-      _code.value = TextEditingValue(text: t.replaceRange(at, at, code), selection: TextSelection.collapsed(offset: at + code.length));
-      return;
-    }
+    final sel = _code.selection;
+    final at = sel.isValid ? sel.end : t.length;
     final lineStart = t.lastIndexOf('\n', at > 0 ? at - 1 : 0) + 1;
     var lineEnd = t.indexOf('\n', at);
     if (lineEnd < 0) lineEnd = t.length;
     final current = t.substring(lineStart, lineEnd);
-    var indent = current.length - current.trimLeft().length;
-    if (current.trimRight().endsWith(':')) indent += 4;
-    final pad = ' ' * indent;
-    final block = code.split('\n').map((l) => l.isEmpty ? l : '$pad$l').join('\n');
+
+    if (!line) {
+      if (sel.isValid && !sel.isCollapsed) {
+        _set(t.replaceRange(sel.start, sel.end, code.trim()), sel.start + code.trim().length);
+        return;
+      }
+      final before = t.substring(lineStart, at), after = t.substring(at, lineEnd);
+      final trimmed = current.trimLeft();
+      final inCondition = (trimmed.startsWith('if ') || trimmed.startsWith('elif ')) && after.contains(':');
+      final inBrackets = '('.allMatches(before).length > ')'.allMatches(before).length;
+      if (!inCondition && !inBrackets) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            content: Text('Tap "if" first, then fill its gap (___), or put the cursor inside a condition or the brackets of an action.')));
+        return;
+      }
+      final glue = before.isNotEmpty && RegExp(r'[A-Za-z0-9_)]$').hasMatch(before) && !code.startsWith(' ') ? ' ' : '';
+      final piece = glue + code;
+      _set(t.replaceRange(at, at, piece), at + piece.length);
+      return;
+    }
+
+    int indentOf(String l) => l.length - l.trimLeft().length;
+    var indent = indentOf(current);
+    final head = code.trimLeft();
+    if (head.startsWith('elif') || head.startsWith('else')) {
+      // Line up with the `if` this belongs to: the nearest if/elif above with a smaller indent
+      // (or the same indent when the cursor is on that if line itself).
+      final lines = t.substring(0, lineEnd).split('\n');
+      for (var k = lines.length - 1; k >= 0; k--) {
+        final l = lines[k], tl = l.trimLeft();
+        if ((tl.startsWith('if ') || tl.startsWith('elif ')) && (indentOf(l) < indent || k == lines.length - 1)) {
+          indent = indentOf(l);
+          break;
+        }
+      }
+    } else if (current.trimRight().endsWith(':')) {
+      indent += 4; // inside the block
+    }
+    var block = ' ' * indent + code;
+    if (head.endsWith(':') && !head.contains(_gap)) block += '\n' + ' ' * (indent + 4); // else: start its body
     final String text;
-    final int cursor;
+    final int insertAt;
     if (current.trim().isEmpty) {
       text = t.replaceRange(lineStart, lineEnd, block);
-      cursor = lineStart + block.length;
+      insertAt = lineStart;
     } else {
       text = t.replaceRange(lineEnd, lineEnd, '\n$block');
-      cursor = lineEnd + 1 + block.length;
+      insertAt = lineEnd + 1;
     }
-    _code.value = TextEditingValue(text: text, selection: TextSelection.collapsed(offset: cursor));
+    final g = block.indexOf(_gap);
+    if (g >= 0) {
+      _code.value = TextEditingValue(text: text, selection: TextSelection(baseOffset: insertAt + g, extentOffset: insertAt + g + _gap.length));
+    } else {
+      _set(text, insertAt + block.length);
+    }
   }
+
+  void _set(String text, int cursor) => _code.value = TextEditingValue(text: text, selection: TextSelection.collapsed(offset: cursor));
 
   Widget _results({bool scroll = true}) {
     final children = <Widget>[
@@ -442,7 +512,7 @@ class _HardTaskScreenState extends State<HardTaskScreen> with SingleTickerProvid
       context: context,
       builder: (d) => AlertDialog(
         title: Text('Submit your plan?'),
-        content: Text('Your plan will face every test, including the ${_panel['hidden_tests'] ?? 0} hidden events and 200 possible futures. You can still improve it and submit again.'),
+        content: Text('Your plan will face every test, including the ${_panel['hidden_tests'] ?? 0} hidden events${_panel['futures'] != null ? ' and ${_panel['futures']} possible futures' : ''}. You can still improve it and submit again.'),
         actions: [
           TextButton(onPressed: () => Navigator.pop(d, false), child: Text('Keep editing')),
           FilledButton(style: FilledButton.styleFrom(minimumSize: Size(120, 44)), onPressed: () => Navigator.pop(d, true), child: Text('Submit')),
