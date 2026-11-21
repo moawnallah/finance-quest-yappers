@@ -5,7 +5,7 @@ import uuid
 from statistics import mean
 from typing import Literal
 
-from fastapi import Depends, FastAPI, Request
+from fastapi import Depends, FastAPI, Header, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
@@ -20,7 +20,7 @@ from app import auth, badges, progress
 from app.catalog import CATALOG
 from app.config import AB_VARIANTS, DATABASE_URL, ON_VERCEL
 from app.db import get_db
-from app.deps import ApiError, current_user, log_event, require_admin
+from app.deps import ApiError, current_user, is_guest, log_event, require_admin, viewer
 from app.models import (Answer, BenchmarkAnswer, BenchmarkQuestion, BenchmarkStat, Node, NodeProgress, Profile,
                         Question, Slice, User, UserBadge)
 from app import schemas as s
@@ -97,20 +97,14 @@ def create_session(body: s.SessionIn, db: Session = Depends(get_db)):
 
 @app.post("/auth/register", response_model=s.AccountOut, status_code=201)
 def register(body: s.RegisterIn, request: Request, db: Session = Depends(get_db)):
-    """Create an account. If the request carries the token of an anonymous session,
-    that session becomes the account, so progress made before signing up is kept."""
+    """Create an account. Every account starts fresh: guests are stateless and nothing carries over."""
     email = auth.normalize_email(body.email)
     if not auth.valid_email(email):
         raise ApiError(422, "invalid_email", "Enter a valid email address.")
     if db.scalar(select(User).where(User.email == email)):
         raise ApiError(409, "email_taken", "An account with this email already exists. Sign in instead.")
     user = None
-    header = request.headers.get("authorization", "")
-    if header.lower().startswith("bearer "):
-        current = db.scalar(select(User).where(User.token == header.split(" ", 1)[1].strip()))
-        if current and current.email is None:
-            user = current  # keep the progress of the anonymous session
-    if user is None:
+    if user is None:  # every account starts fresh: guests are never stored, so nothing carries over
         user = User(id=str(uuid.uuid4()), token=secrets.token_urlsafe(32), variant=random.choice(AB_VARIANTS),
                     display_name=body.display_name or email.split("@")[0])
         db.add(user)
@@ -335,9 +329,11 @@ def award_scales(body: ScaleAwardIn, user: User = Depends(current_user), db: Ses
 
 
 @app.get("/leagues")
-def leagues(user: User = Depends(current_user), db: Session = Depends(get_db)):
+def leagues(user=Depends(viewer), db: Session = Depends(get_db), x_guest_scales: int | None = Header(default=None)):
     """Real leagues: learners grouped by level (Beginner 0-299, Intermediate 300-999, Expert 1000+ Scales),
     ranked by Scales. Admin accounts are left out."""
+    if is_guest(user):
+        return scales.leagues(db, user, me_total=max(0, x_guest_scales or 0))
     return scales.leagues(db, user)
 
 

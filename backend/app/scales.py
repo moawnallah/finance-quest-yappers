@@ -37,7 +37,7 @@ def level_of(scales: int) -> str:
     return [name for name, floor in LEVELS if scales >= floor][-1]
 
 
-def leagues(db: Session, me: User, per_level: int = 50) -> dict:
+def leagues(db: Session, me, per_level: int = 50, me_total: int | None = None) -> dict:
     """Registered learners per level, ranked by Scales. Guests (no account), admin accounts and learners
     with no Scales are left out; a guest still sees their own row, so they know where they would stand."""
     rows = db.execute(select(User.id, User.display_name, func.sum(ScaleEvent.amount).label("n"))
@@ -46,7 +46,7 @@ def leagues(db: Session, me: User, per_level: int = 50) -> dict:
                       .group_by(User.id, User.display_name)).all()
     totals = {uid: (name, int(n)) for uid, name, n in rows}
     if me.id not in totals and not me.is_admin:
-        totals[me.id] = (me.display_name, total(db, me.id))
+        totals[me.id] = (me.display_name, total(db, me.id) if me_total is None else me_total)
     out = []
     for i, (name, floor) in enumerate(LEVELS):
         ceiling = LEVELS[i + 1][1] if i + 1 < len(LEVELS) else None
@@ -55,5 +55,5 @@ def leagues(db: Session, me: User, per_level: int = 50) -> dict:
         out.append({"name": name, "min": floor, "max": ceiling, "total": len(members),
                     "entries": [{"rank": r + 1, "display_name": nm, "scales": n, "is_me": uid == me.id}
                                 for r, (n, nm, uid) in enumerate(members[:per_level])]})
-    mine = total(db, me.id)
+    mine = total(db, me.id) if me_total is None else me_total
     return {"me": {"scales": mine, "level": level_of(mine)}, "levels": out}

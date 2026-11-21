@@ -32,7 +32,7 @@ class _LeagueScreenState extends State<LeagueScreen> {
   Future<void> _load() async {
     final s = context.read<AppState>();
     try {
-      final d = await s.api.leagues(s.profile.name);
+      final d = await s.api.leagues(s.profile.name, guestScales: s.xp);
       s.syncScales(((d['me'] as Map?)?['scales'] as num?)?.toInt());
       if (mounted) setState(() { _data = d; _error = null; });
     } catch (_) {

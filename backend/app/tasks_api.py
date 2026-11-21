@@ -13,7 +13,7 @@ from hard.dsl import check as hard_check
 from app import scales
 from app import schemas as s
 from app.db import get_db
-from app.deps import ApiError, current_user, log_event
+from app.deps import ApiError, current_user, is_guest, log_event, viewer
 from app.engines import AttemptError, Catalog, catalog, easy, hard, localize, medium, node_status
 from app.models import Attempt, User
 
@@ -26,37 +26,42 @@ def _node(cat: Catalog, node_id: str) -> dict:
     return cat.nodes[node_id]
 
 
-def _attempts(db: Session, user_id: str, node_id: str) -> list[Attempt]:
-    return list(db.scalars(select(Attempt).where(Attempt.user_id == user_id, Attempt.node_id == node_id)
+def _attempts(db: Session, user, node_id: str) -> list[Attempt]:
+    """The viewer's attempts on a node: from the database for accounts, from the app's history for guests
+    (transient Attempt objects, never added to a session)."""
+    if is_guest(user):
+        return [Attempt(task_id=t, node_id=n, level=lv, context=c, score=sc) for t, n, lv, c, sc in user.history if n == node_id]
+    return list(db.scalars(select(Attempt).where(Attempt.user_id == user.id, Attempt.node_id == node_id)
                            .order_by(Attempt.id)))
 
 
-def _status(db: Session, cat: Catalog, user_id: str, node_id: str) -> dict:
-    return node_status(cat, node_id, user_id, _attempts(db, user_id, node_id))
+def _status(db: Session, cat: Catalog, user, node_id: str) -> dict:
+    return node_status(cat, node_id, user.id, _attempts(db, user, node_id))
 
 
 @router.get("/skills", response_model=list[s.SkillSummary])
-def list_skills(lang: str = "en", user: User = Depends(current_user), db: Session = Depends(get_db)):
+def list_skills(lang: str = "en", user: User = Depends(viewer), db: Session = Depends(get_db)):
     """All skills-tree nodes that have engine content, with this user's completion."""
     cat = catalog()
     return [s.SkillSummary(id=n["node"], title=localize(n["title"], lang), panel=n["panel"], after=n["after"],
                            live=n["live"], cards=len(n["cards"]), items=len(n["items"]),
                            medium_tasks=len(cat.tasks_by_node.get(n["node"], [])),
-                           status=_status(db, cat, user.id, n["node"]))
+                           status=_status(db, cat, user, n["node"]))
             for n in sorted(cat.nodes.values(), key=lambda n: (n["panel"], n["node"]))]
 
 
 @router.get("/skills/{node_id}", response_model=s.SkillDetail)
-def skill_detail(node_id: str, lang: str = "en", user: User = Depends(current_user), db: Session = Depends(get_db)):
+def skill_detail(node_id: str, lang: str = "en", user: User = Depends(viewer), db: Session = Depends(get_db)):
     """Cards, easy items and medium tasks of one node, without answers."""
     cat = catalog()
     node = _node(cat, node_id)
-    log_event(db, user, "skill_opened", node_id=node_id)
-    db.commit()
+    if not is_guest(user):
+        log_event(db, user, "skill_opened", node_id=node_id)
+        db.commit()
     return s.SkillDetail(node=easy.node_view(node, lang),
                          medium=[medium.question_view(t, lang) for t in cat.tasks_by_node.get(node_id, [])],
                          hard=[hard.question_view(t, lang) for t in cat.hard_by_node.get(node_id, [])],
-                         status=_status(db, cat, user.id, node_id))
+                         status=_status(db, cat, user, node_id))
 
 
 def _drawn(node_id: str, context: str, lang: str, user: User) -> s.DrawnTestOut:
@@ -69,19 +74,19 @@ def _drawn(node_id: str, context: str, lang: str, user: User) -> s.DrawnTestOut:
 
 
 @router.get("/skills/{node_id}/prerequisite-test", response_model=s.DrawnTestOut)
-def prerequisite_test(node_id: str, lang: str = "en", user: User = Depends(current_user)):
+def prerequisite_test(node_id: str, lang: str = "en", user: User = Depends(viewer)):
     """2-3 check items from the node's prerequisite nodes. Passing all marks the node's easy part done."""
     return _drawn(node_id, "prerequisite", lang, user)
 
 
 @router.get("/skills/{node_id}/test-out", response_model=s.DrawnTestOut)
-def test_out(node_id: str, lang: str = "en", user: User = Depends(current_user)):
+def test_out(node_id: str, lang: str = "en", user: User = Depends(viewer)):
     """2 of the node's own check items, for nodes the onboarding router marks 'probably known'."""
     return _drawn(node_id, "test_out", lang, user)
 
 
 @router.get("/tasks/{task_id}", response_model=s.TaskOut)
-def get_task(task_id: str, lang: str = "en", user: User = Depends(current_user)):
+def get_task(task_id: str, lang: str = "en", user: User = Depends(viewer)):
     """One easy item or medium task, without answers, truth or weights."""
     found = catalog().find(task_id)
     if not found:
@@ -138,7 +143,7 @@ def _program_from(rec: dict, response):
 
 
 @router.post("/tasks/{task_id}/run")
-def run_public_tests(task_id: str, body: s.CodeIn, user: User = Depends(current_user), db: Session = Depends(get_db)):
+def run_public_tests(task_id: str, body: s.CodeIn, user: User = Depends(viewer), db: Session = Depends(get_db)):
     """Hard tasks: run the public tests on code from the code panel. Nothing is scored or stored as an
     attempt, and hidden tests are not run: submit (POST /tasks/{id}/attempts with {"code": ...}) for that."""
     found = catalog().find(task_id)
@@ -154,14 +159,15 @@ def run_public_tests(task_id: str, body: s.CodeIn, user: User = Depends(current_
         raise ApiError(400, "invalid_response", "; ".join(errors))
     started = time.perf_counter()
     out = hard.run_public(rec["meta"], program)
-    log_event(db, user, "hard_tests_run", task_id=task_id, required_passed=out["required_passed"])
-    db.commit()
+    if not is_guest(user):
+        log_event(db, user, "hard_tests_run", task_id=task_id, required_passed=out["required_passed"])
+        db.commit()
     return {**out, "duration_ms": int((time.perf_counter() - started) * 1000)}
 
 
 @router.post("/tasks/{task_id}/attempts", response_model=s.AttemptOut)
 def submit_attempt(task_id: str, body: s.AttemptIn, lang: str = "en",
-                   user: User = Depends(current_user), db: Session = Depends(get_db)):
+                   user: User = Depends(viewer), db: Session = Depends(get_db)):
     """Score one answer, store the attempt record, and return the reveal and the node's completion."""
     cat = catalog()
     found = cat.find(task_id)
@@ -202,7 +208,17 @@ def submit_attempt(task_id: str, body: s.AttemptIn, lang: str = "en",
     duration_ms = int((time.perf_counter() - started) * 1000)
     failed = next((t["name"] for t in result.get("obligatory") or [] if not t["passed"]), None)
 
-    was_done = _status(db, cat, user.id, node_id)["done"]
+    was_done = _status(db, cat, user, node_id)["done"]
+    if is_guest(user):
+        # Not stored: the app adds this record to its own history and sends it back next time.
+        record = [task_id, node_id, level, body.context, result["score"]]
+        user.history = user.history + [record]
+        status = _status(db, cat, user, node_id)
+        return s.AttemptOut(attempt_id=0, task_id=task_id, level=level, score=result["score"],
+                            score_estimate=result["score_estimate"], score_reasons=result["score_reasons"],
+                            confidence=result["confidence"], p=result["p"], reveal=reveal, status=status,
+                            node_completed=status["done"] and not was_done, accepted=result.get("accepted"),
+                            points=result.get("points"), growth_index=result.get("growth_index"), record=record)
     attempt = Attempt(user_id=user.id, task_id=task_id, node_id=node_id, level=level,
                       context=body.context, content_version=result["content_version"], response=result["response"],
                       confidence=result["confidence"], p=result["p"], score_estimate=result["score_estimate"],
@@ -214,7 +230,7 @@ def submit_attempt(task_id: str, body: s.AttemptIn, lang: str = "en",
     db.flush()
     log_event(db, user, "attempt_submitted", task_id=task_id, level=level, context=body.context, score=result["score"])
 
-    status = _status(db, cat, user.id, node_id)
+    status = _status(db, cat, user, node_id)
     completed = status["done"] and not was_done
     if completed:
         log_event(db, user, "skill_completed", node_id=node_id)

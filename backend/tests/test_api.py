@@ -171,20 +171,20 @@ def test_accounts_register_login_and_admin(client):
     """Email accounts: passwords stored only as scrypt hashes; login checks them; admins by email."""
     from app.db import SessionLocal
     from app.models import User
-    # an anonymous session that later signs up keeps its id (and so its progress)
+    # an account always starts fresh: nothing carries over from an earlier session
     anon = client.post("/auth/session", json={"display_name": "Zofia"}).json()
     r = client.post("/auth/register", headers={"Authorization": f"Bearer {anon['token']}"},
                     json={"email": "Zofia@Example.com", "password": "correct horse 1"})
-    assert r.status_code == 201 and r.json()["user_id"] == anon["user_id"] and r.json()["email"] == "zofia@example.com"
+    assert r.status_code == 201 and r.json()["user_id"] != anon["user_id"] and r.json()["email"] == "zofia@example.com"
     assert r.json()["is_admin"] is False
     with SessionLocal() as db:
-        u = db.get(User, anon["user_id"])
+        u = db.get(User, r.json()["user_id"])
         assert u.password_hash.startswith("scrypt$") and "correct horse 1" not in u.password_hash
     assert client.post("/auth/register", json={"email": "zofia@example.com", "password": "another pass"}).status_code == 409
     assert client.post("/auth/register", json={"email": "not-an-email", "password": "long enough"}).status_code == 422
     assert client.post("/auth/register", json={"email": "a@b.co", "password": "short"}).status_code == 422
     ok = client.post("/auth/login", json={"email": "ZOFIA@example.com", "password": "correct horse 1"})
-    assert ok.status_code == 200 and ok.json()["token"] == anon["token"]
+    assert ok.status_code == 200 and ok.json()["token"] == r.json()["token"]
     bad = client.post("/auth/login", json={"email": "zofia@example.com", "password": "wrong"})
     nobody = client.post("/auth/login", json={"email": "nobody@example.com", "password": "wrong"})
     assert bad.status_code == nobody.status_code == 401 and bad.json()["error"]["message"] == nobody.json()["error"]["message"]
@@ -251,3 +251,36 @@ def test_guests_are_not_ranked_in_leagues(client):
     assert "Ranked" in names(h) and "Some guest" not in names(h)
     seen_by_guest = names(g)
     assert "Some guest" in seen_by_guest and seen_by_guest.count("Some guest") == 1  # only their own row
+
+
+
+def test_guests_are_stateless(client):
+    """No token: the server scores and computes from the app's history, and stores nothing."""
+    import json
+    from app.db import SessionLocal
+    from app.engines import catalog
+    from app.models import Attempt, Event, User
+    with SessionLocal() as db:
+        before = (db.query(User).count(), db.query(Attempt).count(), db.query(Event).count())
+    g = {"X-Guest-Id": "abcd1234-test"}
+    skills = client.get("/skills", headers=g).json()
+    assert skills and all(not k["status"]["done"] for k in skills)
+    node = next(k for k in skills if k["items"] >= 2)["id"]
+    items = [i for i in catalog().nodes[node]["items"] if i["scored"]]
+    history = []
+    for it in items:
+        r = client.post(f"/tasks/{it['id']}/attempts", headers={**g, "X-Guest-History": json.dumps(history)},
+                        json={"response": it["reveal"]["answer"], "confidence": 4}).json()
+        assert r["score"] == 1 and r["record"][0] == it["id"] and r["attempt_id"] == 0
+        history.append(r["record"])
+    st = client.get(f"/skills/{node}", headers={**g, "X-Guest-History": json.dumps(history)}).json()["status"]
+    assert st["items_answered"] == len(items)
+    survey = {"age_band": "25-39", "goal": "buffer", "horizon": "3_10", "knowledge": {"Q2": {"correct": True}}}
+    assert client.post("/onboarding", headers=g, json=survey).json()["path"]
+    p = client.post("/path/preview", headers={**g, "X-Guest-History": json.dumps(history)}, json={"survey": survey}).json()
+    assert p["survey_done"] is True and p["steps"]
+    lg = client.get("/leagues", headers={**g, "X-Guest-Scales": "40"}).json()
+    assert lg["me"]["scales"] == 40 and sum(e["is_me"] for l in lg["levels"] for e in l["entries"]) == 1
+    with SessionLocal() as db:
+        assert (db.query(User).count(), db.query(Attempt).count(), db.query(Event).count()) == before
+    assert client.get("/me", headers=g).status_code == 401  # account-only routes still need a token

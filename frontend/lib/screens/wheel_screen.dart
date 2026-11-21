@@ -199,7 +199,8 @@ extension on _WheelScreenState {
       Expanded(
         child: LayoutBuilder(builder: (context, rc) {
           // Kyle stands in the roadmap's corner; the roadmap keeps clear of him.
-          final kyle = (rc.maxHeight * 0.44).clamp(160.0, 340.0);
+          // Kyle takes at most ~22% of the width, so the roadmap fits without sideways scrolling.
+          final kyle = math.min((rc.maxHeight * 0.44).clamp(150.0, 340.0), rc.maxWidth * 0.22 / 0.95);
           final showKyle = rc.maxHeight >= 380 && rc.maxWidth >= 560;
           final kyleW = showKyle ? kyle * 0.95 + 32 : 0.0;
           return Stack(children: [
@@ -226,7 +227,7 @@ extension on _WheelScreenState {
                       child: Align(
                         key: ValueKey(panel),
                         alignment: Alignment.centerLeft,
-                        child: _Tree(panel: panel, horizontal: true, height: tc.maxHeight - 16),
+                        child: _Tree(panel: panel, horizontal: true, height: tc.maxHeight - 16, width: tc.maxWidth),
                       ),
                     ),
                   ),
@@ -328,7 +329,8 @@ class _Tree extends StatelessWidget {
   final String panel;
   final bool horizontal; // wide screens: grows left to right out of the wheel
   final double? height; // horizontal mode: the height to spread missions over
-  _Tree({super.key, required this.panel, this.horizontal = false, this.height});
+  final double? width; // horizontal mode: the width to fit into (columns shrink down to a minimum)
+  _Tree({super.key, required this.panel, this.horizontal = false, this.height, this.width});
 
   static const rowH = 112.0, pad = 40.0;
 
@@ -421,7 +423,9 @@ class _Tree extends StatelessWidget {
 
   Widget _horizontal(BuildContext context, AppState s, List<Map<String, dynamic>> ks, Map<int, List<Map<String, dynamic>>> rows,
       int maxDepth, List<String> Function(Map<String, dynamic>) inPanel, List<Map<String, dynamic>> planned, Map<String, List<String>> pAfter) {
-    const colW = 210.0, lead = 120.0;
+    const lead = 120.0;
+    // Columns shrink to fit the space next to Kyle; below 140 px the roadmap scrolls instead.
+    final colW = width == null || maxDepth == 0 ? 210.0 : ((width! - lead - 140) / maxDepth).clamp(140.0, 210.0);
     // At least ~125 px per mission in a column, so short (landscape) screens never overlap; the area scrolls.
     final perCol = rows.values.map((l) => l.length).fold(1, math.max);
     final h = math.max(height ?? 400, perCol * 160.0 + 40);

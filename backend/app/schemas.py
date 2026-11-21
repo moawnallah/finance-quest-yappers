@@ -277,3 +277,4 @@ class AttemptOut(BaseModel):
     points: int | None = Field(default=None, description="Hard only: resilience points 51-100 when accepted.")
     growth_index: float | None = Field(default=None, description="Hard only: growth vs the reference solution = 100.")
     scales_total: int | None = Field(default=None, description="The learner's Scales after this answer.")
+    record: list[Any] | None = Field(default=None, description="Guests only: the attempt record to keep in the app's history (X-Guest-History).")

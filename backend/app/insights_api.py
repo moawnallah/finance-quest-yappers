@@ -17,7 +17,7 @@ from sqlalchemy.orm import Session
 
 from app.config import AB_VARIANTS, BACKEND_DIR
 from app.db import get_db
-from app.deps import ApiError, current_user, log_event, require_admin, require_study_access
+from app.deps import ApiError, current_user, is_guest, log_event, require_admin, require_study_access, viewer
 from app.engines import catalog, node_status
 from app.models import (Attempt, BenchmarkAnswer, Consent, Event, Feedback, LlmEvent, Onboarding, PathCheckin, Profile,
                         RecoEvent, User)
@@ -88,14 +88,14 @@ class SurveyIn(BaseModel):
 
 
 @router.post("/onboarding")
-def onboarding(body: SurveyIn, user: User = Depends(current_user), db: Session = Depends(get_db)):
-    """Score the survey, place the user in the tree, store the result and the router's events."""
-    survey = body.model_dump()
-    if survey["age_band"] == "under_18":  # no buffer or product questions for minors
-        survey["buffer"], survey["products"] = None, None
-    result = onboarding_router.route(survey, user.id)
+def onboarding(body: SurveyIn, user=Depends(viewer), db: Session = Depends(get_db)):
+    """Score the survey, place the user in the tree, store the result and the router's events.
+    Guests get the result back and nothing is stored (the app keeps the survey; POST /path/preview)."""
+    survey, result = _route(body, user)
     events = result.pop("events")
-    result["demo"] = demo.match(result, set(catalog().nodes))
+    if is_guest(user):
+        return {k: result[k] for k in ("router_version", "knowledge_score", "band", "benchmarks", "path", "challenges",
+                                       "goal", "demo")}
     row = db.get(Onboarding, user.id) or Onboarding(user_id=user.id)
     row.survey, row.result, row.router_version = survey, result, result["router_version"]
     row.created_at = datetime.now(timezone.utc)
@@ -112,6 +112,30 @@ def onboarding(body: SurveyIn, user: User = Depends(current_user), db: Session =
     db.commit()
     return {k: result[k] for k in ("router_version", "knowledge_score", "band", "benchmarks", "path", "challenges", "goal",
                                    "demo")}
+
+
+def _route(body: "SurveyIn", user) -> tuple[dict, dict]:
+    survey = body.model_dump()
+    if survey["age_band"] == "under_18":  # no buffer or product questions for minors
+        survey["buffer"], survey["products"] = None, None
+    result = onboarding_router.route(survey, user.id)
+    result["demo"] = demo.match(result, set(catalog().nodes))
+    return survey, result
+
+
+class PathPreviewIn(BaseModel):
+    survey: SurveyIn
+    chosen_path: str | None = Field(default=None, description="A demo path the guest picked (demo.options[].id).")
+
+
+@router.post("/path/preview")
+def path_preview(body: PathPreviewIn, user=Depends(viewer), db: Session = Depends(get_db)):
+    """Guests: the same view as GET /me/path, from the survey the app kept. Nothing is stored."""
+    _, result = _route(body.survey, user)
+    result.pop("events", None)
+    if body.chosen_path in demo.demo_paths():
+        result["chosen_path"] = body.chosen_path
+    return _path_view(result, None, user, db)
 
 
 class ChoosePathIn(BaseModel):
@@ -147,12 +171,14 @@ class PathFinishIn(BaseModel):
 
 
 @router.post("/paths/finish")
-def finish_path(body: PathFinishIn, user: User = Depends(current_user), db: Session = Depends(get_db)):
+def finish_path(body: PathFinishIn, user=Depends(viewer), db: Session = Depends(get_db)):
     """Store the check-in and return the thanks screen: the demo note, the optional feedback ask, the other path."""
     if body.path_id not in demo.demo_paths() and body.path_id != "personal":
         raise ApiError(400, "invalid_request", f"path_id must be 'personal' or one of {sorted(demo.demo_paths())}")
     if any(not 1 <= v <= 5 for v in body.confidence.values()):
         raise ApiError(400, "invalid_request", "confidence values must be 1-5")
+    if is_guest(user):
+        return demo.finished(body.path_id)
     db.add(PathCheckin(user_id=user.id, path_id=body.path_id, answers=body.model_dump(exclude={"path_id"})))
     db.add(RecoEvent(user_id=user.id, router_version=onboarding_router.ROUTER_VERSION, event_type="path_finished",
                      payload={"path_id": body.path_id, "progress": body.progress, "next_goal": body.next_goal}))
@@ -191,8 +217,11 @@ def my_path(user: User = Depends(current_user), db: Session = Depends(get_db)):
     onb = db.get(Onboarding, user.id)
     if not onb:
         return {"survey_done": False, "steps": [], "challenges": []}
+    return _path_view(onb.result, onb.created_at, user, db)
+
+
+def _path_view(res: dict, created_at, user, db: Session) -> dict:
     cat, t = catalog(), onboarding_router.tree()
-    res = onb.result
     reasons = {p["node"]: p.get("reason") for p in res.get("path", [])}
     demo_block = res.get("demo") or {}
     chosen = res.get("chosen_path")
@@ -202,7 +231,10 @@ def my_path(user: User = Depends(current_user), db: Session = Depends(get_db)):
         ids, source = demo_block["path"], "demo" if demo_block.get("path_id") != "personal" else "personal"
     else:
         ids, source = [p["node"] for p in res.get("path", [])], "recommended"
-    attempts = _attempts(db, user.id)
+    if is_guest(user):
+        attempts = [Attempt(task_id=tk, node_id=n, level=lv, context=c, score=sc) for tk, n, lv, c, sc in user.history]
+    else:
+        attempts = _attempts(db, user.id)
     by_node: dict[str, list[Attempt]] = {}
     for a in attempts:
         by_node.setdefault(a.node_id, []).append(a)
@@ -222,7 +254,8 @@ def my_path(user: User = Depends(current_user), db: Session = Depends(get_db)):
             "demo": {k: demo_block.get(k) for k in ("status", "path_id", "message", "closest")},
             "options": [{"id": o["id"], "title": o["title"], "for": o.get("for"), "nodes": o["nodes"]}
                         for o in demo_block.get("options", [])],
-            "recommended": [p["node"] for p in res.get("path", [])], "created_at": onb.created_at.isoformat()}
+            "recommended": [p["node"] for p in res.get("path", [])],
+            "created_at": created_at.isoformat() if created_at else None}
 
 
 class NodeOpenedIn(BaseModel):
@@ -231,10 +264,12 @@ class NodeOpenedIn(BaseModel):
 
 
 @router.post("/events/node-opened")
-def node_opened(body: NodeOpenedIn, user: User = Depends(current_user), db: Session = Depends(get_db)):
+def node_opened(body: NodeOpenedIn, user=Depends(viewer), db: Session = Depends(get_db)):
     """Log which node the user opened and from where. Self-chosen clicks feed the next-step model."""
     if body.node not in onboarding_router.tree():
         raise ApiError(404, "not_found", f"No node {body.node}")
+    if is_guest(user):
+        return {"ok": True}
     log_event(db, user, "node_opened", node=body.node, source=body.source)
     db.commit()
     return {"ok": True}

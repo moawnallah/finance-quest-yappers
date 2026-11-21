@@ -27,7 +27,7 @@ from sqlalchemy.orm import Session
 
 from app.admin import log_llm_event
 from app.db import get_db
-from app.deps import current_user
+from app.deps import current_user, is_guest, viewer
 from app.models import User
 
 router = APIRouter(tags=["tutor"])
@@ -136,8 +136,14 @@ def build_messages(body: TutorIn, visual: bool) -> list[dict]:
     return msgs
 
 
+def _log(db, user, **kw):
+    """Tutor calls are logged for accounts only; guests are never stored."""
+    if not is_guest(user):
+        log_llm_event(db, user, **kw)
+
+
 @router.post("/tutor")
-def tutor(body: TutorIn, user: User = Depends(current_user), db: Session = Depends(get_db)):
+def tutor(body: TutorIn, user=Depends(viewer), db: Session = Depends(get_db)):
     visual = bool(VISUAL.search(body.message)) and body.mode != "repair_diagram"
     intent = "advice_request" if ADVICE.search(body.message) else ("visualize" if visual else "question")
     stored = (body.context or {}).get("explanation")
@@ -146,14 +152,14 @@ def tutor(body: TutorIn, user: User = Depends(current_user), db: Session = Depen
                prompt_masked=mask(body.message))
     if not TUTOR_ENABLED:
         text = stored or "The tutor is resting right now. Here is the key idea from the lesson instead."
-        log_llm_event(db, user, **log, fallback_used=True, checks_failed=[], flagged_for_review=False, answer_masked=mask(text))
+        _log(db, user, **log, fallback_used=True, checks_failed=[], flagged_for_review=False, answer_masked=mask(text))
         db.commit()
         return {"text": text, "mermaid": None, "fallback": True}
     try:
         parsed, latency, t_in, t_out = call_model(build_messages(body, visual))
     except (urllib.error.URLError, TimeoutError, OSError):
         text = stored or "I can't reach the tutor model right now. Try again in a moment."
-        log_llm_event(db, user, **log, fallback_used=True, checks_failed=["model_unreachable"], flagged_for_review=False,
+        _log(db, user, **log, fallback_used=True, checks_failed=["model_unreachable"], flagged_for_review=False,
                       answer_masked=mask(text))
         db.commit()
         return {"text": text, "mermaid": None, "fallback": True}
@@ -167,7 +173,7 @@ def tutor(body: TutorIn, user: User = Depends(current_user), db: Session = Depen
         failed.append("advice")
         text = stored or "I can't recommend products or predict prices, but I can explain how to compare options. Which idea should we look at?"
     flagged = bool(failed) or intent == "advice_request"
-    log_llm_event(db, user, **log, latency_ms=latency, tokens_in=t_in, tokens_out=t_out, checks_failed=failed,
+    _log(db, user, **log, latency_ms=latency, tokens_in=t_in, tokens_out=t_out, checks_failed=failed,
                   fallback_used=False, flagged_for_review=flagged, answer_masked=mask(text + (f"\n[diagram]\n{mermaid}" if mermaid else "")))
     db.commit()
     return {"text": text, "mermaid": mermaid, "fallback": False}
@@ -192,7 +198,7 @@ def _stream_messages(body: TutorIn, visual: bool) -> list[dict]:
 
 
 @router.post("/tutor/stream")
-def tutor_stream(body: TutorIn, user: User = Depends(current_user)):
+def tutor_stream(body: TutorIn, user=Depends(viewer)):
     """Like POST /tutor, but streams the reply as NDJSON lines while the model writes it:
     {"t": "delta", "text": "..."} for each piece of visible text, then one
     {"t": "done", "text": <final text>, "mermaid": <checked code or null>, "fallback": bool}.
@@ -212,7 +218,7 @@ def tutor_stream(body: TutorIn, user: User = Depends(current_user)):
 
     def finish(text, mermaid, fallback, failed, latency=None, t_in=None, t_out=None):
         with SessionLocal() as db:  # the request's session is closed once streaming starts
-            log_llm_event(db, user, **log, latency_ms=latency, tokens_in=t_in, tokens_out=t_out, checks_failed=failed,
+            _log(db, user, **log, latency_ms=latency, tokens_in=t_in, tokens_out=t_out, checks_failed=failed,
                           fallback_used=fallback, flagged_for_review=bool(failed) or intent == "advice_request",
                           answer_masked=mask(text + (f"\n[diagram]\n{mermaid}" if mermaid else "")))
             db.commit()

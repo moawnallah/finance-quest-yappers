@@ -1,3 +1,4 @@
+import re
 """Shared dependencies and the API error format."""
 import hmac
 
@@ -23,6 +24,49 @@ def current_user(authorization: str | None = Header(default=None), db: Session =
     if not user:
         raise ApiError(401, "unauthorized", "Unknown or expired token")
     return user
+
+
+class Guest:
+    """A visitor without an account. Nothing about a guest is stored: the app keeps their history
+    and sends it with each request (X-Guest-History), the server computes and forgets."""
+    is_guest = True
+    is_admin = False
+    email = None
+    token = None
+    variant = "A"
+    display_name = "You"
+
+    def __init__(self, guest_id: str, history: list):
+        self.id = guest_id
+        self.history = history
+
+
+def is_guest(viewer) -> bool:
+    return getattr(viewer, "is_guest", False)
+
+
+def _guest_history(raw: str | None) -> list:
+    """[[task_id, node_id, level, context, score], ...] as sent by the app; bad input is ignored."""
+    import json
+    try:
+        rows = json.loads(raw) if raw else []
+    except ValueError:
+        return []
+    out = []
+    for r in rows[:500] if isinstance(rows, list) else []:
+        if (isinstance(r, list) and len(r) == 5 and all(isinstance(x, str) for x in r[:4])
+                and (r[4] is None or isinstance(r[4], (int, float)))):
+            out.append(r)
+    return out
+
+
+def viewer(authorization: str | None = Header(default=None), x_guest_id: str | None = Header(default=None),
+           x_guest_history: str | None = Header(default=None), db: Session = Depends(get_db)):
+    """The signed-in account (Bearer token), or a stateless Guest when there is no token."""
+    if authorization and authorization.lower().startswith("bearer "):
+        return current_user(authorization, db)
+    gid = x_guest_id if x_guest_id and re.fullmatch(r"[A-Za-z0-9-]{8,64}", x_guest_id) else "guest"
+    return Guest("guest-" + gid, _guest_history(x_guest_history))
 
 
 def require_admin(x_admin_key: str | None = Header(default=None), key: str | None = None,
