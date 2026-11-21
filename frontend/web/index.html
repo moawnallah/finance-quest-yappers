@@ -49,6 +49,21 @@
        so Flutter can show it as an image. -->
   <script src="https://cdn.jsdelivr.net/npm/mermaid@11.4.1/dist/mermaid.min.js"></script>
   <script>
+    // Streams an NDJSON response: calls onLine(text) for each line as it arrives.
+    window.crocoStream = async function (url, headersJson, body, onLine) {
+      const r = await fetch(url, { method: 'POST', headers: JSON.parse(headersJson), body: body });
+      if (!r.ok || !r.body) throw new Error('HTTP ' + r.status);
+      const reader = r.body.getReader(), dec = new TextDecoder();
+      let buf = '';
+      for (;;) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buf += dec.decode(value, { stream: true });
+        let i;
+        while ((i = buf.indexOf('\n')) >= 0) { const l = buf.slice(0, i); buf = buf.slice(i + 1); if (l.trim()) onLine(l); }
+      }
+      if (buf.trim()) onLine(buf);
+    };
     window.crocoMermaid = {
       toPng: async function (code, dark) {
         mermaid.initialize({

@@ -17,6 +17,13 @@ import '../data/sfx.dart';
 import '../widgets/common.dart';
 import 'skills_screen.dart' show ErrorPanel;
 
+/// Lora, resolved once (GoogleFonts lookups are slow inside paint).
+// One lookup per weight (each weight is its own font file), then plain TextStyles.
+final Map<FontWeight?, TextStyle> _loraBase = {};
+TextStyle _lora({double? fontSize, FontWeight? fontWeight, Color? color, double? letterSpacing, double? height}) =>
+    (_loraBase[fontWeight] ??= GoogleFonts.lora(fontWeight: fontWeight))
+        .copyWith(fontSize: fontSize, color: color, letterSpacing: letterSpacing, height: height);
+
 class WheelScreen extends StatefulWidget {
   WheelScreen({super.key});
   @override
@@ -27,6 +34,8 @@ class _WheelScreenState extends State<WheelScreen> {
   static const headerH = 92.0;
   bool _headerVisible = true;
   Timer? _showAgain;
+  DateTime _quietUntil = DateTime.now().add(Duration(milliseconds: 900));
+  String? _shownPanel;
 
   @override
   void initState() {
@@ -44,6 +53,8 @@ class _WheelScreenState extends State<WheelScreen> {
   // Hide the roadmap header while the user scrolls; bring it back when they stop.
   bool _onScroll(ScrollNotification n) {
     if (n.depth != 0) return false;
+    // Relayouts (opening the tab, switching topic) also send scroll events; ignore them.
+    if (DateTime.now().isBefore(_quietUntil)) return false;
     if (n is ScrollUpdateNotification && (n.scrollDelta ?? 0).abs() > 0.5) {
       // any real movement (finger, mouse wheel, trackpad) hides the header
       _showAgain?.cancel();
@@ -63,6 +74,13 @@ class _WheelScreenState extends State<WheelScreen> {
   @override
   Widget build(BuildContext context) {
     final s = context.watch<AppState>();
+    if (_shownPanel != s.selectedPanel) {
+      // A new topic: show its header and ignore the relayout that follows.
+      _shownPanel = s.selectedPanel;
+      _headerVisible = true;
+      _showAgain?.cancel();
+      _quietUntil = DateTime.now().add(Duration(milliseconds: 700));
+    }
     Widget body;
     if (s.skills.isEmpty && s.skillsLoading) {
       body = Center(child: CircularProgressIndicator());
@@ -174,35 +192,31 @@ extension on _WheelScreenState {
         child: LayoutBuilder(builder: (context, rc) => Stack(children: [
           NotificationListener<ScrollNotification>(
             onNotification: _onScroll,
-            child: RefreshIndicator(
-              onRefresh: s.loadSkills,
-              child: SingleChildScrollView(
-                reverse: true,
-                physics: AlwaysScrollableScrollPhysics(),
-                child: ConstrainedBox(
-                  constraints: BoxConstraints(minHeight: rc.maxHeight),
-                  child: Column(mainAxisAlignment: MainAxisAlignment.end, children: [
-                    SizedBox(height: _WheelScreenState.headerH),
-                    Center(
-                      child: ConstrainedBox(
-                        constraints: BoxConstraints(maxWidth: 760),
-                        child: AnimatedSwitcher(
-                          duration: Duration(milliseconds: 380),
-                          switchInCurve: Curves.easeOutCubic,
-                          layoutBuilder: (cur, prev) => Stack(alignment: Alignment.bottomCenter, children: [...prev, if (cur != null) cur]),
-                          transitionBuilder: (child, a) => FadeTransition(
-                            opacity: a,
-                            child: SlideTransition(position: Tween(begin: Offset(0.03, 0), end: Offset.zero).animate(a), child: child),
-                          ),
-                          child: _Tree(key: ValueKey(panel), panel: panel),
-                        ),
+            child: Column(children: [
+              SizedBox(height: _WheelScreenState.headerH),
+              Expanded(
+                child: LayoutBuilder(builder: (context, tc) => SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: ConstrainedBox(
+                    constraints: BoxConstraints(minWidth: tc.maxWidth),
+                    child: AnimatedSwitcher(
+                      duration: Duration(milliseconds: 380),
+                      switchInCurve: Curves.easeOutCubic,
+                      layoutBuilder: (cur, prev) => Stack(alignment: Alignment.centerLeft, children: [...prev, if (cur != null) cur]),
+                      transitionBuilder: (child, a) => FadeTransition(
+                        opacity: a,
+                        child: SlideTransition(position: Tween(begin: Offset(-0.03, 0), end: Offset.zero).animate(a), child: child),
+                      ),
+                      child: Align(
+                        key: ValueKey(panel),
+                        alignment: Alignment.centerLeft,
+                        child: _Tree(panel: panel, horizontal: true, height: tc.maxHeight - 16),
                       ),
                     ),
-                    SizedBox(height: 24),
-                  ]),
-                ),
+                  ),
+                )),
               ),
-            ),
+            ]),
           ),
           Positioned(
             left: 0, right: 0, top: 0, height: _WheelScreenState.headerH,
@@ -243,7 +257,7 @@ class _RoadmapHeader extends StatelessWidget {
       child: Row(children: [
         Expanded(
           child: Column(mainAxisAlignment: MainAxisAlignment.center, crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text(panelLabels[panel] ?? panel, style: GoogleFonts.lora(fontSize: 24, fontWeight: FontWeight.w700, color: kInk, height: 1.1)),
+            Text(panelLabels[panel] ?? panel, style: _lora(fontSize: 24, fontWeight: FontWeight.w700, color: kInk, height: 1.1)),
             SizedBox(height: 2),
             Text(panelQuestions[panel] ?? '', maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(fontSize: 13, color: kBody)),
             Text(ks.isEmpty ? 'Coming soon' : '$done of ${ks.length} missions done${focus ? ' · your focus' : ''}', style: TextStyle(fontSize: 12, color: kMuted)),
@@ -282,7 +296,9 @@ class _RoadmapHeader extends StatelessWidget {
 
 class _Tree extends StatelessWidget {
   final String panel;
-  _Tree({super.key, required this.panel});
+  final bool horizontal; // wide screens: grows left to right out of the wheel
+  final double? height; // horizontal mode: the height to spread missions over
+  _Tree({super.key, required this.panel, this.horizontal = false, this.height});
 
   static const rowH = 112.0, pad = 40.0;
 
@@ -317,6 +333,7 @@ class _Tree extends StatelessWidget {
       rows.putIfAbsent(depth[k['id']]!, () => []).add(k);
     }
     final maxDepth = rows.keys.fold(0, math.max);
+    if (horizontal) return _horizontal(context, s, ks, rows, maxDepth, inPanel);
     final h = pad * 2 + maxDepth * rowH + 70;
 
     return LayoutBuilder(builder: (context, c) {
@@ -344,6 +361,29 @@ class _Tree extends StatelessWidget {
       );
     });
   }
+
+  Widget _horizontal(BuildContext context, AppState s, List<Map<String, dynamic>> ks, Map<int, List<Map<String, dynamic>>> rows,
+      int maxDepth, List<String> Function(Map<String, dynamic>) inPanel) {
+    const colW = 210.0, lead = 120.0;
+    final h = math.max(height ?? 400, 260.0);
+    final w = lead + maxDepth * colW + 140;
+    final pos = <String, Offset>{};
+    for (final MapEntry(key: c, value: list) in rows.entries) {
+      for (final (i, k) in list.indexed) {
+        final y = list.length == 1 ? h * (c.isEven ? 0.45 : 0.58) : h * (i + 1) / (list.length + 1);
+        pos[k['id'] as String] = Offset(lead + c * colW, y);
+      }
+    }
+    return SizedBox(
+      width: w,
+      height: h,
+      child: Stack(clipBehavior: Clip.none, children: [
+        Positioned.fill(child: CustomPaint(painter: _PathsPainter(ks, pos, s, inPanel, Offset(-12, h / 2), horizontal: true))),
+        for (final k in ks)
+          Positioned(left: pos[k['id']]!.dx - 56, top: pos[k['id']]!.dy - 30, width: 112, child: _MissionNode(skill: k)),
+      ]),
+    );
+  }
 }
 
 class _PathsPainter extends CustomPainter {
@@ -352,13 +392,18 @@ class _PathsPainter extends CustomPainter {
   final AppState s;
   final List<String> Function(Map<String, dynamic>) inPanel;
   final Offset root;
-  _PathsPainter(this.ks, this.pos, this.s, this.inPanel, this.root);
+  final bool horizontal;
+  _PathsPainter(this.ks, this.pos, this.s, this.inPanel, this.root, {this.horizontal = false});
 
   void _trail(Canvas canvas, Offset a, Offset b, bool walked) {
-    final dy = (a.dy - b.dy).abs() * 0.55;
-    final path = Path()
-      ..moveTo(a.dx, a.dy)
-      ..cubicTo(a.dx, a.dy - dy, b.dx, b.dy + dy, b.dx, b.dy);
+    final path = Path()..moveTo(a.dx, a.dy);
+    if (horizontal) {
+      final dx = (b.dx - a.dx).abs() * 0.55;
+      path.cubicTo(a.dx + dx, a.dy, b.dx - dx, b.dy, b.dx, b.dy);
+    } else {
+      final dy = (a.dy - b.dy).abs() * 0.55;
+      path.cubicTo(a.dx, a.dy - dy, b.dx, b.dy + dy, b.dx, b.dy);
+    }
     canvas.drawPath(path, Paint()..color = (walked ? kWheelRim : kLine)..style = PaintingStyle.stroke..strokeWidth = 14..strokeCap = StrokeCap.round);
     final dash = Paint()..color = walked ? Colors.white.withValues(alpha: 0.85) : kBorder..style = PaintingStyle.stroke..strokeWidth = 2.5..strokeCap = StrokeCap.round;
     for (final m in path.computeMetrics()) {
@@ -498,7 +543,19 @@ class _SpinWheelState extends State<_SpinWheel> with SingleTickerProviderStateMi
     _rot.value = -math.max(i, 0) * step;
     _sel = _indexFor(_rot.value);
     _rot.addListener(_onTurn);
-    if (!s.wheelSpun) _nudge();
+    // Fonts download after the first paint; when they arrive, drop the cached
+    // letter layouts (made with the fallback font) and repaint.
+    for (final w in [FontWeight.w600, FontWeight.w700]) {
+      _lora(fontWeight: w);
+    }
+    GoogleFonts.pendingFonts().then((_) {
+      _WheelPainter._letters.clear();
+      if (mounted) setState(() {});
+    });
+    if (!s.wheelSpun && !s.wheelNudged) {
+      s.wheelNudged = true;
+      _nudge();
+    }
   }
 
   @override
@@ -640,14 +697,27 @@ class _WheelPainter extends CustomPainter {
   final bool left;
   _WheelPainter(this.panels, this.s, this.rot, this.c, this.r, this.sel, {this.left = false});
 
+  // Laid-out letters are cached: the wheel repaints every animation frame, and
+  // laying out each curved letter again (plus a font lookup) made frames slow.
+  static final Map<String, (List<TextPainter>, double)> _letters = {};
+
+  (List<TextPainter>, double) _layout(String text, TextStyle style, double maxArc) {
+    final key = '$text|${style.fontSize?.toStringAsFixed(1)}|${style.color?.toARGB32()}|${style.fontWeight}|${maxArc.round()}';
+    return _letters[key] ??= () {
+      if (_letters.length > 400) _letters.clear();
+      var tps = [for (final ch in text.characters) TextPainter(text: TextSpan(text: ch, style: style), textDirection: TextDirection.ltr)..layout()];
+      var total = tps.fold<double>(0, (a, t) => a + t.width);
+      if (total > maxArc && style.fontSize != null) {
+        final f = style.fontSize! * maxArc / total;
+        tps = [for (final ch in text.characters) TextPainter(text: TextSpan(text: ch, style: style.copyWith(fontSize: f)), textDirection: TextDirection.ltr)..layout()];
+        total = tps.fold<double>(0, (a, t) => a + t.width);
+      }
+      return (tps, total);
+    }();
+  }
+
   void _arcText(Canvas canvas, double radius, double mid, String text, TextStyle style, double maxArc) {
-    var tps = [for (final ch in text.characters) TextPainter(text: TextSpan(text: ch, style: style), textDirection: TextDirection.ltr)..layout()];
-    var total = tps.fold<double>(0, (a, t) => a + t.width);
-    if (total > maxArc && style.fontSize != null) {
-      final f = style.fontSize! * maxArc / total;
-      tps = [for (final ch in text.characters) TextPainter(text: TextSpan(text: ch, style: style.copyWith(fontSize: f)), textDirection: TextDirection.ltr)..layout()];
-      total = tps.fold<double>(0, (a, t) => a + t.width);
-    }
+    final (tps, total) = _layout(text, style, maxArc);
     var a = mid - total / radius / 2;
     for (final tp in tps) {
       final half = tp.width / 2 / radius;
@@ -694,7 +764,7 @@ class _WheelPainter extends CustomPainter {
       final isSel = i == sel;
       _arcText(
         canvas, r - rim / 2, mid, (panelLabels[p] ?? p).toUpperCase(),
-        GoogleFonts.lora(fontSize: rim * (isSel ? 0.68 : 0.5), fontWeight: FontWeight.w700, color: isSel ? kRimLabelSel : kRimLabel, letterSpacing: 0.5),
+        _lora(fontSize: rim * (isSel ? 0.68 : 0.5), fontWeight: FontWeight.w700, color: isSel ? kRimLabelSel : kRimLabel, letterSpacing: 0.5),
         step * (r - rim / 2) * 0.9,
       );
       final prog = s.panelProgress(p);
@@ -708,7 +778,7 @@ class _WheelPainter extends CustomPainter {
       }
       final ks = s.skillsIn(p);
       final doneN = ks.where(s.skillDone).length;
-      final faceStyle = GoogleFonts.lora(fontSize: r * (isSel ? 0.055 : 0.046), fontWeight: FontWeight.w600, color: kFaceLabel);
+      final faceStyle = _lora(fontSize: r * (isSel ? 0.055 : 0.046), fontWeight: FontWeight.w600, color: kFaceLabel);
       final faceArc = math.min(step, 1.4) * (face - r * 0.12) * 0.9;
       _arcText(canvas, face - r * 0.11, mid, ks.isEmpty ? 'COMING SOON' : isSel ? '$doneN/${ks.length} MISSIONS DONE' : '${ks.length} MISSIONS', faceStyle, faceArc);
       if (p == start) {
@@ -733,7 +803,7 @@ class _WheelPainter extends CustomPainter {
     canvas.drawPath(tri, Paint()..color = Colors.white..style = PaintingStyle.stroke..strokeWidth = 2);
     if (left) canvas.restore();
     final spin = TextPainter(
-      text: TextSpan(text: 'SPIN', style: GoogleFonts.lora(fontSize: r * 0.075, fontWeight: FontWeight.w700, color: Colors.white, letterSpacing: 1.5)),
+      text: TextSpan(text: 'SPIN', style: _lora(fontSize: r * 0.075, fontWeight: FontWeight.w700, color: Colors.white, letterSpacing: 1.5)),
       textDirection: TextDirection.ltr,
     )..layout();
     // Upright on both wheels: above the centre on the bottom wheel, right of it on the left wheel.

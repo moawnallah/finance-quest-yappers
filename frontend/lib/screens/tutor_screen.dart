@@ -13,6 +13,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../data/app_state.dart';
 import '../data/mermaid.dart';
+import '../data/stream.dart';
 import '../widgets/common.dart';
 
 class TutorScreen extends StatefulWidget {
@@ -40,7 +41,13 @@ class _TutorScreenState extends State<TutorScreen> {
       _start(s, s.tutorContext);
       s.tutorContext = null;
     } else if (s.currentConversation == null) {
-      _start(s, null);
+      if (s.conversationsLoaded) {
+        _start(s, null);
+      } else {
+        s.loadConversations().then((_) {
+          if (mounted && s.currentConversation == null) setState(() => _start(s, null));
+        });
+      }
     }
   }
 
@@ -54,6 +61,7 @@ class _TutorScreenState extends State<TutorScreen> {
   /// A new conversation with its opening message.
   void _start(AppState s, TutorContext? c) {
     final conv = s.newConversation(context: c);
+    if (conv.messages.isNotEmpty) return; // reused an empty chat that already has its greeting
     if (c == null) {
       conv.messages.add(TutorMessage(false, 'Hi! Ask me about any investing idea, for example "what is diversification?", or ask me to draw a chart. I explain ideas; I never tell you what to buy.'));
       return;
@@ -141,36 +149,91 @@ class _TutorScreenState extends State<TutorScreen> {
     if (t.isEmpty || typing || conv == null) return;
     setState(() {
       conv.messages.add(TutorMessage(true, t));
-      if (conv.title == 'New chat') conv.title = t.length > 40 ? '${t.substring(0, 40)}...' : t;
+      if (!conv.titled && conv.context == null) conv.title = _quickTitle(t);
       ctrl.clear();
       typing = true;
     });
     _toEnd();
     String reply;
     String? diagram;
+    final mode = conv.context == null || conv.context!.wasRight == true ? 'explain_concept' : 'explain_result';
+    final history = [for (final m in conv.messages) {'role': m.mine ? 'user' : 'tutor', 'text': m.text}];
+    // The reply bubble appears with the first streamed words and grows as the model writes.
+    TutorMessage? live;
     try {
-      final r = await s.api.tutor(
-        s.profile.name,
-        mode: conv.context == null || conv.context!.wasRight == true ? 'explain_concept' : 'explain_result',
-        message: t,
-        context: conv.context?.toJson(),
-        history: [for (final m in conv.messages) {'role': m.mine ? 'user' : 'tutor', 'text': m.text}],
-      );
+      if (!streamSupported) throw UnsupportedError('no streaming');
+      final r = await s.api.tutorStream(s.profile.name, mode: mode, message: t, context: conv.context?.toJson(), history: history,
+          onDelta: (d) {
+        if (!mounted) return;
+        setState(() {
+          if (live == null) {
+            live = TutorMessage(false, '');
+            conv.messages.add(live!);
+            typing = false;
+          }
+          live!.text += d;
+        });
+        _toEnd();
+      });
       reply = r.text;
       diagram = r.mermaid;
     } catch (_) {
-      await Future.delayed(Duration(milliseconds: 450)); // a short "typing" beat
-      reply = _offline(t, s, conv.context);
+      try {
+        final r = await s.api.tutor(s.profile.name, mode: mode, message: t, context: conv.context?.toJson(), history: history);
+        reply = r.text;
+        diagram = r.mermaid;
+      } catch (_) {
+        await Future.delayed(Duration(milliseconds: 450)); // a short "typing" beat
+        reply = _offline(t, s, conv.context);
+      }
     }
     if (!mounted) return;
-    final msg = TutorMessage(false, reply);
+    final msg = live ?? TutorMessage(false, reply);
     setState(() {
-      conv.messages.add(msg);
+      msg.text = reply; // the final, checked text
+      if (live == null) conv.messages.add(msg);
       typing = false;
     });
     s.notify(); // the list's preview updates
+    s.saveConversations();
     _toEnd();
+    if (!conv.titled) _autoTitle(conv, t, reply);
     if (diagram != null) await _draw(conv, msg, diagram, t);
+  }
+
+  /// A readable title from the first question, until the model writes one.
+  String _quickTitle(String t) {
+    final words = t.replaceAll(RegExp(r'[?!.]+$'), '').split(RegExp(r'\s+')).where((w) => w.isNotEmpty).take(6).join(' ');
+    return words.isEmpty ? 'New chat' : words[0].toUpperCase() + words.substring(1);
+  }
+
+  /// Ask the tutor model for a short title after the first exchange.
+  Future<void> _autoTitle(TutorConversation conv, String question, String answer) async {
+    final s = context.read<AppState>();
+    try {
+      final r = await s.api.tutor(s.profile.name, mode: 'title', message: 'Learner: $question\nTutor: $answer');
+      const q = '"\'';  // both quote characters
+      final title = r.text.trim().replaceAll(RegExp('^[$q]+|[$q.]+\$'), '');
+      if (title.isNotEmpty && title.length <= 60 && !conv.titled) s.renameConversation(conv.id, title);
+    } catch (_) {
+      // offline: keep the title from the question
+    }
+  }
+
+  Future<void> _rename(AppState s, TutorConversation c) async {
+    final ctrl = TextEditingController(text: c.title);
+    final title = await showDialog<String>(
+      context: context,
+      builder: (d) => AlertDialog(
+        title: Text('Rename conversation'),
+        content: TextField(controller: ctrl, autofocus: true, maxLength: 60, onSubmitted: (v) => Navigator.pop(d, v)),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(d), child: Text('Cancel')),
+          FilledButton(onPressed: () => Navigator.pop(d, ctrl.text), child: Text('Save')),
+        ],
+      ),
+    );
+    if (title != null) s.renameConversation(c.id, title);
   }
 
   /// Check and render the tutor's diagram before showing it. If Mermaid rejects
@@ -247,16 +310,23 @@ class _TutorScreenState extends State<TutorScreen> {
                       c.messages.isEmpty ? '' : c.messages.last.text.replaceAll('\n', ' '),
                       maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(fontSize: 11, color: kMuted),
                     ),
-                    trailing: s.conversations.length > 1
-                        ? IconButton(
-                            tooltip: 'Delete conversation',
-                            icon: Icon(Icons.close, size: 16, color: kFaint),
-                            onPressed: () => setState(() {
-                              s.deleteConversation(c.id);
-                              if (s.currentConversation == null) _start(s, null);
-                            }),
-                          )
-                        : null,
+                    trailing: Row(mainAxisSize: MainAxisSize.min, children: [
+                      IconButton(
+                        tooltip: 'Rename conversation',
+                        visualDensity: VisualDensity.compact,
+                        icon: Icon(Icons.edit_outlined, size: 16, color: kFaint),
+                        onPressed: () => _rename(s, c),
+                      ),
+                      IconButton(
+                        tooltip: 'Delete conversation',
+                        visualDensity: VisualDensity.compact,
+                        icon: Icon(Icons.close, size: 16, color: kFaint),
+                        onPressed: () => setState(() {
+                          s.deleteConversation(c.id);
+                          if (s.currentConversation == null) _start(s, null);
+                        }),
+                      ),
+                    ]),
                     onTap: () {
                       s.openConversation(c.id);
                       onPicked?.call();

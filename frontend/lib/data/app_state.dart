@@ -5,6 +5,7 @@ import 'dart:convert';
 import 'dart:typed_data';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart' show rootBundle;
+import 'package:shared_preferences/shared_preferences.dart';
 import '../models/content.dart';
 import 'api.dart';
 import 'sfx.dart';
@@ -90,12 +91,17 @@ class TutorContext {
         'node': node, 'task_id': taskId, 'question': question, 'picked': picked,
         'correct': correct, 'explanation': explanation, 'was_right': wasRight,
       };
+  static TutorContext? fromJson(Map<String, dynamic>? j) => j == null
+      ? null
+      : TutorContext(
+          node: j['node'], taskId: j['task_id'], question: j['question'] ?? '', picked: j['picked'],
+          correct: j['correct'], explanation: j['explanation'], wasRight: j['was_right']);
 }
 
 /// One message in a tutor conversation. [image] is a rendered chart.
 class TutorMessage {
   final bool mine;
-  final String text;
+  String text; // grows while the reply streams in
   Uint8List? image;
   bool drawing = false;
   TutorMessage(this.mine, this.text);
@@ -109,6 +115,7 @@ class TutorConversation {
   final DateTime started = DateTime.now();
   final TutorContext? context;
   final List<TutorMessage> messages = [];
+  bool titled = false; // a real title was generated or set by the user
   TutorConversation({required this.id, required this.title, this.context});
 }
 
@@ -119,23 +126,86 @@ class AppState extends ChangeNotifier {
   int _convSeq = 0;
 
   TutorConversation newConversation({TutorContext? context}) {
-    final c = TutorConversation(id: 'c${++_convSeq}', title: context?.question ?? 'New chat', context: context);
+    if (context == null) {
+      final empty = conversations.where((c) => c.context == null && !c.messages.any((m) => m.mine)).firstOrNull;
+      if (empty != null) {
+        activeConversation = empty.id;
+        notifyListeners();
+        return empty;
+      }
+    }
+    final c = TutorConversation(id: 'c${DateTime.now().microsecondsSinceEpoch}${++_convSeq}', title: context?.question ?? 'New chat', context: context);
     conversations.insert(0, c);
     activeConversation = c.id;
     notifyListeners();
+    saveConversations();
     return c;
+  }
+
+  // Conversations are saved on this device per account, so they survive a page
+  // refresh and signing out and back in. Charts are re-drawn from text only.
+  String get _convKey => 'tutor_conversations';
+
+  Future<void> saveConversations() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString(_convKey, jsonEncode([
+        for (final c in conversations.where((c) => c.messages.any((m) => m.mine)).take(30))
+          {
+            'id': c.id, 'title': c.title, 'titled': c.titled, 'context': c.context?.toJson(),
+            'messages': [for (final m in c.messages) {'mine': m.mine, 'text': m.text}],
+          }
+      ]));
+      await prefs.setString('tutor_active', activeConversation ?? '');
+    } catch (_) {}
+  }
+
+  bool conversationsLoaded = false;
+
+  Future<void> loadConversations() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final raw = prefs.getString(_convKey);
+      conversations.clear();
+      if (raw != null) {
+        for (final j in (jsonDecode(raw) as List).cast<Map<String, dynamic>>()) {
+          final c = TutorConversation(id: j['id'], title: j['title'] ?? 'Chat', context: TutorContext.fromJson(j['context']))
+            ..titled = j['titled'] == true;
+          for (final m in (j['messages'] as List).cast<Map<String, dynamic>>()) {
+            c.messages.add(TutorMessage(m['mine'] == true, m['text'] ?? ''));
+          }
+          conversations.add(c);
+        }
+      }
+      final a = prefs.getString('tutor_active');
+      activeConversation = conversations.any((c) => c.id == a) ? a : conversations.firstOrNull?.id;
+    } catch (_) {}
+    conversationsLoaded = true;
+    notifyListeners();
   }
 
   TutorConversation? get currentConversation => conversations.where((c) => c.id == activeConversation).firstOrNull;
   void openConversation(String id) {
     activeConversation = id;
     notifyListeners();
+    saveConversations();
+  }
+
+  void renameConversation(String id, String title) {
+    final t = title.trim();
+    final c = conversations.where((c) => c.id == id).firstOrNull;
+    if (c == null || t.isEmpty) return;
+    c.title = t.length > 60 ? t.substring(0, 60) : t;
+    c.titled = true;
+    notifyListeners();
+    saveConversations();
   }
 
   void deleteConversation(String id) {
     conversations.removeWhere((c) => c.id == id);
     if (activeConversation == id) activeConversation = conversations.firstOrNull?.id;
     notifyListeners();
+    saveConversations();
   }
   /// Backend client for the Skills screens (task engines). Scoring happens on the server.
   Api api = Api();
@@ -246,6 +316,7 @@ class AppState extends ChangeNotifier {
   final Map<String, int> nodeAnswered = {}; // node id -> questions answered so far
   String selectedSlice = 'bonds'; // the topic at the top of the home wheel
   bool wheelSpun = false; // hides the "spin me" hint after the first spin
+  bool wheelNudged = false; // the hint wiggle plays once per visit, not on every tab switch
   final Set<String> badges = {};
   int xp = 0;
   int xpToday = 0;
@@ -267,6 +338,7 @@ class AppState extends ChangeNotifier {
     placementTopic = {for (final q in quiz) q['id'] as String: q['topic'] as String};
     bands = Map<String, dynamic>.from(bench['score_bands']);
     notifyListeners();
+    await loadConversations();
   }
 
   Level get level => levels.lastWhere((l) => xp >= l.minXp);
@@ -361,7 +433,12 @@ class AppState extends ChangeNotifier {
   void setListView(bool v) { listView = v; notifyListeners(); }
   void setThemeMode(String m) { themeMode = m; notifyListeners(); }
   bool signedIn = false;
-  void signIn(String name) { signedIn = true; profile.name = name; notifyListeners(); }
+  void signIn(String name) {
+    signedIn = true;
+    profile.name = name;
+    notifyListeners();
+    loadConversations();
+  }
 
   /// Admin emails (build setting ADMIN_EMAILS, comma separated). Signing in
   /// with one shows the admin panel. Demo only: the backend must check this too.
@@ -385,6 +462,7 @@ class AppState extends ChangeNotifier {
     signedIn = false;
     profile.name = 'Guest';
     notifyListeners();
+    loadConversations();
   }
   /// How the user signed in: email | google | guest (null before sign-in).
   String? signInMethod;

@@ -57,16 +57,16 @@ def _submit(client, h, task_id, **body):
 def test_skills_list(client, learner):
     skills = {s["id"]: s for s in client.get("/skills", headers=learner).json()}
     assert set(skills) == set(NODES)
-    assert skills["I2"]["medium_tasks"] == 1 and skills["I4"]["medium_tasks"] == 0
+    assert skills["P4"]["medium_tasks"] == 1 and skills["I4"]["medium_tasks"] == 0
     assert skills["I4"]["status"]["done"] is False and skills["I4"]["status"]["items_answered"] == 0
 
 
 def test_views_hide_answers(client, learner):
-    detail = client.get("/skills/I2", headers=learner).json()
-    assert detail["node"]["node"] == "I2" and detail["medium"][0]["id"] == "i2.m1"
+    detail = client.get("/skills/P4", headers=learner).json()
+    assert detail["node"]["node"] == "P4" and detail["medium"][0]["id"] == "p4.m1"
     assert not _keys(detail["node"]["items"]) & SECRET_KEYS
     assert not _keys(detail["medium"]) & SECRET_KEYS
-    task = client.get("/tasks/i2.m1", headers=learner).json()
+    task = client.get("/tasks/p4.m1", headers=learner).json()
     assert task["level"] == "medium" and not _keys(task["task"]) & SECRET_KEYS
     assert client.get("/tasks/i4.e1", headers=learner).json()["level"] == "easy"
     assert client.get("/tasks/nope", headers=learner).status_code == 404
@@ -84,22 +84,23 @@ def test_easy_attempt_scored_and_revealed(client, learner):
 def test_invalid_attempts(client, learner):
     assert _submit(client, learner, "i4.e1", response=99).json()["error"]["code"] == "invalid_response"
     assert _submit(client, learner, "i4.e1", response=0, reasons=["x"]).status_code == 400
-    assert _submit(client, learner, "i2.m1", response="indexed", reasons=["nope"]).status_code == 400
+    assert _submit(client, learner, "p4.m1", response="hold", reasons=["nope"]).status_code == 400
+    assert _submit(client, learner, "p4.m1", response="down", reasons=_best_reasons("p4.m1")).status_code == 400  # not an option
     assert _submit(client, learner, "i4.e1", response=0, confidence=7).status_code == 422
     assert _submit(client, learner, "i4.e1", response=0, context="prerequisite").status_code == 400  # no for_node
 
 
 def test_node_completion_needs_easy_and_medium(client, learner):
-    scored = [i["id"] for i in NODES["I2"]["items"] if i["scored"]]
+    scored = [i["id"] for i in NODES["P4"]["items"] if i["scored"]]
     for item_id in scored:
         r = _submit(client, learner, item_id, response=_right(item_id)).json()
     assert r["status"]["easy_done"] and not r["status"]["done"] and not r["node_completed"]
 
-    r = _submit(client, learner, "i2.m1", response="indexed", reasons=_best_reasons("i2.m1")).json()
-    assert r["score"] == 1 and r["score_estimate"] is None  # day X: reasons only
-    assert r["reveal"]["text"].startswith("Day X was")  # the story is shown only after submitting
+    r = _submit(client, learner, "p4.m1", response="hold", reasons=_best_reasons("p4.m1")).json()
+    assert r["score"] == 1 and r["score_estimate"] is None  # day X: reasons only; the choice is recorded, not scored
+    assert r["reveal"]["outcome"] is None and r["reveal"]["text"]  # a choice task has no outcome to check, only the explanation
     assert r["status"]["done"] and r["node_completed"]
-    again = _submit(client, learner, "i2.m1", response="indexed", reasons=_best_reasons("i2.m1")).json()
+    again = _submit(client, learner, "p4.m1", response="hold", reasons=_best_reasons("p4.m1")).json()
     assert again["node_completed"] is False  # completed only once
 
 

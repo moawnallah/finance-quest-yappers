@@ -106,7 +106,10 @@ class StatsBar extends StatelessWidget implements PreferredSizeWidget {
         ),
         Positioned(left: 0, right: 0, bottom: 0, height: 10, child: CustomPaint(painter: CrocoRidgePainter(kWheelRim.withValues(alpha: 0.5)))),
       ]),
-      title: Row(children: [
+      title: Center(child: ConstrainedBox(
+        // Same width and position on every page on wide screens.
+        constraints: BoxConstraints(maxWidth: 1000),
+        child: Row(children: [
         if (canPop) ...[
           IconButton(icon: Icon(Icons.arrow_back), tooltip: 'Back', onPressed: () => GoRouter.of(context).pop()),
           SizedBox(width: 2),
@@ -170,6 +173,7 @@ class StatsBar extends StatelessWidget implements PreferredSizeWidget {
           ),
         ),
       ]),
+      )),
       bottom: PreferredSize(
         preferredSize: Size.fromHeight(title.isEmpty ? 10 : 50),
         child: title.isEmpty
@@ -177,13 +181,13 @@ class StatsBar extends StatelessWidget implements PreferredSizeWidget {
             : Container(
                 alignment: Alignment.centerLeft,
                 padding: EdgeInsets.fromLTRB(20, 0, 20, 14),
-                child: Row(crossAxisAlignment: CrossAxisAlignment.end, children: [
+                child: Center(child: ConstrainedBox(constraints: BoxConstraints(maxWidth: 1000), child: Row(crossAxisAlignment: CrossAxisAlignment.end, children: [
                   Flexible(child: Text(title, overflow: TextOverflow.ellipsis, style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800, color: kInk))),
                   if (subtitle != null) ...[
                     SizedBox(width: 8),
                     Padding(padding: EdgeInsets.only(bottom: 3), child: Text(subtitle!, style: TextStyle(fontSize: 13, color: kMuted))),
                   ],
-                ]),
+                ]))),
               ),
       ),
     );
@@ -195,6 +199,7 @@ void showSettingsSheet(BuildContext context) {
   showModalBottomSheet(
     context: context,
     isScrollControlled: true,
+    constraints: BoxConstraints(maxWidth: 560), // a sheet, not a full-width banner, on wide screens
     // The sheet paints its own background (below) so it follows a theme switch
     // made from inside the sheet; a fixed backgroundColor would stay stale.
     backgroundColor: Colors.transparent,

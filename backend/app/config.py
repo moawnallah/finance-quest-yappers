@@ -9,6 +9,11 @@ REPO_DIR = BACKEND_DIR.parent
 ON_VERCEL = bool(os.getenv("VERCEL"))
 _default_db = "sqlite:////tmp/finance_quest.db" if ON_VERCEL else f"sqlite:///{BACKEND_DIR / 'finance_quest.db'}"
 DATABASE_URL = os.getenv("DATABASE_URL", _default_db)
+# Hosted Postgres (e.g. Neon) gives postgres:// or postgresql:// URLs; use the psycopg 3 driver.
+if DATABASE_URL.startswith("postgres://"):
+    DATABASE_URL = "postgresql://" + DATABASE_URL[len("postgres://"):]
+if DATABASE_URL.startswith("postgresql://"):
+    DATABASE_URL = "postgresql+psycopg://" + DATABASE_URL[len("postgresql://"):]
 CONTENT_DIR = Path(os.getenv("CONTENT_DIR", BACKEND_DIR / "content"))
 
 XP_PER_CORRECT = 10
