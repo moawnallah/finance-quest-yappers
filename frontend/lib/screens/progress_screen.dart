@@ -1,4 +1,4 @@
-// Progress: today's goal, level, the three badges, the quick-check retest,
+// Progress: today's goal, level, the three badges,
 // and how Scales are earned. The league has its own tab.
 
 import 'package:fl_chart/fl_chart.dart';
@@ -94,28 +94,6 @@ class ProgressScreen extends StatelessWidget {
         ]),
         SizedBox(height: 16),
         _Calibration(points: s.calibration),
-        SizedBox(height: 16),
-        Panel(
-          child: Row(children: [
-            Icon(Icons.quiz_outlined, color: kPrimaryText),
-            SizedBox(width: 12),
-            Expanded(
-              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                Text('Check your progress', style: TextStyle(fontWeight: FontWeight.w700)),
-                Text(
-                  s.profile.placementScore == null
-                      ? 'Take the 5-question quick check'
-                      : 'First check: ${s.profile.placementScore} of 5${s.profile.retestScore != null ? ' · latest: ${s.profile.retestScore} of 5' : ''}',
-                  style: TextStyle(color: kMuted),
-                ),
-              ]),
-            ),
-            TextButton(
-              onPressed: () => context.push(s.profile.placementScore == null ? '/placement' : '/placement?retest=1'),
-              child: Text(s.profile.placementScore == null ? 'Start' : 'Retake'),
-            ),
-          ]),
-        ),
         SizedBox(height: 16),
         Text('How you earn Scales', style: TextStyle(fontWeight: FontWeight.w700, color: kInk)),
         SizedBox(height: 6),

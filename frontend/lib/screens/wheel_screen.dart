@@ -15,6 +15,7 @@ import 'package:provider/provider.dart';
 import '../data/app_state.dart';
 import '../data/sfx.dart';
 import '../widgets/common.dart';
+import 'drawn_test.dart';
 import 'skills_screen.dart' show ErrorPanel;
 
 /// Lora, resolved once (GoogleFonts lookups are slow inside paint).
@@ -533,21 +534,39 @@ class _MissionNode extends StatelessWidget {
     final id = skill['id'] as String;
     if (s.skillState(skill) == 'locked') {
       final missing = [for (final a in s.knownAfter(skill)) if (!s.skillDone(s.skillById(a)!)) s.skillById(a)!];
-      final go = await showDialog<bool>(
-        context: context,
-        builder: (d) => AlertDialog(
-          title: Text('Start this mission?'),
-          content: Text(
-            'It builds on ${missing.map((m) => '"${m['title']}"${m['panel'] != skill['panel'] ? ' (${panelLabels[m['panel']]})' : ''}').join(' and ')}, '
-            'which you have not finished yet. You can still start it now.',
+      // Three choices; a failed prerequisite check comes back here.
+      while (true) {
+        final choice = await showDialog<String>(
+          context: context,
+          builder: (d) => AlertDialog(
+            title: Text('Start this mission?'),
+            content: Text(
+              'It builds on ${missing.map((m) => '"${m['title']}"${m['panel'] != skill['panel'] ? ' (${panelLabels[m['panel']]})' : ''}').join(' and ')}, '
+              'which you have not finished yet. You can still start it now.',
+            ),
+            actions: [
+              TextButton(onPressed: () => Navigator.pop(d, 'later'), child: Text('Not now')),
+              OutlinedButton(onPressed: () => Navigator.pop(d, 'check'), child: Text('Prerequisite check')),
+              FilledButton(
+                style: FilledButton.styleFrom(minimumSize: Size(120, 44)),
+                onPressed: () => Navigator.pop(d, 'start'),
+                child: Text('Start anyway'),
+              ),
+            ],
           ),
-          actions: [
-            TextButton(onPressed: () => Navigator.pop(d, false), child: Text('Not now')),
-            FilledButton(onPressed: () => Navigator.pop(d, true), child: Text('Start anyway')),
-          ],
-        ),
-      );
-      if (go != true || !context.mounted) return;
+        );
+        if (!context.mounted || choice == null || choice == 'later') return;
+        if (choice == 'start') break;
+        final passed = await runDrawnTest(context, id, testOut: false);
+        if (!context.mounted) return;
+        if (passed == true) {
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Prerequisite check passed: the questions part of this mission is done.')));
+          break;
+        }
+        if (passed == false) {
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Not all right this time. The explanations are in the answers you just saw.')));
+        }
+      }
     }
     await context.push('/skill/$id');
     s.loadSkills(); // progress may have changed

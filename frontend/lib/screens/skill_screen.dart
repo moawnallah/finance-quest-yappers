@@ -62,21 +62,6 @@ class _SkillScreenState extends State<SkillScreen> {
     _reload();
   }
 
-  Future<void> _drawn(String path, String context, String title) async {
-    final s = this.context.read<AppState>();
-    try {
-      final test = await s.api.drawnTest(s.profile.name, widget.nodeId, path);
-      final ids = [for (final i in test['items'] as List) i['id'] as String];
-      if (ids.isEmpty) {
-        if (mounted) ScaffoldMessenger.of(this.context).showSnackBar(SnackBar(content: Text('No questions to draw for this skill yet.')));
-        return;
-      }
-      await _run(TaskRun(title: title, taskIds: ids, context: context, forNode: widget.nodeId));
-    } catch (e) {
-      if (mounted) ScaffoldMessenger.of(this.context).showSnackBar(SnackBar(content: Text('$e')));
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -155,22 +140,6 @@ class _SkillScreenState extends State<SkillScreen> {
                 subtitle: 'Snap the right steps together, in order.',
                 onTap: _plan,
               ),
-            SizedBox(height: 16),
-            Text('Skip ahead', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
-            SizedBox(height: 8),
-            if ((st['prerequisite']['items'] as List).isNotEmpty)
-              _ActionTile(
-                icon: Icons.fact_check_outlined,
-                title: st['prerequisite']['passed'] == true ? 'Prerequisite check passed' : 'Prerequisite check',
-                subtitle: 'Questions from earlier skills. Get all right to finish the questions here.',
-                onTap: () => _drawn('prerequisite-test', 'prerequisite', 'Prerequisite check'),
-              ),
-            _ActionTile(
-              icon: Icons.bolt_outlined,
-              title: st['test_out']['passed'] == true ? 'Test-out passed' : 'I know this already',
-              subtitle: 'Two questions from this skill. Get both right to skip its questions.',
-              onTap: () => _drawn('test-out', 'test_out', 'Test-out'),
-            ),
           ]);
         },
       ),

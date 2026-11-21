@@ -284,3 +284,20 @@ def test_guests_are_stateless(client):
     with SessionLocal() as db:
         assert (db.query(User).count(), db.query(Attempt).count(), db.query(Event).count()) == before
     assert client.get("/me", headers=g).status_code == 401  # account-only routes still need a token
+
+
+
+def test_test_out_is_one_attempt_and_completes_the_node(client, auth):
+    from app.engines import catalog
+    cat = catalog()
+    node = next(n for n in cat.nodes if len(client.get(f"/skills/{n}/test-out", headers=auth).json()["items"]) == 2)
+    items = client.get(f"/skills/{node}/test-out", headers=auth).json()["items"]
+    for it in items:
+        right = cat.items[it["id"]]["reveal"]["answer"]
+        r = client.post(f"/tasks/{it['id']}/attempts", headers=auth,
+                        json={"response": right, "context": "test_out", "for_node": node})
+        assert r.status_code == 200
+    assert r.json()["status"]["done"] is True and r.json()["status"]["test_out"]["passed"] is True
+    again = client.post(f"/tasks/{items[0]['id']}/attempts", headers=auth,
+                        json={"response": cat.items[items[0]["id"]]["reveal"]["answer"], "context": "test_out", "for_node": node})
+    assert again.status_code == 409

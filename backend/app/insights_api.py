@@ -293,7 +293,9 @@ def _path_view(res: dict, created_at, user, db: Session) -> dict:
                       "done": bool(st and st.get("done")), "answered": (st or {}).get("items_answered", 0),
                       "total": (st or {}).get("items_total", 0)})
     nxt = next((x["node"] for x in steps if x["live"] and not x["done"]), None)
-    return {"survey_done": True, "source": source, "goal": res.get("goal"), "band": res.get("band"),
+    path_id = chosen if source == "chosen" else demo_block.get("path_id") if source == "demo" else (
+        "personal" if source == "personal" else "recommended")
+    return {"survey_done": True, "source": source, "path_id": path_id, "goal": res.get("goal"), "band": res.get("band"),
             "knowledge_score": res.get("knowledge_score"), "steps": steps, "next": nxt,
             "challenges": [{"node": c["node"], "title": c.get("title"), "why": c.get("why"), "live": c["node"] in cat.nodes}
                            for c in res.get("challenges", [])],

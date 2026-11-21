@@ -8,6 +8,8 @@ import 'package:provider/provider.dart';
 import '../data/app_state.dart';
 import '../widgets/common.dart';
 import 'skills_screen.dart' show ErrorPanel;
+import 'drawn_test.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class PathScreen extends StatefulWidget {
   PathScreen({super.key});
@@ -72,6 +74,99 @@ class _PathScreenState extends State<PathScreen> {
         Center(child: Text('About 2 minutes. You can retake it any time.', style: TextStyle(color: kMuted))),
       ]);
 
+  Future<void> _choose(AppState s, String id) async {
+    try {
+      await s.api.choosePath(s.profile.name, id);
+    } catch (_) {}
+    if (mounted) setState(() => _data = _load());
+  }
+
+  void _changePlan(BuildContext context, AppState s, Map<String, dynamic> d, List<Map<String, dynamic>> options) {
+    showModalBottomSheet(
+      context: context,
+      useRootNavigator: true,
+      constraints: BoxConstraints(maxWidth: 560),
+      builder: (ctx) => SafeArea(
+        child: ListView(shrinkWrap: true, padding: EdgeInsets.all(20), children: [
+          Text('Change plan', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: kInk)),
+          SizedBox(height: 4),
+          Text('Your progress is kept when you switch: every answer counts on every path.', style: TextStyle(color: kMuted)),
+          SizedBox(height: 12),
+          ListTile(
+            leading: Icon(Icons.auto_awesome, color: kPrimaryText),
+            title: Text('Recommended', style: TextStyle(fontWeight: FontWeight.w700)),
+            subtitle: Text('The path from your starting survey'),
+            trailing: d['source'] != 'chosen' ? Icon(Icons.check, color: kGreen) : null,
+            onTap: () {
+              Navigator.pop(ctx);
+              _choose(s, 'recommended');
+            },
+          ),
+          for (final o in options)
+            ListTile(
+              leading: Icon(Icons.map_outlined, color: kPrimaryText),
+              title: Text('${o['title']}', style: TextStyle(fontWeight: FontWeight.w700)),
+              subtitle: o['for'] == null ? null : Text('${o['for']}'),
+              trailing: d['path_id'] == o['id'] ? Icon(Icons.check, color: kGreen) : null,
+              onTap: () {
+                Navigator.pop(ctx);
+                _choose(s, o['id'] as String);
+              },
+            ),
+        ]),
+      ),
+    );
+  }
+
+  Future<void> _quickCheck(BuildContext context, Map<String, dynamic> c) async {
+    final passed = await runDrawnTest(context, c['node'] as String, testOut: true, title: 'Quick check: ${c['title']}');
+    if (!mounted || passed == null) return;
+    setState(() => _data = _load());
+    if (!context.mounted) return;
+    if (passed) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Both right: "${c['title']}" is marked done.')));
+    } else {
+      await showDialog(
+        context: context,
+        builder: (d) => AlertDialog(
+          title: Text('Not both right'),
+          content: Text('The answers you just saw explain why. The full mission covers it step by step.'),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(d), child: Text('Close')),
+            FilledButton(
+              style: FilledButton.styleFrom(minimumSize: Size(120, 44)),
+              onPressed: () {
+                Navigator.pop(d);
+                context.push('/skill/${c['node']}');
+              },
+              child: Text('Open the mission'),
+            ),
+          ],
+        ),
+      );
+    }
+  }
+
+  Future<void> _finish(BuildContext context, AppState s, Map<String, dynamic> d, List<Map<String, dynamic>> steps) async {
+    final answers = await showModalBottomSheet<Map<String, dynamic>>(
+      context: context,
+      isScrollControlled: true,
+      useRootNavigator: true,
+      constraints: BoxConstraints(maxWidth: 560),
+      builder: (_) => _CheckIn(steps: steps),
+    );
+    if (answers == null || !context.mounted) return;
+    Map<String, dynamic> r;
+    try {
+      r = await s.api.finishPath(s.profile.name, {'path_id': d['path_id'] ?? 'recommended', ...answers});
+    } catch (e) {
+      if (context.mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e')));
+      return;
+    }
+    if (!context.mounted) return;
+    await showDialog(context: context, builder: (_) => _FinishReply(reply: r));
+  }
+
   Widget _path(BuildContext context, AppState s, Map<String, dynamic> d) {
     final steps = (d['steps'] as List).cast<Map<String, dynamic>>();
     final challenges = (d['challenges'] as List? ?? []).cast<Map<String, dynamic>>();
@@ -80,10 +175,9 @@ class _PathScreenState extends State<PathScreen> {
     final done = steps.where((x) => x['done'] == true).length;
     final source = switch (d['source']) {
       'chosen' => 'The path you picked',
-      'demo' => 'Recommended for you (a ready path)',
-      'personal' => 'Recommended for you',
-      _ => 'Recommended for you',
+      _ => 'Recommended',
     };
+    final allDone = steps.isNotEmpty && done == steps.length;
     return ListView(padding: EdgeInsets.fromLTRB(20, 16, 20, 96), children: [
       Panel(
         child: Row(crossAxisAlignment: CrossAxisAlignment.center, children: [
@@ -104,6 +198,13 @@ class _PathScreenState extends State<PathScreen> {
               borderRadius: BorderRadius.circular(6),
               child: LinearProgressIndicator(value: steps.isEmpty ? 0 : done / steps.length, minHeight: 8, color: kGreen, backgroundColor: kLine),
             ),
+            SizedBox(height: 8),
+            Wrap(spacing: 8, runSpacing: 4, children: [
+              if (options.isNotEmpty)
+                TextButton.icon(onPressed: () => _changePlan(context, s, d, options), icon: Icon(Icons.swap_horiz), label: Text('Change plan')),
+              if (d['source'] == 'chosen')
+                TextButton.icon(onPressed: () => _choose(s, 'recommended'), icon: Icon(Icons.undo), label: Text('Back to my recommended path')),
+            ]),
           ])),
           SizedBox(width: 12),
           MascotPlaceholder(size: 150, pose: done == steps.length && steps.isNotEmpty ? 'cheer' : 'point', headOnPhone: true),
@@ -115,18 +216,39 @@ class _PathScreenState extends State<PathScreen> {
           color: kWarnSoft,
           border: kWarnBorder,
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text('${demo['message'] ?? 'Your recommended path is not ready yet.'}', style: TextStyle(color: kInk, height: 1.4)),
+            Text(
+              s.isAdmin
+                  ? '${demo['message'] ?? 'The recommended path is not ready yet.'}\n(admin) recommended: ${(d['recommended'] as List? ?? []).join(' > ')} · demo status: ${demo['status']}'
+                  : 'This path is not ready yet in the demo. Pick one of the ready paths:',
+              style: TextStyle(color: kInk, height: 1.4),
+            ),
             SizedBox(height: 10),
             Wrap(spacing: 8, runSpacing: 8, children: [
               for (final o in options)
                 OutlinedButton(
-                  onPressed: () async {
-                    await s.api.choosePath(s.profile.name, o['id'] as String);
-                    setState(() => _data = _load());
-                  },
+                  onPressed: () => _choose(s, o['id'] as String),
                   child: Text('${o['title']}'),
                 ),
             ]),
+          ]),
+        ),
+      ],
+      if (allDone) ...[
+        SizedBox(height: 12),
+        Panel(
+          color: kGreenSoft,
+          border: kGreen,
+          child: Row(children: [
+            Icon(Icons.flag_circle, color: kGreen, size: 32),
+            SizedBox(width: 12),
+            Expanded(child: Text('You finished every step of this path. Tell us how it went and see what to learn next.',
+                style: TextStyle(color: kInk, height: 1.35))),
+            SizedBox(width: 8),
+            FilledButton(
+              style: FilledButton.styleFrom(minimumSize: Size(110, 44)),
+              onPressed: () => _finish(context, s, d, steps),
+              child: Text('Finish'),
+            ),
           ]),
         ),
       ],
@@ -134,12 +256,12 @@ class _PathScreenState extends State<PathScreen> {
       Text('Steps', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: kInk)),
       SizedBox(height: 8),
       for (final (i, st) in steps.indexed) _Step(index: i, step: st, isNext: st['node'] == d['next'], last: i == steps.length - 1),
-      if (challenges.isNotEmpty) ...[
+      if (challenges.any((c) => c['live'] == true)) ...[
         SizedBox(height: 16),
         Text('Quick checks', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: kInk)),
         Text('Topics you probably know already: answer 2 questions to skip them.', style: TextStyle(color: kMuted)),
         SizedBox(height: 8),
-        for (final c in challenges)
+        for (final c in challenges.where((c) => c['live'] == true))
           Card(
             elevation: 0,
             color: kSurface,
@@ -149,7 +271,7 @@ class _PathScreenState extends State<PathScreen> {
               title: Text('${c['title']}', style: TextStyle(fontWeight: FontWeight.w700, color: kInk)),
               subtitle: Text('${c['why'] ?? ''}', style: TextStyle(color: kMuted)),
               trailing: Icon(Icons.chevron_right),
-              onTap: () => context.push(c['live'] == true ? '/skill/${c['node']}' : '/coming-later?node=${c['node']}'),
+              onTap: () => _quickCheck(context, c),
             ),
           ),
       ],
@@ -283,3 +405,151 @@ class ComingLaterScreen extends StatelessWidget {
     );
   }
 }
+
+
+/// The end-of-path check-in: progress, confidence per step, next goal (POST /paths/finish).
+class _CheckIn extends StatefulWidget {
+  final List<Map<String, dynamic>> steps;
+  _CheckIn({required this.steps});
+  @override
+  State<_CheckIn> createState() => _CheckInState();
+}
+
+class _CheckInState extends State<_CheckIn> {
+  String? progress;
+  String? goal;
+  final Map<String, int> confidence = {};
+  static const goals = {
+    'buffer': 'An emergency buffer', 'first_investment': 'My first investment', 'retirement': 'Retirement',
+    'home': 'A home', 'keep_learning': 'Keep learning', 'other': 'Something else',
+  };
+
+  @override
+  Widget build(BuildContext context) {
+    final ready = progress != null && goal != null;
+    return SafeArea(
+      child: Padding(
+        padding: EdgeInsets.fromLTRB(20, 20, 20, 20 + MediaQuery.viewInsetsOf(context).bottom),
+        child: SingleChildScrollView(
+          child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisSize: MainAxisSize.min, children: [
+            Text('How did it go?', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: kInk)),
+            SizedBox(height: 12),
+            Text('Did you make progress?', style: TextStyle(fontWeight: FontWeight.w700, color: kInk)),
+            SizedBox(height: 6),
+            Wrap(spacing: 8, children: [
+              for (final (v, l) in [('yes', 'Yes'), ('somewhat', 'Somewhat'), ('no', 'No')])
+                ChoiceChip(label: Text(l), selected: progress == v, onSelected: (_) => setState(() => progress = v)),
+            ]),
+            SizedBox(height: 14),
+            Text('How sure do you feel about each step? (1-5)', style: TextStyle(fontWeight: FontWeight.w700, color: kInk)),
+            for (final st in widget.steps.where((x) => x['live'] == true))
+              Padding(
+                padding: EdgeInsets.only(top: 8),
+                child: Row(children: [
+                  Expanded(child: Text('${st['title']}', style: TextStyle(color: kBody))),
+                  for (final c in [1, 2, 3, 4, 5])
+                    Padding(
+                      padding: EdgeInsets.only(left: 4),
+                      child: ChoiceChip(
+                        label: Text('$c'),
+                        visualDensity: VisualDensity.compact,
+                        selected: confidence[st['node']] == c,
+                        onSelected: (_) => setState(() => confidence[st['node'] as String] = c),
+                      ),
+                    ),
+                ]),
+              ),
+            SizedBox(height: 14),
+            Text('What is your next goal?', style: TextStyle(fontWeight: FontWeight.w700, color: kInk)),
+            SizedBox(height: 6),
+            Wrap(spacing: 8, runSpacing: 6, children: [
+              for (final e in goals.entries)
+                ChoiceChip(label: Text(e.value), selected: goal == e.key, onSelected: (_) => setState(() => goal = e.key)),
+            ]),
+            SizedBox(height: 18),
+            FilledButton(
+              onPressed: ready ? () => Navigator.pop(context, {'progress': progress, 'confidence': confidence, 'next_goal': goal}) : null,
+              child: Text('Send'),
+            ),
+          ]),
+        ),
+      ),
+    );
+  }
+}
+
+/// The reply: thanks, the other path, the next steps, and how people usually start with their own money.
+class _FinishReply extends StatelessWidget {
+  final Map<String, dynamic> reply;
+  _FinishReply({required this.reply});
+
+  @override
+  Widget build(BuildContext context) {
+    final next = (reply['next_steps'] as List? ?? []).cast<Map>();
+    final other = reply['other_path'] as Map?;
+    return AlertDialog(
+      title: Text('Thank you!', textAlign: TextAlign.center),
+      content: SizedBox(
+        width: 520,
+        child: SingleChildScrollView(
+          child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Center(child: MascotPlaceholder(size: 140, pose: 'cheer')),
+            SizedBox(height: 8),
+            Text('${reply['message'] ?? ''}', style: TextStyle(color: kBody, height: 1.4)),
+            if (next.isNotEmpty) ...[
+              SizedBox(height: 14),
+              Text('What to learn next', style: TextStyle(fontWeight: FontWeight.w800, color: kInk)),
+              for (final n in next)
+                ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  leading: Icon(n['live'] == true ? Icons.play_circle_outline : Icons.hourglass_top_rounded,
+                      color: n['live'] == true ? kPrimaryText : kWarnIcon),
+                  title: Text('${n['title']}', style: TextStyle(fontWeight: FontWeight.w700)),
+                  subtitle: n['reason'] == null ? null : Text('${n['reason']}'),
+                  onTap: () {
+                    Navigator.pop(context);
+                    context.push(n['live'] == true ? '/skill/${n['node']}' : '/coming-later?node=${n['node']}');
+                  },
+                ),
+            ],
+            if (other != null) ...[
+              SizedBox(height: 10),
+              Text('Or try the other path: ${other['title']}', style: TextStyle(color: kMuted)),
+            ],
+            SizedBox(height: 14),
+            Panel(
+              color: kPrimarySoft,
+              border: kPrimarySoft,
+              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                Text('Start with your own money', style: TextStyle(fontWeight: FontWeight.w800, color: kPrimaryText)),
+                SizedBox(height: 6),
+                Text('How people usually start: an emergency fund first, then a small monthly amount in shares '
+                    'through a low-cost, diversified fund.', style: TextStyle(color: kInk, height: 1.4)),
+                SizedBox(height: 6),
+                Text('Before you buy: check the costs in the KID (key information document), and check the firm '
+                    'in the KNF register.', style: TextStyle(color: kInk, height: 1.4)),
+                SizedBox(height: 10),
+                OutlinedButton.icon(
+                  onPressed: () => openInvestmentAccountPage(),
+                  icon: Icon(Icons.open_in_new),
+                  label: Text("Open an investment account at the bank"),
+                ),
+                SizedBox(height: 4),
+                Text('Educational information about types of investments, not advice about any product.',
+                    style: TextStyle(fontSize: 11, color: kMuted)),
+              ]),
+            ),
+          ]),
+        ),
+      ),
+      actions: [FilledButton(style: FilledButton.styleFrom(minimumSize: Size(110, 44)), onPressed: () => Navigator.pop(context), child: Text('Close'))],
+    );
+  }
+}
+
+
+/// The bank's own page for opening an investment account (a service, not a recommended instrument).
+/// Set with --dart-define=INVEST_ACCOUNT_URL; the wording and link are to be confirmed with the Commerzbank mentor.
+const investAccountUrl = String.fromEnvironment('INVEST_ACCOUNT_URL', defaultValue: 'https://www.mbank.pl/indywidualny/inwestycje/');
+
+Future<void> openInvestmentAccountPage() => launchUrl(Uri.parse(investAccountUrl), webOnlyWindowName: '_blank');

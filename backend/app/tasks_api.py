@@ -184,6 +184,10 @@ def submit_attempt(task_id: str, body: s.AttemptIn, lang: str = "en",
         if task_id not in draw(cat.nodes, body.for_node, seed=user.id):
             raise ApiError(400, "invalid_context", f"'{task_id}' is not in your {body.context} for {body.for_node}")
         node_id = body.for_node
+        # The challenge (test-out) is one attempt: each drawn item can be answered once.
+        if body.context == "test_out" and any(x.task_id == task_id and x.context == "test_out"
+                                               for x in _attempts(db, user, node_id)):
+            raise ApiError(409, "already_answered", "This quick-check question was already answered.")
     elif level in ("easy", "hard") and body.reasons:
         raise ApiError(400, "invalid_response", "reasons are only for medium tasks")
 

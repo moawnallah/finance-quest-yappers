@@ -257,6 +257,13 @@ class Api {
     return Map<String, dynamic>.from(await _authed('POST', '/onboarding/choose-path', name, body: {'path_id': id}));
   }
 
+  /// The end-of-path check-in (POST /paths/finish): thanks, the other path and next_steps.
+  Future<Map<String, dynamic>> finishPath(String name, Map<String, dynamic> body) async {
+    await _load();
+    return Map<String, dynamic>.from(await _authed('POST', '/paths/finish', name,
+        body: {...body, if (isGuest && guestSurvey != null) 'survey': guestSurvey}));
+  }
+
   /// Every node of the skills tree, built or planned (GET /roadmap).
   Future<List<Map<String, dynamic>>> roadmap(String name) async =>
       ((await _authed('GET', '/roadmap', name))['nodes'] as List).cast<Map<String, dynamic>>();
