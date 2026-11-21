@@ -26,3 +26,4 @@ flutter:
   assets:
     - assets/roadmap.json
     - assets/eu_benchmark.json
+    - assets/steps.json
