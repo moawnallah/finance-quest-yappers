@@ -46,7 +46,7 @@ class _LeagueScreenState extends State<LeagueScreen> {
     final pageCount = (rows.length / perPage).ceil();
     return Scaffold(
       appBar: StatsBar(title: '$viewing league', subtitle: own ? 'Your league' : null),
-      body: Column(children: [
+      body: PageWidth(max: 1000, child: Column(children: [
         Padding(
           padding: EdgeInsets.fromLTRB(20, 12, 20, 12),
           child: SegmentedButton<String>(
@@ -120,7 +120,7 @@ class _LeagueScreenState extends State<LeagueScreen> {
             IconButton(tooltip: 'Next page', onPressed: _page < pageCount - 1 ? () => _go(_page + 1) : null, icon: Icon(Icons.chevron_right)),
           ]),
         ),
-      ]),
+      ])),
     );
   }
 }

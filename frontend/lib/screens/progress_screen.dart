@@ -19,7 +19,7 @@ class ProgressScreen extends StatelessWidget {
     final reached = today >= goal;
     return Scaffold(
       appBar: StatsBar(title: 'Your progress'),
-      body: ListView(padding: EdgeInsets.fromLTRB(20, 0, 20, 20), children: [
+      body: PageWidth(max: 1000, child: ListView(padding: EdgeInsets.fromLTRB(20, 16, 20, 20), children: [
         // Today's goal, in words and a bar.
         Panel(
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -129,7 +129,7 @@ class ProgressScreen extends StatelessWidget {
               ScaleIcon(size: 14),
             ]),
           ),
-      ]),
+      ])),
     );
   }
 }

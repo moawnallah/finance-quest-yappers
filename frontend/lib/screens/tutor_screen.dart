@@ -169,6 +169,7 @@ class _TutorScreenState extends State<TutorScreen> {
       typing = false;
     });
     s.notify(); // the list's preview updates
+    s.saveConversations();
     _toEnd();
     if (diagram != null) await _draw(conv, msg, diagram, t);
   }
