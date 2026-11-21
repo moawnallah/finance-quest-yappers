@@ -3,42 +3,48 @@
     <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
       <stop offset="0" stop-color="#1FA33A"/><stop offset="1" stop-color="#0B6B26"/>
     </linearGradient>
-    <radialGradient id="glow" cx="0.3" cy="0.25" r="0.8">
+    <radialGradient id="glow" cx="0.3" cy="0.22" r="0.85">
       <stop offset="0" stop-color="#FFFFFF" stop-opacity="0.22"/><stop offset="1" stop-color="#FFFFFF" stop-opacity="0"/>
     </radialGradient>
     <linearGradient id="coin" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="#FFE27A"/><stop offset="1" stop-color="#F2A81D"/>
+      <stop offset="0" stop-color="#FFE38A"/><stop offset="0.55" stop-color="#F8C440"/><stop offset="1" stop-color="#EE9E16"/>
     </linearGradient>
-  </defs><g transform="translate(174 174) scale(0.66)">
+    <linearGradient id="rim" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#C98A0C"/><stop offset="1" stop-color="#8A5A00"/>
+    </linearGradient>
+  </defs>
   <!-- full-bleed square: iOS and Android apply their own corner masks -->
   
   
-  
-  <g stroke="#0B3D16" stroke-width="22" stroke-linejoin="round" stroke-linecap="round">
-    <!-- crest -->
-    <path d="M250,360 l40,-110 l40,100 Z M330,320 l46,-120 l40,110 Z M420,300 l44,-110 l36,108 Z" fill="#2A8F2F"/>
-    <!-- head -->
-    <path d="M210,560 C180,400 300,300 450,318 C540,330 580,360 640,372 L840,392 C900,398 912,452 896,490
-             C884,520 852,538 812,540 L600,560 C520,620 330,640 210,560 Z" fill="#3FAE3A"/>
-    <path d="M262,600 C360,640 520,620 600,560 L812,540 C840,538 870,526 884,508 L600,520 C500,540 380,560 262,600 Z" fill="#A6E58A" stroke="none"/>
-    <path d="M600,548 Q720,560 880,500" fill="none"/>
-    <!-- teeth (friendly grin) -->
-    <path d="M640,548 l18,34 l18,-36 Z M700,543 l18,34 l18,-37 Z M760,536 l18,33 l18,-38 Z M818,525 l16,30 l16,-36 Z" fill="#FFFFFF" stroke-width="12"/>
-    <circle cx="866" cy="420" r="10" fill="#0B3D16" stroke="none"/>
-    <!-- eye -->
-    <circle cx="470" cy="316" r="96" fill="#3FAE3A"/>
-    <ellipse cx="478" cy="322" rx="56" ry="62" fill="#FFD84A" stroke-width="14"/>
-    <ellipse cx="488" cy="326" rx="13" ry="44" fill="#151515" stroke="none"/>
-    <circle cx="456" cy="296" r="13" fill="#FFFFFF" stroke="none"/>
+  <g transform="translate(512 512) scale(0.64)">
+    <!-- coin -->
+    <circle r="372" fill="#063D16" opacity="0.30" transform="translate(12 18)"/>
+    <circle r="372" fill="url(#rim)"/>
+    <circle r="336" fill="url(#coin)"/>
+    <circle r="296" fill="none" stroke="#C2860E" stroke-width="12" opacity="0.65"/>
+    <path d="M-250,-120 A270,270 0 0 1 -60,-262" fill="none" stroke="#FFF6D0" stroke-width="18" stroke-linecap="round" opacity="0.7"/>
+    <!-- crocodile jaws, open, facing right -->
+    <g transform="translate(-14 14) scale(1.1)" stroke="#0B3D16" stroke-width="16" stroke-linejoin="round" stroke-linecap="round">
+      <!-- mouth inside -->
+      <path d="M-130,18 L196,-38 L200,56 Z" fill="#8E2A2A" stroke="none"/>
+      <!-- lower jaw -->
+      <path d="M-205,40 C-205,95 -140,140 -40,138 L170,108 C205,103 222,82 214,58 L-120,28 Z" fill="#3FAE3A"/>
+      <path d="M-170,92 C-110,128 -30,130 60,120 L170,108 C190,105 205,96 210,84 L-150,70 Z" fill="#A6E58A" stroke="none"/>
+      <!-- lower teeth -->
+      <path d="M-60,34 l14,-34 l14,36 Z M10,40 l14,-34 l14,37 Z M80,47 l14,-34 l14,37 Z M146,54 l12,-30 l12,32 Z" fill="#FFFFFF" stroke-width="9"/>
+      <!-- upper jaw and head -->
+      <path d="M-215,30 C-245,-60 -200,-150 -110,-170 C-40,-186 10,-160 50,-140 L210,-118 C250,-112 262,-80 252,-58 C244,-40 226,-34 206,-36 L-130,14 C-160,22 -195,30 -215,30 Z" fill="#3FAE3A"/>
+      <!-- upper teeth -->
+      <path d="M-70,0 l14,34 l14,-38 Z M0,-12 l14,34 l14,-38 Z M70,-23 l14,34 l14,-38 Z M140,-33 l12,30 l12,-33 Z" fill="#FFFFFF" stroke-width="9"/>
+      <!-- crest -->
+      <path d="M-200,-110 l18,-62 l26,52 Z M-150,-150 l22,-66 l26,58 Z M-92,-170 l22,-60 l22,56 Z" fill="#2A8F2F"/>
+      <!-- eye -->
+      <circle cx="-62" cy="-150" r="62" fill="#3FAE3A"/>
+      <ellipse cx="-56" cy="-146" rx="36" ry="40" fill="#FFD84A" stroke-width="11"/>
+      <ellipse cx="-49" cy="-143" rx="9" ry="28" fill="#151515" stroke="none"/>
+      <circle cx="-68" cy="-162" r="9" fill="#FFFFFF" stroke="none"/>
+      <!-- nostril -->
+      <circle cx="232" cy="-94" r="8" fill="#0B3D16" stroke="none"/>
+    </g>
   </g>
-  <!-- coin -->
-  <g transform="translate(700 700)">
-    <circle r="150" fill="#0B3D16" opacity="0.25" transform="translate(10 14)"/>
-    <circle r="150" fill="url(#coin)" stroke="#8A5A00" stroke-width="18"/>
-    <circle r="112" fill="none" stroke="#B57A0A" stroke-width="10" opacity="0.6"/>
-    <!-- a scale (CrocoCash points) on the coin -->
-    <path d="M0,-74 Q66,-56 60,6 Q54,60 0,76 Q-54,60 -60,6 Q-66,-56 0,-74 Z" fill="#3FAE3A" stroke="#0B6B26" stroke-width="12"/>
-    <path d="M0,-50 L0,52" stroke="#0B6B26" stroke-width="12" stroke-linecap="round"/>
-    <circle cx="-24" cy="-26" r="10" fill="#FFFFFF" opacity="0.8"/>
-  </g>
-</g></svg>
+</svg>
