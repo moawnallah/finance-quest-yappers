@@ -301,3 +301,42 @@ def test_test_out_is_one_attempt_and_completes_the_node(client, auth):
     again = client.post(f"/tasks/{items[0]['id']}/attempts", headers=auth,
                         json={"response": cat.items[items[0]["id"]]["reveal"]["answer"], "context": "test_out", "for_node": node})
     assert again.status_code == 409
+
+
+
+def test_hard_code_deep_nesting_is_400_and_runs_are_rate_limited(client):
+    from app import tasks_api
+    from app.engines import catalog
+    h = {"Authorization": f"Bearer {client.post('/auth/session', json={'display_name': 'hostile'}).json()['token']}"}
+    tid = sorted(catalog().hard_tasks)[0]
+    for code in ["invest_in(" + "(" * 3000 + "cash" + ")" * 3000 + ", fund)", "x = " + "-" * 3000 + "1"]:
+        r = client.post(f"/tasks/{tid}/run", headers=h, json={"code": code[:8000]})
+        assert r.status_code == 400, r.text
+    tasks_api._RATE.clear()
+    codes = [client.post(f"/tasks/{tid}/run", headers=h, json={"code": "x = 1"}).status_code for _ in range(tasks_api.HARD_LIMITS["run"] + 1)]
+    assert codes[-1] == 429 and 429 not in codes[:-1]
+    tasks_api._RATE.clear()
+
+
+def test_tutor_cache_serves_the_second_identical_question(client, monkeypatch):
+    from app import tutor_api
+    calls = []
+    monkeypatch.setattr(tutor_api, "TUTOR_ENABLED", True)
+    monkeypatch.setattr(tutor_api.tutor_pipeline, "handles", lambda mode: False)
+    def fake(messages):
+        calls.append(1)
+        tutor_api._last.timings = {"load_ms": 1500, "prompt_eval_ms": 40, "eval_ms": 900}
+        return {"text": "An index fund holds many shares at once. Which part should we look at next?", "mermaid": None}, 1200, 50, 30
+    monkeypatch.setattr(tutor_api, "call_model", fake)
+    h = {"Authorization": f"Bearer {client.post('/auth/session', json={'display_name': 'cache'}).json()['token']}"}
+    q = {"mode": "explain_concept", "message": "What is an index fund?", "context": {"node": "I4"}}
+    a = client.post("/tutor", headers=h, json=q).json()
+    b = client.post("/tutor", headers=h, json={**q, "message": "what is an   index fund?"}).json()
+    assert len(calls) == 1 and b.get("cached") is True and b["text"] == a["text"]
+    client.post("/tutor", headers=h, json={**q, "mode": "explain_result"})  # never cached
+    client.post("/tutor", headers=h, json={**q, "history": [{"role": "user", "text": "hi"}]})  # history: never cached
+    assert len(calls) == 3
+    ADMIN = {"X-Admin-Key": "test-admin-key"}
+    m = {x["mode"]: x for x in client.get("/admin/tutor-metrics", headers=ADMIN).json()["modes"]}
+    assert m["explain_concept"]["cache_hit_rate"] > 0 and m["explain_concept"]["cold_loads"] >= 1
+    assert client.delete("/admin/tutor-cache", headers=ADMIN).json()["deleted"] == 1

@@ -13,12 +13,15 @@
 The model runs in Ollama (OLLAMA_API_BASE, TUTOR_MODEL). Mateusz's full tutor
 pipeline (backend/ml/tutor, LiteLLM, output checks) can replace call_model().
 """
+import hashlib
 import json
 import os
+import threading
 import re
 import time
 import urllib.error
 import urllib.request
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 from fastapi import APIRouter, Depends
@@ -29,14 +32,15 @@ from app import tutor_pipeline
 from app.admin import log_llm_event
 from app.db import get_db
 from app.deps import current_user, is_guest, viewer
-from app.models import User
+from app.models import TutorCache, User
 
 router = APIRouter(tags=["tutor"])
 
 OLLAMA_API_BASE = os.getenv("OLLAMA_API_BASE", "http://127.0.0.1:11434")
 TUTOR_MODEL = os.getenv("TUTOR_MODEL", "gemma4:12b")
 TUTOR_ENABLED = os.getenv("TUTOR_ENABLED", "true").lower() != "false"
-PROMPT_VERSION = os.getenv("PROMPT_VERSION", "tutor-v1")
+# Label of this file's own tutor prompt in llm_events. PROMPT_VERSION (tutor-v2) is read by the tutor pipeline.
+MO_PROMPT_VERSION = os.getenv("MO_PROMPT_VERSION", "mo-v1")
 TUTOR_TIMEOUT = float(os.getenv("TUTOR_TIMEOUT", "90"))  # seconds; the first call also loads the model
 SKILL_DIR = Path(__file__).resolve().parent.parent / "ml" / "prompts" / "skills"
 
@@ -97,6 +101,51 @@ def parse_reply(content: str) -> dict:
     return {"text": text, "mermaid": None}
 
 
+_last = threading.local()  # Ollama timings of the last call on this thread (call_model keeps its signature)
+
+
+def _timings(out: dict) -> dict:
+    """Ollama's durations (nanoseconds) as milliseconds, for llm_events."""
+    ms = lambda k: int(out[k] / 1e6) if isinstance(out.get(k), (int, float)) else None
+    return {"load_ms": ms("load_duration"), "prompt_eval_ms": ms("prompt_eval_duration"), "eval_ms": ms("eval_duration")}
+
+
+# ---------------------------------------------------------------- answer cache (docs/scaling.md, layer 2)
+CACHE_TTL = timedelta(days=1)
+
+
+def cache_key(body: "TutorIn") -> str | None:
+    """Only answers that are the same for everyone: explain_concept with a node, no history, no task
+    attempt, and a message that masking leaves unchanged (no personal data). None means: do not cache."""
+    ctx = body.context or {}
+    if body.mode != "explain_concept" or not ctx.get("node") or body.history or ctx.get("task_id") \
+            or ctx.get("picked") is not None or mask(body.message) != body.message:
+        return None
+    version = os.getenv("PROMPT_VERSION", "tutor-v2") if tutor_pipeline.handles(body.mode) else MO_PROMPT_VERSION
+    norm = " ".join(body.message.lower().split())
+    return hashlib.sha256(f"{version}|{TUTOR_MODEL}|{body.mode}|{ctx['node']}|{norm}".encode()).hexdigest()
+
+
+def cache_get(db: Session, key: str | None):
+    if not key:
+        return None
+    row = db.get(TutorCache, key)
+    if row is None:
+        return None
+    created = row.created_at if row.created_at.tzinfo else row.created_at.replace(tzinfo=timezone.utc)
+    if datetime.now(timezone.utc) - created > CACHE_TTL:
+        db.delete(row)
+        return None
+    row.hits = (row.hits or 0) + 1
+    return row
+
+
+def cache_put(db: Session, key: str | None, body: "TutorIn", text: str, mermaid: str | None) -> None:
+    if key and text:
+        db.merge(TutorCache(key=key, mode=body.mode, node=(body.context or {}).get("node"), text=text, mermaid=mermaid,
+                            hits=0, created_at=datetime.now(timezone.utc)))
+
+
 def call_model(messages: list[dict]) -> tuple[dict, int, int, int]:
     """One chat call to Ollama in JSON mode. Returns (parsed, latency_ms, tokens_in, tokens_out)."""
     # think=False: Gemma 4 otherwise reasons privately for ~50 s before answering.
@@ -109,6 +158,7 @@ def call_model(messages: list[dict]) -> tuple[dict, int, int, int]:
     latency = int((time.monotonic() - t0) * 1000)
     if "error" in out:
         raise OSError(out["error"])
+    _last.timings = _timings(out)
     parsed = parse_reply(out.get("message", {}).get("content", ""))
     return parsed, latency, out.get("prompt_eval_count") or 0, out.get("eval_count") or 0
 
@@ -146,12 +196,24 @@ def _log(db, user, **kw):
 @router.post("/tutor")
 def tutor(body: TutorIn, user=Depends(viewer), db: Session = Depends(get_db)):
     visual = bool(VISUAL.search(body.message)) and body.mode != "repair_diagram"
+    t0, key = time.monotonic(), cache_key(body)
+    hit = cache_get(db, key)
+    if hit is not None:
+        _log(db, user, mode=body.mode, model_role="tutor_small", model="cache", node=hit.node, prompt_masked=body.message,
+             latency_ms=int((time.monotonic() - t0) * 1000), checks_failed=[], fallback_used=False, flagged_for_review=False,
+             answer_masked=hit.text)
+        db.commit()
+        return {"text": hit.text, "mermaid": hit.mermaid, "fallback": False, "cached": True}
     if tutor_pipeline.handles(body.mode):  # TUTOR_PIPELINE=true: server-side context and output checks
-        return tutor_pipeline.run(body, user, db, call_model, TUTOR_MODEL, visual, clean_mermaid)
+        out = tutor_pipeline.run(body, user, db, call_model, TUTOR_MODEL, visual, clean_mermaid)
+        if not out.get("fallback"):
+            cache_put(db, key, body, out.get("text") or "", out.get("mermaid"))
+            db.commit()
+        return out
     intent = "advice_request" if ADVICE.search(body.message) else ("visualize" if visual else "question")
     stored = (body.context or {}).get("explanation")
     log = dict(mode=body.mode, intent=intent, model_role="tutor_small", model=f"ollama/{TUTOR_MODEL}",
-               prompt_version=PROMPT_VERSION, node=(body.context or {}).get("node"), task_id=(body.context or {}).get("task_id"),
+               prompt_version=MO_PROMPT_VERSION, node=(body.context or {}).get("node"), task_id=(body.context or {}).get("task_id"),
                prompt_masked=mask(body.message))
     if not TUTOR_ENABLED:
         text = stored or "The tutor is resting right now. Here is the key idea from the lesson instead."
@@ -177,7 +239,10 @@ def tutor(body: TutorIn, user=Depends(viewer), db: Session = Depends(get_db)):
         text = stored or "I can't recommend products or predict prices, but I can explain how to compare options. Which idea should we look at?"
     flagged = bool(failed) or intent == "advice_request"
     _log(db, user, **log, latency_ms=latency, tokens_in=t_in, tokens_out=t_out, checks_failed=failed,
-                  fallback_used=False, flagged_for_review=flagged, answer_masked=mask(text + (f"\n[diagram]\n{mermaid}" if mermaid else "")))
+                  fallback_used=False, flagged_for_review=flagged, answer_masked=mask(text + (f"\n[diagram]\n{mermaid}" if mermaid else "")),
+         **getattr(_last, "timings", {}))
+    if not failed:
+        cache_put(db, key, body, text, mermaid)
     db.commit()
     return {"text": text, "mermaid": mermaid, "fallback": False}
 
@@ -213,11 +278,26 @@ def tutor_stream(body: TutorIn, user=Depends(viewer)):
     intent = "advice_request" if ADVICE.search(body.message) else ("visualize" if visual else "question")
     stored = (body.context or {}).get("explanation")
     log = dict(mode=body.mode, intent=intent, model_role="tutor_small", model=f"ollama/{TUTOR_MODEL}",
-               prompt_version=PROMPT_VERSION, node=(body.context or {}).get("node"), task_id=(body.context or {}).get("task_id"),
+               prompt_version=MO_PROMPT_VERSION, node=(body.context or {}).get("node"), task_id=(body.context or {}).get("task_id"),
                prompt_masked=mask(body.message))
 
     def line(obj) -> bytes:
         return (json.dumps(obj, ensure_ascii=False) + "\n").encode()
+
+    key = cache_key(body)
+    with SessionLocal() as db:
+        hit = cache_get(db, key)
+        if hit is not None:
+            text, mermaid, node = hit.text, hit.mermaid, hit.node
+            _log(db, user, mode=body.mode, model_role="tutor_small", model="cache", node=node, prompt_masked=body.message,
+                 latency_ms=0, checks_failed=[], fallback_used=False, flagged_for_review=False, answer_masked=text)
+            db.commit()
+
+            def cached():
+                yield line({"t": "delta", "text": text})
+                yield line({"t": "done", "text": text, "mermaid": mermaid, "fallback": False, "cached": True})
+            return StreamingResponse(cached(), media_type="application/x-ndjson",
+                                     headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"})
 
     if tutor_pipeline.handles(body.mode):
         # The output checks need the whole answer, so with the pipeline the text arrives in one piece:
@@ -225,17 +305,22 @@ def tutor_stream(body: TutorIn, user=Depends(viewer)):
         def checked():
             with SessionLocal() as db:
                 out = tutor_pipeline.run(body, user, db, call_model, TUTOR_MODEL, visual, clean_mermaid)
+                if not out.get("fallback"):
+                    cache_put(db, key, body, out.get("text") or "", out.get("mermaid"))
+                    db.commit()
             if not out["fallback"]:
                 yield line({"t": "delta", "text": out["text"]})
             yield line({"t": "done", **out})
         return StreamingResponse(checked(), media_type="application/x-ndjson",
                                  headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"})
 
-    def finish(text, mermaid, fallback, failed, latency=None, t_in=None, t_out=None):
+    def finish(text, mermaid, fallback, failed, latency=None, t_in=None, t_out=None, timings=None):
         with SessionLocal() as db:  # the request's session is closed once streaming starts
             _log(db, user, **log, latency_ms=latency, tokens_in=t_in, tokens_out=t_out, checks_failed=failed,
                           fallback_used=fallback, flagged_for_review=bool(failed) or intent == "advice_request",
-                          answer_masked=mask(text + (f"\n[diagram]\n{mermaid}" if mermaid else "")))
+                          answer_masked=mask(text + (f"\n[diagram]\n{mermaid}" if mermaid else "")), **(timings or {}))
+            if not fallback and not failed:
+                cache_put(db, key, body, text, mermaid)
             db.commit()
         return line({"t": "done", "text": text, "mermaid": mermaid, "fallback": fallback})
 
@@ -248,7 +333,7 @@ def tutor_stream(body: TutorIn, user=Depends(viewer)):
             data=json.dumps({"model": TUTOR_MODEL, "messages": _stream_messages(body, visual), "stream": True, "think": False,
                              "keep_alive": "30m", "options": {"temperature": 0.3}}).encode(),
             headers={"Content-Type": "application/json"})
-        full, sent, t0, t_in, t_out = "", 0, time.monotonic(), 0, 0
+        full, sent, t0, t_in, t_out, timings = "", 0, time.monotonic(), 0, 0, {}
         try:
             with urllib.request.urlopen(req, timeout=TUTOR_TIMEOUT) as r:
                 for raw in r:
@@ -260,6 +345,7 @@ def tutor_stream(body: TutorIn, user=Depends(viewer)):
                     full += chunk.get("message", {}).get("content", "")
                     if chunk.get("done"):
                         t_in, t_out = chunk.get("prompt_eval_count") or 0, chunk.get("eval_count") or 0
+                        timings = _timings(chunk)
                     visible = full.split("```", 1)[0]
                     if "```" not in full:
                         visible = visible.rstrip("`")  # hold back a fence that may be starting
@@ -278,6 +364,6 @@ def tutor_stream(body: TutorIn, user=Depends(viewer)):
         if ADVICE.search(text):
             failed.append("advice")
             text = stored or "I can't recommend products or predict prices, but I can explain how to compare options."
-        yield finish(text or (stored or ""), mermaid, False, failed, int((time.monotonic() - t0) * 1000), t_in, t_out)
+        yield finish(text or (stored or ""), mermaid, False, failed, int((time.monotonic() - t0) * 1000), t_in, t_out, timings)
 
     return StreamingResponse(gen(), media_type="application/x-ndjson", headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"})

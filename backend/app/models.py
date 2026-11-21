@@ -161,6 +161,18 @@ class UserBadge(Base):
     awarded_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
 
 
+class TutorCache(Base):
+    """Answers that are the same for everyone (docs/scaling.md, layer 2), kept for a day."""
+    __tablename__ = "tutor_cache"
+    key: Mapped[str] = mapped_column(String(64), primary_key=True)  # sha256 of prompt version, model, mode, node, message
+    mode: Mapped[str] = mapped_column(String(30))
+    node: Mapped[str | None] = mapped_column(String(10), nullable=True)
+    text: Mapped[str] = mapped_column(Text)
+    mermaid: Mapped[str | None] = mapped_column(Text, nullable=True)
+    hits: Mapped[int] = mapped_column(Integer, default=0)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
+
+
 class ScaleEvent(Base):
     """One award of Scales (app/scales.py). (user, source, ref) is unique, so an award is given once."""
     __tablename__ = "scale_events"
@@ -252,6 +264,9 @@ class LlmEvent(Base):
     hint_level: Mapped[int | None] = mapped_column(Integer, nullable=True)
     user_rating: Mapped[int | None] = mapped_column(Integer, nullable=True)    # +1 / -1
     flagged_for_review: Mapped[bool] = mapped_column(Boolean, default=False, index=True)
+    load_ms: Mapped[int | None] = mapped_column(Integer, nullable=True)         # Ollama load_duration (cold model load)
+    prompt_eval_ms: Mapped[int | None] = mapped_column(Integer, nullable=True)  # Ollama prompt_eval_duration (prefix cache)
+    eval_ms: Mapped[int | None] = mapped_column(Integer, nullable=True)         # Ollama eval_duration (writing the answer)
     prompt_masked: Mapped[str | None] = mapped_column(Text, nullable=True)     # what the user asked, personal data masked
     answer_masked: Mapped[str | None] = mapped_column(Text, nullable=True)     # what the tutor answered, masked
 

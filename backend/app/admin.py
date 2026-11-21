@@ -97,4 +97,40 @@ def reco_events(event_type: str | None = None, limit: int = Query(50, ge=1, le=5
     return {"items": [{
         "id": r.id, "ts": r.ts.isoformat() if r.ts else None, "user": pseudo(r.user_id), "type": r.event_type,
         "router_version": r.router_version, "node": r.node, "predicted_m": r.predicted_m, "observed": r.observed,
-        "priority": r.priority, "reason": r.reason_term, "path": r.path} for r in rows]}
+        "priority": r.priority, "reason": r.reason_term, "path": r.path, "payload": r.payload} for r in rows]}
+
+
+
+@router.get("/tutor-metrics")
+def tutor_metrics(db: Session = Depends(get_db)):
+    """Per mode (docs/scaling.md "Admin panel"): requests, p50/p95 latency of model answers, fallback rate,
+    cache hit rate, cold loads (load over 1 s) and prompt-eval p50, plus the cache size."""
+    from statistics import median
+    from app.models import TutorCache
+    rows = db.scalars(select(LlmEvent)).all()
+    def pct(xs, q):
+        xs = sorted(xs)
+        return xs[min(len(xs) - 1, int(round(q * (len(xs) - 1))))] if xs else None
+    modes = {}
+    for r in rows:
+        modes.setdefault(r.mode or "unknown", []).append(r)
+    out = []
+    for m, rs in sorted(modes.items()):
+        model = [r for r in rs if r.model != "cache" and not r.fallback_used and r.latency_ms is not None]
+        lat = [r.latency_ms for r in model]
+        pe = [r.prompt_eval_ms for r in model if r.prompt_eval_ms is not None]
+        out.append({"mode": m, "requests": len(rs), "p50_ms": pct(lat, 0.5), "p95_ms": pct(lat, 0.95),
+                    "fallback_rate": round(sum(r.fallback_used for r in rs) / len(rs), 3),
+                    "cache_hit_rate": round(sum(r.model == "cache" for r in rs) / len(rs), 3),
+                    "cold_loads": sum(1 for r in model if (r.load_ms or 0) > 1000),
+                    "prompt_eval_p50_ms": int(median(pe)) if pe else None})
+    return {"modes": out, "cache_entries": db.query(TutorCache).count()}
+
+
+@router.delete("/tutor-cache")
+def clear_tutor_cache(db: Session = Depends(get_db)):
+    """After a content or prompt fix: forget every cached tutor answer."""
+    from app.models import TutorCache
+    n = db.query(TutorCache).delete()
+    db.commit()
+    return {"deleted": n}

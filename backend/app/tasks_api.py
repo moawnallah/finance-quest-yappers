@@ -127,8 +127,24 @@ def _code_panel(rec: dict) -> dict:
             actions.append({"code": "rebalance()", "meaning": BLOCKS[b]["text"]})
     return {"starter": starter, "public_tests": hard.public_tests(rec["meta"]),
             "hidden_tests": max(0, len(rec["meta"]["optional"]) - hard.PUBLIC_OPTIONAL),
+            "futures": (rec["meta"].get("futures") or {}).get("n"),
             "values": [{"name": n, "meaning": VARS.get(n, n)} for n in names], "assets": assets, "actions": actions,
             "own_variables": "my_total = 0, my_total += cash (up to 3 names)" if "set_var" in [p["block"] for p in q["palette"]] else None}
+
+
+_RATE: dict[tuple[str, str], list[float]] = {}
+HARD_LIMITS = {"run": 30, "submit": 10}  # per user (or guest) and minute
+
+
+def _rate_limit(kind: str, user) -> None:
+    """A per-user sliding minute for hard-task runs and submits (each simulates many scenarios)."""
+    now = time.monotonic()
+    key = (kind, str(user.id))
+    hits = [t for t in _RATE.get(key, []) if now - t < 60]
+    if len(hits) >= HARD_LIMITS[kind]:
+        raise ApiError(429, "rate_limited", f"Too many {kind}s in a minute. Wait a moment and try again.")
+    hits.append(now)
+    _RATE[key] = hits
 
 
 def _program_from(rec: dict, response):
@@ -139,6 +155,8 @@ def _program_from(rec: dict, response):
             return hard_text.to_program(response["code"], names, assets)
         except hard_text.TextError as e:
             raise ApiError(400, "invalid_response", str(e)) from e
+        except RecursionError as e:  # thousands of nested brackets or minus signs
+            raise ApiError(400, "invalid_response", "line 1: the plan is nested too deeply; simplify the brackets") from e
     return response
 
 
@@ -150,6 +168,7 @@ def run_public_tests(task_id: str, body: s.CodeIn, user: User = Depends(viewer),
     if not found or found[0] != "hard":
         raise ApiError(404, "not_found", f"No hard task '{task_id}'")
     rec = found[1]
+    _rate_limit("run", user)
     program = _program_from(rec, {"code": body.code})
     q = rec["question"]
     names, assets = _hard_lists(rec)
@@ -199,6 +218,7 @@ def submit_attempt(task_id: str, body: s.AttemptIn, lang: str = "en",
             result = medium.score(rec, body.response, body.reasons or [], body.confidence)
             reveal = medium.reveal_view(rec, lang)
         else:
+            _rate_limit("submit", user)
             body.response = _program_from(rec, body.response)
             if not isinstance(body.response, dict):
                 raise AttemptError("a hard task needs the Blockly workspace JSON or the program JSON")

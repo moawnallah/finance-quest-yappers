@@ -43,6 +43,7 @@ class _AdminScreenState extends State<AdminScreen> {
       api.admin('node-opened', _key),
       api.admin('ab-results', _key),
       api.admin('study', _key),
+      api.admin('tutor-metrics', _key),
     ]);
   }
 
@@ -81,13 +82,13 @@ class _AdminScreenState extends State<AdminScreen> {
                 FilledButton(onPressed: _refresh, child: Text('Try again')),
               ]);
             }
-            final [summary, llm, reco, events, overview, items, calibration, advice, feedback, insights, clicks, ab, study] = snap.data!;
+            final [summary, llm, reco, events, overview, items, calibration, advice, feedback, insights, clicks, ab, study, tutorMetrics] = snap.data!;
             return TabBarView(children: [
               _overview(summary),
               _alerts(overview),
               _items(items),
               _calibration(calibration),
-              _advice(advice),
+              _advice(advice, tutorMetrics),
               _feedback(feedback),
               _insights(insights, clicks, ab),
               _study(study),
@@ -456,8 +457,34 @@ class _AdminScreenState extends State<AdminScreen> {
     ]);
   }
 
-  Widget _advice(Map<String, dynamic> d) {
-    if ((d['n'] ?? 0) == 0) return _empty('No tutor answers yet.');
+  Widget _advice(Map<String, dynamic> d, Map<String, dynamic> tm) {
+    final modes = (tm['modes'] as List? ?? []).cast<Map<String, dynamic>>();
+    final perMode = [
+      _h('Tutor per mode', 'Latency of model answers (cached and fallback answers excluded). Cache entries: ${tm['cache_entries'] ?? 0}.'),
+      _table(['Mode', 'Requests', 'p50', 'p95', 'Fallback', 'Cache hits', 'Cold loads', 'Prompt eval p50'], [
+        for (final m in modes)
+          ['${m['mode']}', '${m['requests']}', m['p50_ms'] == null ? '-' : '${m['p50_ms']} ms', m['p95_ms'] == null ? '-' : '${m['p95_ms']} ms',
+            _pct(m['fallback_rate']), _pct(m['cache_hit_rate']), '${m['cold_loads']}', m['prompt_eval_p50_ms'] == null ? '-' : '${m['prompt_eval_p50_ms']} ms'],
+      ]),
+      SizedBox(height: 8),
+      Align(
+        alignment: Alignment.centerLeft,
+        child: OutlinedButton.icon(
+          onPressed: () async {
+            try {
+              final r = await context.read<AppState>().api.adminWrite('DELETE', 'tutor-cache', null, _key);
+              if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Cleared ${r['deleted']} cached answers.')));
+              _refresh();
+            } catch (e) {
+              if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Couldn't clear the cache: $e")));
+            }
+          },
+          icon: Icon(Icons.delete_sweep_outlined),
+          label: Text('Clear tutor cache'),
+        ),
+      ),
+    ];
+    if ((d['n'] ?? 0) == 0) return ListView(padding: EdgeInsets.all(16), children: [Text('No tutor answers yet.', style: TextStyle(color: kMuted)), ...perMode]);
     final alert = Map<String, dynamic>.from(d['advice_alert'] as Map? ?? {});
     return ListView(padding: EdgeInsets.all(16), children: [
       Panel(
@@ -486,6 +513,7 @@ class _AdminScreenState extends State<AdminScreen> {
           : Wrap(spacing: 6, runSpacing: 6, children: [for (final e in (d['checks_failed'] as Map).entries) _chip('${e.key}: ${e.value}', tone: kRed)]),
       _h('Models'),
       Wrap(spacing: 6, runSpacing: 6, children: [for (final e in (d['models'] as Map? ?? {}).entries) _chip('${e.key}: ${e.value}')]),
+      ...perMode,
     ]);
   }
 

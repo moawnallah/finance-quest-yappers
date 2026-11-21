@@ -137,9 +137,13 @@ class Api {
     };
     final http.Response r;
     try {
-      r = method == 'GET'
-          ? await _http.get(uri, headers: headers)
-          : await _http.post(uri, headers: headers, body: jsonEncode(body ?? {}));
+      // GET, POST, PATCH and DELETE (the admin panel changes report status and clears the tutor cache).
+      r = switch (method) {
+        'GET' => await _http.get(uri, headers: headers),
+        'PATCH' => await _http.patch(uri, headers: headers, body: jsonEncode(body ?? {})),
+        'DELETE' => await _http.delete(uri, headers: headers),
+        _ => await _http.post(uri, headers: headers, body: jsonEncode(body ?? {})),
+      };
     } catch (e) {
       throw ApiException(0, 'offline', 'Cannot reach the server at $baseUrl. Is the backend running?');
     }
