@@ -199,6 +199,7 @@ void showSettingsSheet(BuildContext context) {
   showModalBottomSheet(
     context: context,
     isScrollControlled: true,
+    constraints: BoxConstraints(maxWidth: 560), // a sheet, not a full-width banner, on wide screens
     // The sheet paints its own background (below) so it follows a theme switch
     // made from inside the sheet; a fixed backgroundColor would stay stale.
     backgroundColor: Colors.transparent,

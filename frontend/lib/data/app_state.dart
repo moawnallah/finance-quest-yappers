@@ -115,6 +115,7 @@ class TutorConversation {
   final DateTime started = DateTime.now();
   final TutorContext? context;
   final List<TutorMessage> messages = [];
+  bool titled = false; // a real title was generated or set by the user
   TutorConversation({required this.id, required this.title, this.context});
 }
 
@@ -125,6 +126,14 @@ class AppState extends ChangeNotifier {
   int _convSeq = 0;
 
   TutorConversation newConversation({TutorContext? context}) {
+    if (context == null) {
+      final empty = conversations.where((c) => c.context == null && !c.messages.any((m) => m.mine)).firstOrNull;
+      if (empty != null) {
+        activeConversation = empty.id;
+        notifyListeners();
+        return empty;
+      }
+    }
     final c = TutorConversation(id: 'c${DateTime.now().microsecondsSinceEpoch}${++_convSeq}', title: context?.question ?? 'New chat', context: context);
     conversations.insert(0, c);
     activeConversation = c.id;
@@ -135,21 +144,23 @@ class AppState extends ChangeNotifier {
 
   // Conversations are saved on this device per account, so they survive a page
   // refresh and signing out and back in. Charts are re-drawn from text only.
-  String get _convKey => 'tutor_conversations_${email ?? signInMethod ?? 'guest'}';
+  String get _convKey => 'tutor_conversations';
 
   Future<void> saveConversations() async {
     try {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString(_convKey, jsonEncode([
-        for (final c in conversations.take(30))
+        for (final c in conversations.where((c) => c.messages.any((m) => m.mine)).take(30))
           {
-            'id': c.id, 'title': c.title, 'context': c.context?.toJson(),
+            'id': c.id, 'title': c.title, 'titled': c.titled, 'context': c.context?.toJson(),
             'messages': [for (final m in c.messages) {'mine': m.mine, 'text': m.text}],
           }
       ]));
       await prefs.setString('tutor_active', activeConversation ?? '');
     } catch (_) {}
   }
+
+  bool conversationsLoaded = false;
 
   Future<void> loadConversations() async {
     try {
@@ -158,7 +169,8 @@ class AppState extends ChangeNotifier {
       conversations.clear();
       if (raw != null) {
         for (final j in (jsonDecode(raw) as List).cast<Map<String, dynamic>>()) {
-          final c = TutorConversation(id: j['id'], title: j['title'] ?? 'Chat', context: TutorContext.fromJson(j['context']));
+          final c = TutorConversation(id: j['id'], title: j['title'] ?? 'Chat', context: TutorContext.fromJson(j['context']))
+            ..titled = j['titled'] == true;
           for (final m in (j['messages'] as List).cast<Map<String, dynamic>>()) {
             c.messages.add(TutorMessage(m['mine'] == true, m['text'] ?? ''));
           }
@@ -167,13 +179,24 @@ class AppState extends ChangeNotifier {
       }
       final a = prefs.getString('tutor_active');
       activeConversation = conversations.any((c) => c.id == a) ? a : conversations.firstOrNull?.id;
-      notifyListeners();
     } catch (_) {}
+    conversationsLoaded = true;
+    notifyListeners();
   }
 
   TutorConversation? get currentConversation => conversations.where((c) => c.id == activeConversation).firstOrNull;
   void openConversation(String id) {
     activeConversation = id;
+    notifyListeners();
+    saveConversations();
+  }
+
+  void renameConversation(String id, String title) {
+    final t = title.trim();
+    final c = conversations.where((c) => c.id == id).firstOrNull;
+    if (c == null || t.isEmpty) return;
+    c.title = t.length > 60 ? t.substring(0, 60) : t;
+    c.titled = true;
     notifyListeners();
     saveConversations();
   }
@@ -452,8 +475,6 @@ class AppState extends ChangeNotifier {
     signInMethod = null;
     profile.name = 'You';
     api.reset();
-    conversations.clear();
-    activeConversation = null;
     notifyListeners();
   }
 

@@ -124,6 +124,10 @@ def build_messages(body: TutorIn, visual: bool) -> list[dict]:
     for h in body.history[-8:]:
         role = "assistant" if h.get("role") == "tutor" else "user"
         msgs.append({"role": role, "content": str(h.get("text", ""))[:1500]})
+    if body.mode == "title":
+        return [{"role": "system", "content": "Write a short title (2 to 6 words, no quotes, no final period) for this tutor "
+                 "conversation. Reply as JSON: {\"text\": \"<title>\", \"mermaid\": null}."},
+                {"role": "user", "content": body.message[:1500]}]
     if body.mode == "repair_diagram":
         msgs.append({"role": "user", "content": "Mermaid could not render your diagram. Error: " + body.message
                      + ". Return the same JSON with a corrected, simpler 'mermaid' value that follows the skill exactly."})
