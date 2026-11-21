@@ -67,7 +67,7 @@ class _TaskRunScreenState extends State<TaskRunScreen> {
     if (index + 1 >= widget.run.taskIds.length && confScore.isNotEmpty) {
       final c = confScore.map((e) => e.$1).reduce((a, b) => a + b) / confScore.length;
       final sc = confScore.map((e) => e.$2).reduce((a, b) => a + b) / confScore.length;
-      context.read<AppState>().addCalibration(widget.run.title, c, sc);
+      context.read<AppState>().addCalibration(widget.run.title, c, sc, skill: widget.run.skill ?? widget.run.forNode);
     }
     setState(() {
       index++;

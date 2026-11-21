@@ -11,6 +11,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../data/api.dart' show ApiException;
 import '../data/app_state.dart';
 import '../data/mermaid.dart';
 import '../data/stream.dart';
@@ -157,7 +158,8 @@ class _TutorScreenState extends State<TutorScreen> {
     String reply;
     String? diagram;
     final mode = conv.context == null || conv.context!.wasRight == true ? 'explain_concept' : 'explain_result';
-    final history = [for (final m in conv.messages) {'role': m.mine ? 'user' : 'tutor', 'text': m.text}];
+    // Earlier turns only: the new question is sent separately as `message`.
+    final history = [for (final m in conv.messages.take(conv.messages.length - 1)) {'role': m.mine ? 'user' : 'tutor', 'text': m.text}];
     // The reply bubble appears with the first streamed words and grows as the model writes.
     TutorMessage? live;
     try {
@@ -177,8 +179,9 @@ class _TutorScreenState extends State<TutorScreen> {
       });
       reply = r.text;
       diagram = r.mermaid;
-    } catch (_) {
+    } catch (e) {
       try {
+        if (e is ApiException && e.status == 503) rethrow; // model down: go straight to the lesson-based answer
         final r = await s.api.tutor(s.profile.name, mode: mode, message: t, context: conv.context?.toJson(), history: history);
         reply = r.text;
         diagram = r.mermaid;

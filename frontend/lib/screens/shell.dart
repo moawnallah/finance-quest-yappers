@@ -33,22 +33,8 @@ class AppShell extends StatelessWidget {
       child: KeyedSubtree(key: ValueKey(tabs[index].$1), child: child),
     );
     if (isWideWeb(context)) {
-      // Desktop browser: a navigation rail on the left, the page fills the rest.
-      return Scaffold(
-        body: Row(children: [
-          NavigationRail(
-            selectedIndex: index,
-            onDestinationSelected: select,
-            labelType: NavigationRailLabelType.all,
-            backgroundColor: Theme.of(context).navigationBarTheme.backgroundColor,
-            indicatorColor: Theme.of(context).navigationBarTheme.indicatorColor,
-            destinations: [
-              for (final t in tabs) NavigationRailDestination(icon: Icon(t.$2), selectedIcon: Icon(t.$3), label: Text(t.$4)),
-            ],
-          ),
-          Expanded(child: body),
-        ]),
-      );
+      // Desktop browser: the tabs sit in the top bar (StatsBar), the page fills the window.
+      return Scaffold(body: body);
     }
     return Scaffold(
       body: AnimatedSwitcher(

@@ -195,7 +195,9 @@ extension on _WheelScreenState {
             child: Column(children: [
               SizedBox(height: _WheelScreenState.headerH),
               Expanded(
-                child: LayoutBuilder(builder: (context, tc) => SingleChildScrollView(
+                child: s.skillsIn(panel).isEmpty
+                    ? Center(child: _Tree(key: ValueKey(panel), panel: panel))
+                    : LayoutBuilder(builder: (context, tc) => SingleChildScrollView(
                   scrollDirection: Axis.horizontal,
                   child: ConstrainedBox(
                     constraints: BoxConstraints(minWidth: tc.maxWidth),

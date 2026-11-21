@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../data/app_state.dart';
 import '../data/sfx.dart';
+import '../screens/shell.dart' show AppShell;
 
 // Palette from the Figma frames (docs/design/Lightmode.pdf and Darkmode.pdf):
 // greens on white in light mode, greens on near-black in dark mode.
@@ -62,7 +63,10 @@ class PageWidth extends StatelessWidget {
   PageWidth({super.key, required this.child, this.max = 860});
   @override
   Widget build(BuildContext context) =>
-      isWideWeb(context) ? Center(child: ConstrainedBox(constraints: BoxConstraints(maxWidth: max), child: child)) : child;
+      MediaQuery.sizeOf(context).width > max
+          // The page colour fills the whole window (no white bands); content stays readable.
+          ? ColoredBox(color: kBg, child: Center(child: ConstrainedBox(constraints: BoxConstraints(maxWidth: max), child: child)))
+          : child;
 }
 
 /// Top header shown on every main screen: current level with progress to the
@@ -108,13 +112,18 @@ class StatsBar extends StatelessWidget implements PreferredSizeWidget {
       ]),
       title: Center(child: ConstrainedBox(
         // Same width and position on every page on wide screens.
-        constraints: BoxConstraints(maxWidth: 1000),
+        constraints: BoxConstraints(maxWidth: 1400),
         child: Row(children: [
         if (canPop) ...[
           IconButton(icon: Icon(Icons.arrow_back), tooltip: 'Back', onPressed: () => GoRouter.of(context).pop()),
           SizedBox(width: 2),
         ],
         Expanded(
+          child: Semantics(
+          container: true,
+          button: true,
+          excludeSemantics: true,
+          label: '${lvl.name}, ${s.xp} Scales, ${s.streak} day streak. ${next == null ? 'Top level' : '${next.minXp - s.xp} Scales to ${next.name}'}. Open progress',
           child: GestureDetector(
           onTap: () => GoRouter.of(context).go('/progress'),
           child: Container(
@@ -157,11 +166,18 @@ class StatsBar extends StatelessWidget implements PreferredSizeWidget {
             ]),
           ),
           ),
+          ),
         ),
+        if (isWideWeb(context)) ...[
+          SizedBox(width: 12),
+          _TopNav(),
+        ],
         SizedBox(width: 12),
         Semantics(
+          container: true, // its own node: otherwise merged into the header and unreachable for screen readers
           button: true,
           label: 'Settings',
+          excludeSemantics: true, // say "Settings", not the initial on the avatar
           child: GestureDetector(
             onTap: () => showSettingsSheet(context),
             child: Container(
@@ -191,6 +207,51 @@ class StatsBar extends StatelessWidget implements PreferredSizeWidget {
               ),
       ),
     );
+  }
+}
+
+/// Wide screens: the four tabs, in the top bar between the level card and the avatar.
+class _TopNav extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    final path = GoRouterState.of(context).uri.path;
+    return Row(mainAxisSize: MainAxisSize.min, children: [
+      for (final t in AppShell.tabs)
+        Builder(builder: (context) {
+          final on = path.startsWith(t.$1);
+          return Padding(
+            padding: EdgeInsets.symmetric(horizontal: 2),
+            child: Semantics(
+              container: true,
+              button: true,
+              selected: on,
+              label: t.$4,
+              excludeSemantics: true,
+              child: Material(
+                color: on ? kSurface : Colors.transparent,
+                shape: StadiumBorder(side: BorderSide(color: on ? kWheelRim : Colors.transparent, width: 2)),
+                child: InkWell(
+                  customBorder: StadiumBorder(),
+                  onTap: on
+                      ? null
+                      : () {
+                          Sfx.tap();
+                          GoRouter.of(context).go(t.$1);
+                        },
+                  child: Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                    child: Row(mainAxisSize: MainAxisSize.min, children: [
+                      Icon(on ? t.$3 : t.$2, size: 20, color: on ? kPrimaryText : kInk),
+                      SizedBox(width: 6),
+                      Text(t.$4, style: TextStyle(fontSize: 14, fontWeight: on ? FontWeight.w800 : FontWeight.w600, color: on ? kPrimaryText : kInk)),
+                    ]),
+                  ),
+                ),
+              ),
+            ),
+          );
+        }),
+    ]);
   }
 }
 
@@ -271,8 +332,62 @@ void showSettingsSheet(BuildContext context) {
               onSelectionChanged: (v) => s.setThemeMode(v.first),
             ),
             SizedBox(height: 12),
-            SwitchListTile(contentPadding: EdgeInsets.zero, title: Text('Sound effects'), value: s.soundOn, onChanged: s.setSound),
-            SwitchListTile(contentPadding: EdgeInsets.zero, title: Text('Larger text'), value: s.largeText, onChanged: s.setLargeText),
+            // Sound effects: on by default; turning them on plays a short preview.
+            Container(
+              padding: EdgeInsets.fromLTRB(12, 10, 8, 10),
+              decoration: BoxDecoration(
+                gradient: s.soundOn ? LinearGradient(colors: [kPrimarySoft, kSurface]) : null,
+                color: s.soundOn ? null : kSurface,
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: s.soundOn ? kWheelRim : kLine, width: s.soundOn ? 2 : 1),
+              ),
+              child: Row(children: [
+                AnimatedContainer(
+                  duration: Duration(milliseconds: 200),
+                  width: 40, height: 40,
+                  decoration: BoxDecoration(shape: BoxShape.circle, color: s.soundOn ? kPrimary : kLine),
+                  child: Icon(s.soundOn ? Icons.volume_up_rounded : Icons.volume_off_rounded, color: s.soundOn ? Colors.white : kFaint, size: 22),
+                ),
+                SizedBox(width: 12),
+                Expanded(
+                  child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                    Text('Sound effects', style: TextStyle(fontWeight: FontWeight.w700, color: kInk)),
+                    Text(s.soundOn ? 'Ticks, answer chimes and badge fanfares' : 'Off: the app stays silent',
+                        style: TextStyle(fontSize: 12, color: kMuted)),
+                  ]),
+                ),
+                if (s.soundOn)
+                  IconButton(tooltip: 'Play a sample', icon: Icon(Icons.play_circle_outline, color: kPrimaryText), onPressed: Sfx.correct),
+                Switch(
+                  value: s.soundOn,
+                  onChanged: (v) {
+                    s.setSound(v);
+                    if (v) Sfx.correct();
+                  },
+                ),
+              ]),
+            ),
+            SizedBox(height: 8),
+            Row(children: [
+              Text('Text size', style: TextStyle(color: kInk, fontSize: 16)),
+              Spacer(),
+              Text('${(s.textScale * 100).round()}%', style: TextStyle(color: kMuted, fontWeight: FontWeight.w700)),
+            ]),
+            Row(children: [
+              Text('A', style: TextStyle(fontSize: 13, color: kMuted)),
+              Expanded(
+                child: Slider(
+                  value: s.textScale,
+                  min: 1.0,
+                  max: 1.6,
+                  divisions: 6,
+                  label: '${(s.textScale * 100).round()}%',
+                  semanticFormatterCallback: (v) => 'Text size ${(v * 100).round()} percent',
+                  onChanged: s.setTextScale,
+                ),
+              ),
+              Text('A', style: TextStyle(fontSize: 22, color: kMuted)),
+            ]),
             SwitchListTile(contentPadding: EdgeInsets.zero, title: Text('List instead of the wheel'), value: s.listView, onChanged: s.setListView),
             SizedBox(height: 8),
             Text('Daily goal (Scales)', style: TextStyle(fontWeight: FontWeight.w700, color: kInk)),

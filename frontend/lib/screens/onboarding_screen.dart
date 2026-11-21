@@ -77,7 +77,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   if (step < total - 1) {
                     next();
                   } else {
-                    s.notify();
+                    s.startFromSurvey(); // the survey picks the starting topic
                     context.go('/placement');
                   }
                 },

@@ -3,6 +3,7 @@
 
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart' show SystemMouseCursors;
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../data/app_state.dart';
@@ -138,7 +139,7 @@ class ProgressScreen extends StatelessWidget {
 /// the score they actually got, one dot per finished mission. The dashed line
 /// is perfect self-assessment (sure 1 = 20%, sure 5 = 100%).
 class _Calibration extends StatelessWidget {
-  final List<(String, double, double)> points;
+  final List<(String, double, double, String?)> points;
   _Calibration({required this.points});
 
   @override
@@ -165,7 +166,21 @@ class _Calibration extends StatelessWidget {
               minX: 1, maxX: 5, minY: 0, maxY: 100,
               gridData: FlGridData(show: true, horizontalInterval: 25, verticalInterval: 1, getDrawingHorizontalLine: (_) => FlLine(color: kLine, strokeWidth: 1), getDrawingVerticalLine: (_) => FlLine(color: kLine, strokeWidth: 1)),
               borderData: FlBorderData(show: false),
-              lineTouchData: LineTouchData(enabled: false),
+              // Tap a dot to reopen the mission it came from.
+              lineTouchData: LineTouchData(
+                enabled: true,
+                handleBuiltInTouches: false,
+                touchSpotThreshold: 18,
+                touchCallback: (event, resp) {
+                  if (event is! FlTapUpEvent) return;
+                  final hit = resp?.lineBarSpots?.where((b) => b.barIndex == 1).firstOrNull;
+                  if (hit == null) return;
+                  final skill = points[hit.spotIndex].$4;
+                  if (skill != null) GoRouter.of(context).push('/skill/$skill');
+                },
+                mouseCursorResolver: (event, resp) =>
+                    (resp?.lineBarSpots?.any((b) => b.barIndex == 1) ?? false) ? SystemMouseCursors.click : SystemMouseCursors.basic,
+              ),
               titlesData: FlTitlesData(
                 topTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
                 rightTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
@@ -196,7 +211,7 @@ class _Calibration extends StatelessWidget {
         Row(children: [
           Container(width: 10, height: 10, decoration: BoxDecoration(color: kPrimary, shape: BoxShape.circle)),
           SizedBox(width: 6),
-          Text('A mission', style: TextStyle(fontSize: 11, color: kMuted)),
+          Text('A mission (tap to open it)', style: TextStyle(fontSize: 11, color: kMuted)),
           SizedBox(width: 14),
           Container(width: 16, height: 2, color: kFaint),
           SizedBox(width: 6),

@@ -103,6 +103,7 @@ class Api {
   Future<({String text, String? mermaid})> tutor(String name,
       {required String mode, required String message, Map<String, dynamic>? context, List<Map<String, String>> history = const []}) async {
     final r = Map<String, dynamic>.from(await _authed('POST', '/tutor', name, body: {'mode': mode, 'message': message, 'context': context, 'history': history}));
+    if (r['fallback'] == true) throw ApiException(503, 'tutor_unavailable', (r['text'] as String?) ?? '');
     return (text: (r['text'] as String?) ?? '', mermaid: r['mermaid'] as String?);
   }
 
@@ -113,6 +114,7 @@ class Api {
       List<Map<String, String>> history = const [], required void Function(String) onDelta}) async {
     final token = await _session(name);
     String? text, mermaid;
+    var fallback = false;
     await postStream(
       '$baseUrl/tutor/stream',
       {'Content-Type': 'application/json', 'Authorization': 'Bearer $token'},
@@ -123,10 +125,12 @@ class Api {
         if (m['t'] == 'done') {
           text = m['text'] as String?;
           mermaid = m['mermaid'] as String?;
+          fallback = m['fallback'] == true;
         }
       },
     );
     if (text == null) throw ApiException(0, 'stream', 'The reply stopped early.');
+    if (fallback) throw ApiException(503, 'tutor_unavailable', text!);
     return (text: text!, mermaid: mermaid);
   }
 
