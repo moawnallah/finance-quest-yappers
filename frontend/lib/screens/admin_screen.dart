@@ -13,6 +13,7 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../data/app_state.dart';
+import '../util/save_file.dart';
 import '../widgets/common.dart';
 
 class AdminScreen extends StatefulWidget {
@@ -801,7 +802,14 @@ class _AdminScreenState extends State<AdminScreen> {
   Future<void> _download(String table, bool synthetic) async {
     try {
       final csv = await context.read<AppState>().api.adminText('export?table=$table&format=csv${synthetic ? '&synthetic=1' : ''}', _key);
-      await launchUrl(Uri.dataFromString(csv, mimeType: 'text/csv', encoding: utf8), webOnlyWindowName: '_blank');
+      final name = '${table}${synthetic ? '_incl_synthetic' : ''}_${DateTime.now().toIso8601String().substring(0, 10)}.csv';
+      final downloaded = await saveTextFile(name, csv);
+      final rows = csv.trimRight().split('\n').length - 1;
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            content: Text((downloaded ? 'Downloaded $name ($rows rows)' : 'Copied $name ($rows rows) to the clipboard') +
+                (rows == 0 && !synthetic ? '. No real learner shares their profile yet, so only the header is included.' : ''))));
+      }
     } catch (e) {
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Export failed: $e')));
     }
