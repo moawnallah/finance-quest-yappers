@@ -142,8 +142,8 @@ def test_prerequisite_test_is_deterministic_and_uses_check_items(nodes):
 
 
 def test_prerequisite_test_with_missing_prerequisite_is_empty(nodes):
-    without_f2 = {k: v for k, v in nodes.items() if k != "F2"}  # as if F2 had no node file
-    assert prerequisite_test(without_f2, "D3", seed=1) == []
+    without_f1 = {k: v for k, v in nodes.items() if k != "F1"}  # as if F1 had no node file
+    assert prerequisite_test(without_f1, "S1", seed=1) == []
 
 
 def test_completion_rule():

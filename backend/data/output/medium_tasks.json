@@ -2,8 +2,8 @@
   "schema_version": 1,
   "tasks": [
     {
-      "id": "d1.m1",
-      "node": "D1",
+      "id": "i2.m1",
+      "node": "I2",
       "level": "medium",
       "variant": "day_x",
       "content_version": 1,
@@ -13,301 +13,351 @@
         "reasons": 1.0
       },
       "question": {
-        "brief": {
-          "en": "Company X, a large software firm, reports quarterly results today after the close. The share price has risen strongly over the past three months. Profit beat analyst estimates, but the company said growth will slow next quarter and spending on data centres will rise sharply. Over the next week, did the share price go up or down?\n"
-        },
+        "brief": "Kasia, 28, has 20,000 PLN saved for the deposit on a flat. She plans to pay it in about four years, and she has a separate emergency fund, so she does not expect to need this money earlier. The chart shows how fast prices are rising compared with a year earlier, and the central bank's rate, up to the latest figures. Prices are rising faster than they have in many years. The central bank has raised its rate five times since October, most recently last week. Since the start of this month the government has cut taxes on food, fuel and energy until the summer. Kasia is choosing between three safe options. Assume that in the first year they all pay about the same rate. Which would you choose for her, and why?",
         "stimulus": [
           {
             "kind": "chart",
             "type": "line",
-            "x_unit": "trading_day",
+            "x_unit": "month",
             "series": [
               {
-                "label": "Company X",
-                "unit": "index (cutoff = 100)",
+                "label": "Prices, % change on a year earlier",
+                "unit": "%",
                 "points": [
                   {
-                    "t": -65,
-                    "v": 104.8596
-                  },
-                  {
-                    "t": -64,
-                    "v": 105.9179
-                  },
-                  {
-                    "t": -63,
-                    "v": 107.6251
-                  },
-                  {
-                    "t": -62,
-                    "v": 107.9515
-                  },
-                  {
-                    "t": -61,
-                    "v": 107.0251
-                  },
-                  {
-                    "t": -60,
-                    "v": 107.136
-                  },
-                  {
-                    "t": -59,
-                    "v": 106.6562
-                  },
-                  {
-                    "t": -58,
-                    "v": 105.2431
-                  },
-                  {
-                    "t": -57,
-                    "v": 103.1272
-                  },
-                  {
-                    "t": -56,
-                    "v": 101.3084
-                  },
-                  {
-                    "t": -55,
-                    "v": 101.3017
-                  },
-                  {
-                    "t": -54,
-                    "v": 101.4851
-                  },
-                  {
-                    "t": -53,
-                    "v": 100.9088
-                  },
-                  {
-                    "t": -52,
-                    "v": 102.6541
-                  },
-                  {
-                    "t": -51,
-                    "v": 102.8748
-                  },
-                  {
-                    "t": -50,
-                    "v": 103.5968
-                  },
-                  {
-                    "t": -49,
-                    "v": 105.1229
-                  },
-                  {
-                    "t": -48,
-                    "v": 104.0934
-                  },
-                  {
-                    "t": -47,
-                    "v": 101.6617
-                  },
-                  {
-                    "t": -46,
-                    "v": 102.5837
-                  },
-                  {
-                    "t": -45,
-                    "v": 101.7397
-                  },
-                  {
-                    "t": -44,
-                    "v": 103.3529
-                  },
-                  {
-                    "t": -43,
-                    "v": 103.7725
-                  },
-                  {
-                    "t": -42,
-                    "v": 105.0337
-                  },
-                  {
-                    "t": -41,
-                    "v": 106.0006
-                  },
-                  {
-                    "t": -40,
-                    "v": 103.3869
-                  },
-                  {
-                    "t": -39,
-                    "v": 104.2831
-                  },
-                  {
-                    "t": -38,
-                    "v": 103.4441
-                  },
-                  {
-                    "t": -37,
-                    "v": 102.5098
-                  },
-                  {
                     "t": -36,
-                    "v": 101.9759
+                    "v": 0.7
                   },
                   {
                     "t": -35,
-                    "v": 102.9203
+                    "v": 1.2
                   },
                   {
                     "t": -34,
-                    "v": 104.0184
+                    "v": 1.7
                   },
                   {
                     "t": -33,
-                    "v": 105.2884
+                    "v": 2.2
                   },
                   {
                     "t": -32,
-                    "v": 103.2121
+                    "v": 2.4
                   },
                   {
                     "t": -31,
-                    "v": 102.4833
+                    "v": 2.6
                   },
                   {
                     "t": -30,
-                    "v": 99.6032
+                    "v": 2.9
                   },
                   {
                     "t": -29,
-                    "v": 99.4814
+                    "v": 2.9
                   },
                   {
                     "t": -28,
-                    "v": 100.2004
+                    "v": 2.6
                   },
                   {
                     "t": -27,
-                    "v": 99.2859
+                    "v": 2.5
                   },
                   {
                     "t": -26,
-                    "v": 99.578
+                    "v": 2.6
                   },
                   {
                     "t": -25,
-                    "v": 99.8549
+                    "v": 3.4
                   },
                   {
                     "t": -24,
-                    "v": 101.0696
+                    "v": 4.3
                   },
                   {
                     "t": -23,
-                    "v": 100.0782
+                    "v": 4.7
                   },
                   {
                     "t": -22,
-                    "v": 99.0876
+                    "v": 4.6
                   },
                   {
                     "t": -21,
-                    "v": 98.1842
+                    "v": 3.4
                   },
                   {
                     "t": -20,
-                    "v": 100.2709
+                    "v": 2.9
                   },
                   {
                     "t": -19,
-                    "v": 101.5918
+                    "v": 3.3
                   },
                   {
                     "t": -18,
-                    "v": 101.4413
+                    "v": 3.0
                   },
                   {
                     "t": -17,
-                    "v": 101.7163
+                    "v": 2.9
                   },
                   {
                     "t": -16,
-                    "v": 101.856
+                    "v": 3.2
                   },
                   {
                     "t": -15,
-                    "v": 102.1044
+                    "v": 3.1
                   },
                   {
                     "t": -14,
-                    "v": 101.8491
+                    "v": 3.0
                   },
                   {
                     "t": -13,
-                    "v": 101.4415
+                    "v": 2.4
                   },
                   {
                     "t": -12,
-                    "v": 99.9233
+                    "v": 2.6
                   },
                   {
                     "t": -11,
-                    "v": 99.1567
+                    "v": 2.4
                   },
                   {
                     "t": -10,
-                    "v": 101.14
+                    "v": 3.2
                   },
                   {
                     "t": -9,
-                    "v": 101.7934
+                    "v": 4.3
                   },
                   {
                     "t": -8,
-                    "v": 101.8725
+                    "v": 4.7
                   },
                   {
                     "t": -7,
-                    "v": 101.6102
+                    "v": 4.4
                   },
                   {
                     "t": -6,
-                    "v": 101.6866
+                    "v": 5.0
                   },
                   {
                     "t": -5,
-                    "v": 102.1187
+                    "v": 5.5
                   },
                   {
                     "t": -4,
-                    "v": 101.3302
+                    "v": 5.9
                   },
                   {
                     "t": -3,
-                    "v": 101.5693
+                    "v": 6.8
                   },
                   {
                     "t": -2,
-                    "v": 101.8622
+                    "v": 7.8
                   },
                   {
                     "t": -1,
-                    "v": 100.9513
+                    "v": 8.6
                   },
                   {
                     "t": 0,
-                    "v": 100.0
+                    "v": 9.4
+                  }
+                ]
+              },
+              {
+                "label": "Central bank rate, %",
+                "unit": "%",
+                "points": [
+                  {
+                    "t": -36,
+                    "v": 1.5
+                  },
+                  {
+                    "t": -35,
+                    "v": 1.5
+                  },
+                  {
+                    "t": -34,
+                    "v": 1.5
+                  },
+                  {
+                    "t": -33,
+                    "v": 1.5
+                  },
+                  {
+                    "t": -32,
+                    "v": 1.5
+                  },
+                  {
+                    "t": -31,
+                    "v": 1.5
+                  },
+                  {
+                    "t": -30,
+                    "v": 1.5
+                  },
+                  {
+                    "t": -29,
+                    "v": 1.5
+                  },
+                  {
+                    "t": -28,
+                    "v": 1.5
+                  },
+                  {
+                    "t": -27,
+                    "v": 1.5
+                  },
+                  {
+                    "t": -26,
+                    "v": 1.5
+                  },
+                  {
+                    "t": -25,
+                    "v": 1.5
+                  },
+                  {
+                    "t": -24,
+                    "v": 1.5
+                  },
+                  {
+                    "t": -23,
+                    "v": 1.5
+                  },
+                  {
+                    "t": -22,
+                    "v": 1.0
+                  },
+                  {
+                    "t": -21,
+                    "v": 0.5
+                  },
+                  {
+                    "t": -20,
+                    "v": 0.1
+                  },
+                  {
+                    "t": -19,
+                    "v": 0.1
+                  },
+                  {
+                    "t": -18,
+                    "v": 0.1
+                  },
+                  {
+                    "t": -17,
+                    "v": 0.1
+                  },
+                  {
+                    "t": -16,
+                    "v": 0.1
+                  },
+                  {
+                    "t": -15,
+                    "v": 0.1
+                  },
+                  {
+                    "t": -14,
+                    "v": 0.1
+                  },
+                  {
+                    "t": -13,
+                    "v": 0.1
+                  },
+                  {
+                    "t": -12,
+                    "v": 0.1
+                  },
+                  {
+                    "t": -11,
+                    "v": 0.1
+                  },
+                  {
+                    "t": -10,
+                    "v": 0.1
+                  },
+                  {
+                    "t": -9,
+                    "v": 0.1
+                  },
+                  {
+                    "t": -8,
+                    "v": 0.1
+                  },
+                  {
+                    "t": -7,
+                    "v": 0.1
+                  },
+                  {
+                    "t": -6,
+                    "v": 0.1
+                  },
+                  {
+                    "t": -5,
+                    "v": 0.1
+                  },
+                  {
+                    "t": -4,
+                    "v": 0.1
+                  },
+                  {
+                    "t": -3,
+                    "v": 0.5
+                  },
+                  {
+                    "t": -2,
+                    "v": 1.25
+                  },
+                  {
+                    "t": -1,
+                    "v": 1.75
+                  },
+                  {
+                    "t": 0,
+                    "v": 2.25
                   }
                 ]
               }
             ],
-            "synthetic": true,
-            "attribution": []
+            "synthetic": false,
+            "attribution": [
+              {
+                "source": "GUS",
+                "licence": "stat.gov.pl copyright: reuse with the source given"
+              },
+              {
+                "source": "NBP",
+                "licence": "NBP regulations; credit 'Source: NBP, www.nbp.pl'"
+              }
+            ]
           }
         ],
         "response": {
-          "kind": "direction",
+          "kind": "choice",
           "options": [
-            "up",
-            "down"
-          ],
-          "horizon": {
-            "label": "1w",
-            "steps": 5,
-            "unit": "trading_day"
-          }
+            {
+              "id": "deposit",
+              "text": "A 12-month bank deposit, renewed each year at the rate banks then offer"
+            },
+            {
+              "id": "fixed",
+              "text": "A 3-year savings bond with one rate fixed for the whole term, then a 1-year deposit"
+            },
+            {
+              "id": "indexed",
+              "text": "A 4-year inflation-indexed savings bond: a fixed rate in year one, then inflation plus a small margin"
+            }
+          ]
         },
         "reasons": {
           "pick": {
@@ -316,28 +366,36 @@
           },
           "boxes": [
             {
-              "id": "guidance",
-              "text": "The outlook for next quarter was weaker than expected"
+              "id": "inflation_above",
+              "text": "Prices are rising faster than any of the rates on offer"
             },
             {
-              "id": "capex",
-              "text": "Much higher spending could squeeze future profits"
+              "id": "indexed_follows",
+              "text": "An indexed bond follows prices, so she doesn't have to guess where inflation goes"
             },
             {
-              "id": "priced_in",
-              "text": "After the run-up, good results were already expected"
+              "id": "rates_rising",
+              "text": "The central bank is raising its rate, so deposit rates may be higher when she renews"
             },
             {
-              "id": "beat",
-              "text": "Profit came in above estimates"
+              "id": "early_fee",
+              "text": "If her plans change, selling a bond back early costs a small fee"
             },
             {
-              "id": "chart_pattern",
-              "text": "The chart had risen too far, so it had to fall"
+              "id": "tax_cut",
+              "text": "The tax cuts will slow price rises for a few months"
             },
             {
-              "id": "hindsight",
-              "text": "Other software shares fell later that month"
+              "id": "fixed_certain",
+              "text": "A fixed rate is safest because she knows exactly how many PLN she will get"
+            },
+            {
+              "id": "app",
+              "text": "Her bank's mobile app is easy to use"
+            },
+            {
+              "id": "peak",
+              "text": "Inflation will pass 15% within a year"
             }
           ]
         },
@@ -347,329 +405,462 @@
         }
       },
       "reveal": {
-        "text": {
-          "en": "Good results can still mean a falling price. The market compares news with expectations and cares most about what comes next.\n"
-        },
-        "outcome": {
-          "direction": "down",
-          "change": -8.0,
-          "unit": "%",
-          "flat_band": null,
-          "steps": 5
-        },
+        "text": "Day X was 16 February 2022, in Poland. Inflation kept rising for about another year, much further than most forecasts said, and then fell back. The central bank raised its rate several more times. The indexed bond kept up with prices best; the deposit followed the rate up, but stayed below inflation for a long time; the fixed rate lost the most buying power. Other futures were possible on day X: if inflation had fallen quickly, the fixed rate would have done well. That is why we grade your reasons, not the outcome.",
+        "outcome": null,
         "truth": null,
         "stimulus": [
           {
             "kind": "chart",
             "series": [
               {
-                "label": "Company X",
-                "name": "Synthetic listed company (fictional)",
-                "unit": "index (cutoff = 100)",
+                "label": "Prices, % change on a year earlier",
+                "name": "CPI Poland, % change on the same month a year earlier (GUS)",
+                "unit": "%",
                 "points": [
                   {
                     "t": 0,
-                    "v": 100.0
+                    "v": 9.4
                   },
                   {
                     "t": 1,
-                    "v": 98.0644
+                    "v": 8.5
                   },
                   {
                     "t": 2,
-                    "v": 96.0921
+                    "v": 11.0
                   },
                   {
                     "t": 3,
-                    "v": 96.3924
+                    "v": 12.4
                   },
                   {
                     "t": 4,
-                    "v": 92.9952
+                    "v": 13.9
                   },
                   {
                     "t": 5,
-                    "v": 92.0
+                    "v": 15.5
                   },
                   {
                     "t": 6,
-                    "v": 91.3278
+                    "v": 15.6
                   },
                   {
                     "t": 7,
-                    "v": 90.651
+                    "v": 16.1
                   },
                   {
                     "t": 8,
-                    "v": 90.7573
+                    "v": 17.2
                   },
                   {
                     "t": 9,
-                    "v": 91.994
+                    "v": 17.9
                   },
                   {
                     "t": 10,
-                    "v": 92.0784
+                    "v": 17.5
                   },
                   {
                     "t": 11,
-                    "v": 91.9236
+                    "v": 16.6
                   },
                   {
                     "t": 12,
-                    "v": 91.2505
+                    "v": 16.6
                   },
                   {
                     "t": 13,
-                    "v": 91.1094
+                    "v": 18.4
                   },
                   {
                     "t": 14,
-                    "v": 92.1121
+                    "v": 16.1
                   },
                   {
                     "t": 15,
-                    "v": 91.6776
+                    "v": 14.7
                   },
                   {
                     "t": 16,
-                    "v": 90.4249
+                    "v": 13.0
                   },
                   {
                     "t": 17,
-                    "v": 89.0636
+                    "v": 11.5
                   },
                   {
                     "t": 18,
-                    "v": 87.8886
+                    "v": 10.8
                   },
                   {
                     "t": 19,
-                    "v": 86.4348
+                    "v": 10.1
                   },
                   {
                     "t": 20,
-                    "v": 87.5823
+                    "v": 8.2
                   },
                   {
                     "t": 21,
-                    "v": 87.9564
+                    "v": 6.6
                   },
                   {
                     "t": 22,
-                    "v": 87.7062
+                    "v": 6.6
                   },
                   {
                     "t": 23,
-                    "v": 89.2559
+                    "v": 6.2
                   },
                   {
                     "t": 24,
-                    "v": 88.554
+                    "v": 3.7
                   },
                   {
                     "t": 25,
-                    "v": 89.3578
+                    "v": 2.8
                   },
                   {
                     "t": 26,
-                    "v": 90.2209
+                    "v": 2.0
                   },
                   {
                     "t": 27,
-                    "v": 88.5622
+                    "v": 2.4
                   },
                   {
                     "t": 28,
-                    "v": 86.9229
+                    "v": 2.5
                   },
                   {
                     "t": 29,
-                    "v": 85.9608
+                    "v": 2.6
                   },
                   {
                     "t": 30,
-                    "v": 86.9012
+                    "v": 4.2
                   },
                   {
                     "t": 31,
-                    "v": 88.2634
+                    "v": 4.3
                   },
                   {
                     "t": 32,
-                    "v": 86.9727
+                    "v": 4.9
                   },
                   {
                     "t": 33,
-                    "v": 88.074
+                    "v": 5.0
                   },
                   {
                     "t": 34,
-                    "v": 87.6701
+                    "v": 4.7
                   },
                   {
                     "t": 35,
-                    "v": 87.2571
+                    "v": 4.7
                   },
                   {
                     "t": 36,
-                    "v": 86.682
+                    "v": 4.9
                   },
                   {
                     "t": 37,
-                    "v": 86.3456
+                    "v": 4.9
                   },
                   {
                     "t": 38,
-                    "v": 84.4819
+                    "v": 4.9
                   },
                   {
                     "t": 39,
-                    "v": 83.473
+                    "v": 4.3
                   },
                   {
                     "t": 40,
-                    "v": 82.2444
+                    "v": 4.0
                   },
                   {
                     "t": 41,
-                    "v": 82.7299
+                    "v": 4.1
                   },
                   {
                     "t": 42,
-                    "v": 84.8301
+                    "v": 3.1
                   },
                   {
                     "t": 43,
-                    "v": 87.657
+                    "v": 2.9
                   },
                   {
                     "t": 44,
-                    "v": 87.3038
+                    "v": 2.9
                   },
                   {
                     "t": 45,
-                    "v": 85.5189
+                    "v": 2.8
                   },
                   {
                     "t": 46,
-                    "v": 85.1022
+                    "v": 2.5
                   },
                   {
                     "t": 47,
-                    "v": 84.1483
+                    "v": 2.4
+                  }
+                ]
+              },
+              {
+                "label": "Central bank rate, %",
+                "name": "NBP reference rate",
+                "unit": "%",
+                "points": [
+                  {
+                    "t": 0,
+                    "v": 2.25
                   },
                   {
-                    "t": 48,
-                    "v": 86.175
+                    "t": 1,
+                    "v": 2.75
                   },
                   {
-                    "t": 49,
-                    "v": 86.7675
+                    "t": 2,
+                    "v": 3.5
                   },
                   {
-                    "t": 50,
-                    "v": 86.0121
+                    "t": 3,
+                    "v": 4.5
                   },
                   {
-                    "t": 51,
-                    "v": 86.9834
+                    "t": 4,
+                    "v": 5.25
                   },
                   {
-                    "t": 52,
-                    "v": 87.5446
+                    "t": 5,
+                    "v": 6.0
                   },
                   {
-                    "t": 53,
-                    "v": 85.8537
+                    "t": 6,
+                    "v": 6.5
                   },
                   {
-                    "t": 54,
-                    "v": 85.3079
+                    "t": 7,
+                    "v": 6.5
                   },
                   {
-                    "t": 55,
-                    "v": 85.0632
+                    "t": 8,
+                    "v": 6.75
                   },
                   {
-                    "t": 56,
-                    "v": 85.0825
+                    "t": 9,
+                    "v": 6.75
                   },
                   {
-                    "t": 57,
-                    "v": 85.2175
+                    "t": 10,
+                    "v": 6.75
                   },
                   {
-                    "t": 58,
-                    "v": 84.8715
+                    "t": 11,
+                    "v": 6.75
                   },
                   {
-                    "t": 59,
-                    "v": 85.0651
+                    "t": 12,
+                    "v": 6.75
                   },
                   {
-                    "t": 60,
-                    "v": 84.4689
+                    "t": 13,
+                    "v": 6.75
                   },
                   {
-                    "t": 61,
-                    "v": 83.565
+                    "t": 14,
+                    "v": 6.75
                   },
                   {
-                    "t": 62,
-                    "v": 85.099
+                    "t": 15,
+                    "v": 6.75
                   },
                   {
-                    "t": 63,
-                    "v": 85.4677
+                    "t": 16,
+                    "v": 6.75
                   },
                   {
-                    "t": 64,
-                    "v": 85.9184
+                    "t": 17,
+                    "v": 6.75
                   },
                   {
-                    "t": 65,
-                    "v": 84.2896
+                    "t": 18,
+                    "v": 6.75
+                  },
+                  {
+                    "t": 19,
+                    "v": 6.75
+                  },
+                  {
+                    "t": 20,
+                    "v": 6.0
+                  },
+                  {
+                    "t": 21,
+                    "v": 5.75
+                  },
+                  {
+                    "t": 22,
+                    "v": 5.75
+                  },
+                  {
+                    "t": 23,
+                    "v": 5.75
+                  },
+                  {
+                    "t": 24,
+                    "v": 5.75
+                  },
+                  {
+                    "t": 25,
+                    "v": 5.75
+                  },
+                  {
+                    "t": 26,
+                    "v": 5.75
+                  },
+                  {
+                    "t": 27,
+                    "v": 5.75
+                  },
+                  {
+                    "t": 28,
+                    "v": 5.75
+                  },
+                  {
+                    "t": 29,
+                    "v": 5.75
+                  },
+                  {
+                    "t": 30,
+                    "v": 5.75
+                  },
+                  {
+                    "t": 31,
+                    "v": 5.75
+                  },
+                  {
+                    "t": 32,
+                    "v": 5.75
+                  },
+                  {
+                    "t": 33,
+                    "v": 5.75
+                  },
+                  {
+                    "t": 34,
+                    "v": 5.75
+                  },
+                  {
+                    "t": 35,
+                    "v": 5.75
+                  },
+                  {
+                    "t": 36,
+                    "v": 5.75
+                  },
+                  {
+                    "t": 37,
+                    "v": 5.75
+                  },
+                  {
+                    "t": 38,
+                    "v": 5.75
+                  },
+                  {
+                    "t": 39,
+                    "v": 5.75
+                  },
+                  {
+                    "t": 40,
+                    "v": 5.25
+                  },
+                  {
+                    "t": 41,
+                    "v": 5.25
+                  },
+                  {
+                    "t": 42,
+                    "v": 5.0
+                  },
+                  {
+                    "t": 43,
+                    "v": 5.0
+                  },
+                  {
+                    "t": 44,
+                    "v": 4.75
+                  },
+                  {
+                    "t": 45,
+                    "v": 4.5
+                  },
+                  {
+                    "t": 46,
+                    "v": 4.25
+                  },
+                  {
+                    "t": 47,
+                    "v": 4.0
                   }
                 ]
               }
             ],
-            "cutoff": "2024-04-25"
+            "cutoff": "2022-01-31"
           }
         ],
         "reasons": [
           {
-            "id": "guidance",
+            "id": "inflation_above",
             "weight": 1.0,
-            "explain": "Prices look ahead. A weaker outlook can outweigh a good past quarter."
+            "explain": "On day X inflation was well above deposit and bond rates, so money at a fixed rate was already losing buying power."
           },
           {
-            "id": "capex",
+            "id": "indexed_follows",
+            "weight": 0.8,
+            "explain": "With four years to go and inflation high and uncertain, a payment linked to prices protects what the money buys, whatever happens."
+          },
+          {
+            "id": "rates_rising",
             "weight": 0.6,
-            "explain": "Heavy spending lowers profit margins for a while, and investors price that in."
+            "explain": "Renewing each year lets a deposit follow rising rates, but with a delay, and not necessarily as fast as prices."
           },
           {
-            "id": "priced_in",
-            "weight": 0.5,
-            "explain": "Beating estimates was partly priced in, so it added little."
+            "id": "early_fee",
+            "weight": 0.3,
+            "explain": "Worth checking. She has a separate emergency fund, so it matters less for her."
           },
           {
-            "id": "beat",
+            "id": "tax_cut",
+            "weight": 0.2,
+            "explain": "True, but they are temporary. A four-year choice should not rest on a few months."
+          },
+          {
+            "id": "fixed_certain",
+            "weight": -0.3,
+            "explain": "She knows the number of PLN, not what they will buy. With inflation above the rate, a fixed rate locks in a loss of buying power."
+          },
+          {
+            "id": "app",
             "weight": 0.0,
-            "explain": "True, but known beats tend to be priced in. On its own it doesn't explain the move."
+            "explain": "Convenient, but it says nothing about what her money will buy."
           },
           {
-            "id": "chart_pattern",
-            "weight": -0.5,
-            "explain": "Past moves don't force a reversal. The news on the day drove the price."
-          },
-          {
-            "id": "hindsight",
+            "id": "peak",
             "weight": -1.0,
-            "explain": "That wasn't known on day X. Using it is hindsight."
+            "explain": "Nobody knew that on day X. Using it is hindsight."
           }
         ],
-        "sources": [],
+        "sources": [
+          "gus_cpi",
+          "nbp_ref_rate",
+          "mf_bonds_offer"
+        ],
         "show": [
           "outcome",
           "per_box_explain",
@@ -678,17 +869,26 @@
         ]
       },
       "meta": {
-        "content_file": "D1.yaml",
-        "author": "Yurii",
+        "content_file": "I2.yaml",
+        "author": "draft by Claude (AI), 2026-11-21",
         "reviewer": null,
-        "cutoff_used": "2024-04-25",
-        "synthetic": true,
-        "attribution": []
+        "cutoff_used": "2022-01-01",
+        "synthetic": false,
+        "attribution": [
+          {
+            "source": "GUS",
+            "licence": "stat.gov.pl copyright: reuse with the source given"
+          },
+          {
+            "source": "NBP",
+            "licence": "NBP regulations; credit 'Source: NBP, www.nbp.pl'"
+          }
+        ]
       }
     },
     {
-      "id": "d3.m1",
-      "node": "D3",
+      "id": "p4.m1",
+      "node": "P4",
       "level": "medium",
       "variant": "day_x",
       "content_version": 1,
@@ -698,302 +898,157 @@
         "reasons": 1.0
       },
       "question": {
-        "brief": {
-          "en": "Today the statistics office published the monthly CPI flash estimate. Inflation came in above economists' forecasts for the second month in a row, and core inflation was also higher than expected. The Monetary Policy Council (RPP) had kept rates unchanged for months. Over the next week, did the 10-year government bond yield go up, down or stay flat?\n"
-        },
+        "brief": "Marek, 35, saves for his retirement, more than 20 years away. He had 100,000 PLN invested: 60% in a broad Polish share fund and 40% in a bond fund. In calm times he decided that 60/40 is his target mix. Over the past few weeks share prices fell fast as a new virus spread and governments closed schools, shops and borders. The central bank cut its rate, and the government announced aid for firms and workers. His share fund is now well below 60% of his money. What should he do, and why?",
         "stimulus": [
           {
             "kind": "chart",
             "type": "line",
-            "x_unit": "trading_day",
+            "x_unit": "month",
             "series": [
               {
-                "label": "10-year yield",
-                "unit": "%",
+                "label": "Polish share prices",
+                "unit": "index (cutoff = 100)",
                 "points": [
                   {
-                    "t": -65,
-                    "v": 5.5186
-                  },
-                  {
-                    "t": -64,
-                    "v": 5.5146
-                  },
-                  {
-                    "t": -63,
-                    "v": 5.4752
-                  },
-                  {
-                    "t": -62,
-                    "v": 5.5615
-                  },
-                  {
-                    "t": -61,
-                    "v": 5.5708
-                  },
-                  {
-                    "t": -60,
-                    "v": 5.5783
-                  },
-                  {
-                    "t": -59,
-                    "v": 5.6276
-                  },
-                  {
-                    "t": -58,
-                    "v": 5.6521
-                  },
-                  {
-                    "t": -57,
-                    "v": 5.6541
-                  },
-                  {
-                    "t": -56,
-                    "v": 5.6214
-                  },
-                  {
-                    "t": -55,
-                    "v": 5.6171
-                  },
-                  {
-                    "t": -54,
-                    "v": 5.613
-                  },
-                  {
-                    "t": -53,
-                    "v": 5.593
-                  },
-                  {
-                    "t": -52,
-                    "v": 5.5674
-                  },
-                  {
-                    "t": -51,
-                    "v": 5.5378
-                  },
-                  {
-                    "t": -50,
-                    "v": 5.5346
-                  },
-                  {
-                    "t": -49,
-                    "v": 5.5171
-                  },
-                  {
-                    "t": -48,
-                    "v": 5.5295
-                  },
-                  {
-                    "t": -47,
-                    "v": 5.56
-                  },
-                  {
-                    "t": -46,
-                    "v": 5.5697
-                  },
-                  {
-                    "t": -45,
-                    "v": 5.5706
-                  },
-                  {
-                    "t": -44,
-                    "v": 5.6174
-                  },
-                  {
-                    "t": -43,
-                    "v": 5.6371
-                  },
-                  {
-                    "t": -42,
-                    "v": 5.5933
-                  },
-                  {
-                    "t": -41,
-                    "v": 5.5721
-                  },
-                  {
-                    "t": -40,
-                    "v": 5.5781
-                  },
-                  {
-                    "t": -39,
-                    "v": 5.552
-                  },
-                  {
-                    "t": -38,
-                    "v": 5.5749
-                  },
-                  {
-                    "t": -37,
-                    "v": 5.5228
-                  },
-                  {
-                    "t": -36,
-                    "v": 5.466
-                  },
-                  {
-                    "t": -35,
-                    "v": 5.4954
-                  },
-                  {
-                    "t": -34,
-                    "v": 5.513
-                  },
-                  {
-                    "t": -33,
-                    "v": 5.4654
-                  },
-                  {
-                    "t": -32,
-                    "v": 5.4678
-                  },
-                  {
-                    "t": -31,
-                    "v": 5.5081
-                  },
-                  {
-                    "t": -30,
-                    "v": 5.475
-                  },
-                  {
-                    "t": -29,
-                    "v": 5.4396
-                  },
-                  {
-                    "t": -28,
-                    "v": 5.4034
-                  },
-                  {
-                    "t": -27,
-                    "v": 5.3742
-                  },
-                  {
                     "t": -26,
-                    "v": 5.3225
+                    "v": 153.1957
                   },
                   {
                     "t": -25,
-                    "v": 5.3082
+                    "v": 146.6344
                   },
                   {
                     "t": -24,
-                    "v": 5.265
+                    "v": 140.2922
                   },
                   {
                     "t": -23,
-                    "v": 5.267
+                    "v": 138.8411
                   },
                   {
                     "t": -22,
-                    "v": 5.3339
+                    "v": 137.3423
                   },
                   {
                     "t": -21,
-                    "v": 5.3026
+                    "v": 133.6427
                   },
                   {
                     "t": -20,
-                    "v": 5.3298
+                    "v": 133.525
                   },
                   {
                     "t": -19,
-                    "v": 5.3648
+                    "v": 138.8948
                   },
                   {
                     "t": -18,
-                    "v": 5.296
+                    "v": 135.6543
                   },
                   {
                     "t": -17,
-                    "v": 5.2994
+                    "v": 131.7128
                   },
                   {
                     "t": -16,
-                    "v": 5.2991
+                    "v": 131.9685
                   },
                   {
                     "t": -15,
-                    "v": 5.2892
+                    "v": 135.2162
                   },
                   {
                     "t": -14,
-                    "v": 5.3131
+                    "v": 138.2683
                   },
                   {
                     "t": -13,
-                    "v": 5.3001
+                    "v": 140.0819
                   },
                   {
                     "t": -12,
-                    "v": 5.3107
+                    "v": 139.5752
                   },
                   {
                     "t": -11,
-                    "v": 5.2992
+                    "v": 141.7687
                   },
                   {
                     "t": -10,
-                    "v": 5.2952
+                    "v": 133.346
                   },
                   {
                     "t": -9,
-                    "v": 5.2718
+                    "v": 137.5532
                   },
                   {
                     "t": -8,
-                    "v": 5.3399
+                    "v": 140.3271
                   },
                   {
                     "t": -7,
-                    "v": 5.3383
+                    "v": 131.0362
                   },
                   {
                     "t": -6,
-                    "v": 5.3049
+                    "v": 133.5003
                   },
                   {
                     "t": -5,
-                    "v": 5.3632
+                    "v": 132.5459
                   },
                   {
                     "t": -4,
-                    "v": 5.4103
+                    "v": 136.0511
                   },
                   {
                     "t": -3,
-                    "v": 5.4045
+                    "v": 132.2356
                   },
                   {
                     "t": -2,
-                    "v": 5.385
+                    "v": 135.4997
                   },
                   {
                     "t": -1,
-                    "v": 5.3631
+                    "v": 131.2832
                   },
                   {
                     "t": 0,
-                    "v": 5.4
+                    "v": 100.0
                   }
                 ]
               }
             ],
-            "synthetic": true,
-            "attribution": []
+            "synthetic": false,
+            "attribution": [
+              {
+                "source": "OECD (Main Economic Indicators, dataset DSD_STES@DF_FINMARK)",
+                "licence": "CC BY 4.0 (OECD terms). Download from OECD, not FRED"
+              }
+            ]
           }
         ],
         "response": {
-          "kind": "direction",
+          "kind": "choice",
           "options": [
-            "up",
-            "down",
-            "flat"
-          ],
-          "horizon": {
-            "label": "1w",
-            "steps": 5,
-            "unit": "trading_day"
-          }
+            {
+              "id": "sell",
+              "text": "Sell the share fund and keep the money in cash until things calm down"
+            },
+            {
+              "id": "hold",
+              "text": "Do nothing and keep the mix as it is now"
+            },
+            {
+              "id": "rebalance",
+              "text": "Rebalance: move money from the bond fund into shares, back to 60/40"
+            },
+            {
+              "id": "all_in",
+              "text": "Move everything into shares while they are cheap"
+            }
+          ]
         },
         "reasons": {
           "pick": {
@@ -1002,28 +1057,36 @@
           },
           "boxes": [
             {
-              "id": "fewer_cuts",
-              "text": "Higher inflation makes rate cuts less likely soon"
+              "id": "horizon",
+              "text": "He won't need this money for more than 20 years"
             },
             {
-              "id": "core",
-              "text": "Core inflation, which the central bank watches, was also high"
+              "id": "rule",
+              "text": "He chose his 60/40 target in calm times for exactly this kind of moment"
             },
             {
-              "id": "price_yield",
-              "text": "Bond prices and yields move in opposite directions"
+              "id": "timing",
+              "text": "Nobody knows when the fall will stop, so selling means guessing when to buy back too"
             },
             {
-              "id": "deposit",
-              "text": "Banks will advertise new deposits"
+              "id": "lock_loss",
+              "text": "Selling now turns a fall on paper into a real loss"
             },
             {
-              "id": "safe_haven",
-              "text": "Investors rushed to buy safe government bonds"
+              "id": "support",
+              "text": "The central bank and the government are acting to support the economy"
             },
             {
-              "id": "rpp_hike",
-              "text": "The RPP raised rates the following month"
+              "id": "coupon",
+              "text": "His bond fund pays interest"
+            },
+            {
+              "id": "news_fear",
+              "text": "The news is frightening, so prices will keep falling"
+            },
+            {
+              "id": "recovery",
+              "text": "Share prices will be back near their old level within a year"
             }
           ]
         },
@@ -1033,329 +1096,157 @@
         }
       },
       "reveal": {
-        "text": {
-          "en": "Bond yields move with expectations for interest rates. An inflation surprise changes those expectations quickly, so yields can move on the day of the release.\n"
-        },
-        "outcome": {
-          "direction": "up",
-          "change": 0.22,
-          "unit": "pp",
-          "flat_band": 0.05,
-          "steps": 5
-        },
+        "text": "Day X was the end of March 2020, the first weeks of the COVID-19 pandemic. Polish share prices recovered over the following months. Selling at that point would have made the fall final; holding kept the plan; rebalancing bought shares after they had fallen. It could have gone the other way: in 2008 prices kept falling for months. A rule made in calm times works in both cases; a forecast made in fear does not. The chart is a price index without dividends.",
+        "outcome": null,
         "truth": null,
         "stimulus": [
           {
             "kind": "chart",
             "series": [
               {
-                "label": "10-year yield",
-                "name": "Synthetic 10-year government bond yield (fictional)",
-                "unit": "%",
+                "label": "Polish share prices",
+                "name": "OECD share price index, Poland",
+                "unit": "index (cutoff = 100)",
                 "points": [
                   {
                     "t": 0,
-                    "v": 5.4
+                    "v": 100.0
                   },
                   {
                     "t": 1,
-                    "v": 5.4373
+                    "v": 103.087
                   },
                   {
                     "t": 2,
-                    "v": 5.4632
+                    "v": 106.689
                   },
                   {
                     "t": 3,
-                    "v": 5.5354
+                    "v": 117.085
                   },
                   {
                     "t": 4,
-                    "v": 5.5745
+                    "v": 119.169
                   },
                   {
                     "t": 5,
-                    "v": 5.62
+                    "v": 121.3167
                   },
                   {
                     "t": 6,
-                    "v": 5.6779
+                    "v": 115.9262
                   },
                   {
                     "t": 7,
-                    "v": 5.7038
+                    "v": 111.7715
                   },
                   {
                     "t": 8,
-                    "v": 5.7411
+                    "v": 118.5174
                   },
                   {
                     "t": 9,
-                    "v": 5.7536
+                    "v": 129.4593
                   },
                   {
                     "t": 10,
-                    "v": 5.7921
+                    "v": 135.0955
                   },
                   {
                     "t": 11,
-                    "v": 5.7871
+                    "v": 134.1471
                   },
                   {
                     "t": 12,
-                    "v": 5.816
+                    "v": 135.2966
                   },
                   {
                     "t": 13,
-                    "v": 5.8473
+                    "v": 138.6747
                   },
                   {
                     "t": 14,
-                    "v": 5.8351
+                    "v": 146.4006
                   },
                   {
                     "t": 15,
-                    "v": 5.7967
+                    "v": 154.8921
                   },
                   {
                     "t": 16,
-                    "v": 5.8128
+                    "v": 155.9745
                   },
                   {
                     "t": 17,
-                    "v": 5.8092
+                    "v": 160.1618
                   },
                   {
                     "t": 18,
-                    "v": 5.8275
+                    "v": 164.7338
                   },
                   {
                     "t": 19,
-                    "v": 5.8095
+                    "v": 170.7222
                   },
                   {
                     "t": 20,
-                    "v": 5.8254
+                    "v": 165.7935
                   },
                   {
                     "t": 21,
-                    "v": 5.8542
-                  },
-                  {
-                    "t": 22,
-                    "v": 5.9249
-                  },
-                  {
-                    "t": 23,
-                    "v": 5.9784
-                  },
-                  {
-                    "t": 24,
-                    "v": 5.9901
-                  },
-                  {
-                    "t": 25,
-                    "v": 6.033
-                  },
-                  {
-                    "t": 26,
-                    "v": 6.0144
-                  },
-                  {
-                    "t": 27,
-                    "v": 6.0495
-                  },
-                  {
-                    "t": 28,
-                    "v": 6.0537
-                  },
-                  {
-                    "t": 29,
-                    "v": 6.0935
-                  },
-                  {
-                    "t": 30,
-                    "v": 6.1036
-                  },
-                  {
-                    "t": 31,
-                    "v": 6.0967
-                  },
-                  {
-                    "t": 32,
-                    "v": 6.0756
-                  },
-                  {
-                    "t": 33,
-                    "v": 6.1131
-                  },
-                  {
-                    "t": 34,
-                    "v": 6.1149
-                  },
-                  {
-                    "t": 35,
-                    "v": 6.1363
-                  },
-                  {
-                    "t": 36,
-                    "v": 6.1507
-                  },
-                  {
-                    "t": 37,
-                    "v": 6.0898
-                  },
-                  {
-                    "t": 38,
-                    "v": 6.1078
-                  },
-                  {
-                    "t": 39,
-                    "v": 6.0968
-                  },
-                  {
-                    "t": 40,
-                    "v": 6.1086
-                  },
-                  {
-                    "t": 41,
-                    "v": 6.123
-                  },
-                  {
-                    "t": 42,
-                    "v": 6.0691
-                  },
-                  {
-                    "t": 43,
-                    "v": 6.0598
-                  },
-                  {
-                    "t": 44,
-                    "v": 6.058
-                  },
-                  {
-                    "t": 45,
-                    "v": 6.0697
-                  },
-                  {
-                    "t": 46,
-                    "v": 6.0978
-                  },
-                  {
-                    "t": 47,
-                    "v": 6.0775
-                  },
-                  {
-                    "t": 48,
-                    "v": 6.0707
-                  },
-                  {
-                    "t": 49,
-                    "v": 6.0893
-                  },
-                  {
-                    "t": 50,
-                    "v": 6.0347
-                  },
-                  {
-                    "t": 51,
-                    "v": 6.0901
-                  },
-                  {
-                    "t": 52,
-                    "v": 6.0619
-                  },
-                  {
-                    "t": 53,
-                    "v": 6.1013
-                  },
-                  {
-                    "t": 54,
-                    "v": 6.1057
-                  },
-                  {
-                    "t": 55,
-                    "v": 6.162
-                  },
-                  {
-                    "t": 56,
-                    "v": 6.1931
-                  },
-                  {
-                    "t": 57,
-                    "v": 6.1922
-                  },
-                  {
-                    "t": 58,
-                    "v": 6.1415
-                  },
-                  {
-                    "t": 59,
-                    "v": 6.1455
-                  },
-                  {
-                    "t": 60,
-                    "v": 6.1553
-                  },
-                  {
-                    "t": 61,
-                    "v": 6.1716
-                  },
-                  {
-                    "t": 62,
-                    "v": 6.134
-                  },
-                  {
-                    "t": 63,
-                    "v": 6.1094
-                  },
-                  {
-                    "t": 64,
-                    "v": 6.0861
-                  },
-                  {
-                    "t": 65,
-                    "v": 6.0946
+                    "v": 158.4093
                   }
                 ]
               }
             ],
-            "cutoff": "2024-03-15"
+            "cutoff": "2020-03-31"
           }
         ],
         "reasons": [
           {
-            "id": "fewer_cuts",
+            "id": "horizon",
             "weight": 1.0,
-            "explain": "Bond yields follow expected interest rates. Fewer expected cuts push them up."
+            "explain": "A long horizon leaves time to recover from a fall. Money needed next year would be a different case."
           },
           {
-            "id": "core",
-            "weight": 0.7,
-            "explain": "High core inflation means the price rises are spreading, so the RPP can't wait it out."
+            "id": "rule",
+            "weight": 0.8,
+            "explain": "A rule made in advance protects him from deciding in fear, and it tells him to buy shares after a fall."
           },
           {
-            "id": "price_yield",
-            "weight": 0.3,
-            "explain": "True and useful, but it describes how the move works rather than what caused it."
+            "id": "timing",
+            "weight": 0.6,
+            "explain": "To gain from selling he would have to be right twice: when to get out and when to get back in."
           },
           {
-            "id": "deposit",
+            "id": "lock_loss",
+            "weight": 0.4,
+            "explain": "Partly right: the loss becomes final only if he stays out. The bigger problem is having to time the way back in."
+          },
+          {
+            "id": "support",
+            "weight": 0.2,
+            "explain": "True on day X, but nobody could know how much it would help. It is no reason to change a long-term plan."
+          },
+          {
+            "id": "coupon",
             "weight": 0.0,
-            "explain": "Not relevant to the bond market on the day."
+            "explain": "True, but it doesn't help him decide what to do with the mix."
           },
           {
-            "id": "safe_haven",
+            "id": "news_fear",
             "weight": -0.5,
-            "explain": "That would push yields down, and there was no sign of panic."
+            "explain": "The bad news was already known and already in the prices. Fear is a feeling, not a forecast."
           },
           {
-            "id": "rpp_hike",
+            "id": "recovery",
             "weight": -1.0,
-            "explain": "That wasn't known on day X. Using it is hindsight."
+            "explain": "Nobody knew that on day X. Using it is hindsight."
           }
         ],
-        "sources": [],
+        "sources": [
+          "oecd_share_prices_pl"
+        ],
         "show": [
           "outcome",
           "per_box_explain",
@@ -1364,12 +1255,17 @@
         ]
       },
       "meta": {
-        "content_file": "D3.yaml",
-        "author": "Yurii",
+        "content_file": "P4.yaml",
+        "author": "draft by Claude (AI), 2026-11-21",
         "reviewer": null,
-        "cutoff_used": "2024-03-15",
-        "synthetic": true,
-        "attribution": []
+        "cutoff_used": "2020-03-01",
+        "synthetic": false,
+        "attribution": [
+          {
+            "source": "OECD (Main Economic Indicators, dataset DSD_STES@DF_FINMARK)",
+            "licence": "CC BY 4.0 (OECD terms). Download from OECD, not FRED"
+          }
+        ]
       }
     }
   ]

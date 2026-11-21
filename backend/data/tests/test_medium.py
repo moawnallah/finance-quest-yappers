@@ -7,14 +7,15 @@ import pytest
 import yaml
 
 from medium import AttemptError, question_view, reveal_view, score
-from medium.build import NODES, SERIES, build, write
+from medium.build import SERIES, build, write
 from medium.parts import Report, score_reasons
 from medium.series import SeriesStore, TRANSFORMS, step_dates
 from common import load_sources
 from medium.task import compile_task, validate
 
 DATA = Path(__file__).resolve().parent.parent
-D1 = yaml.safe_load((NODES / "D1.yaml").read_text(encoding="utf-8"))
+FIXTURES = Path(__file__).resolve().parent / "fixtures" / "nodes"  # engine samples D1, D3 (synthetic data)
+D1 = yaml.safe_load((FIXTURES / "D1.yaml").read_text(encoding="utf-8"))
 D1_TASK = {"node": "D1", "level": "medium", **D1["medium"][0]}
 TODAY = dt.date(2026, 11, 20)
 
@@ -32,13 +33,13 @@ def compiled(task, s=None):
 
 @pytest.fixture(scope="module")
 def records():
-    return {tid: rec for tid, rec, _, _ in build()}
+    return {tid: rec for tid, rec, _, _ in build(FIXTURES)}
 
 
 # ---------------------------------------------------------------- build and views
 
 def test_samples_build_and_match_schema(tmp_path):
-    results = build()
+    results = build(FIXTURES)
     assert results and all(rec for _, rec, _, _ in results), [r.errors for *_, r, _ in results]
     data = json.loads(write(results, tmp_path).read_text(encoding="utf-8"))
     jsonschema = pytest.importorskip("jsonschema")
@@ -46,7 +47,7 @@ def test_samples_build_and_match_schema(tmp_path):
 
 
 def test_build_is_deterministic():
-    assert [rec for _, rec, _, _ in build()] == [rec for _, rec, _, _ in build()]
+    assert [rec for _, rec, _, _ in build(FIXTURES)] == [rec for _, rec, _, _ in build(FIXTURES)]
 
 
 def test_question_view_hides_answer_and_identity(records):
@@ -212,3 +213,33 @@ def test_transforms():
 
 def test_reveal_show_defaults_to_everything(records):
     assert set(records["d1.m1"]["reveal"]["show"]) == {"truth", "outcome", "per_box_explain", "sources"}
+
+
+# ---------------------------------------------------------------- choice response
+
+CHOICE = {"kind": "choice", "options": [{"id": "sell", "text": "Sell"}, {"id": "hold", "text": "Hold"}]}
+
+
+def test_choice_day_x_records_the_choice_and_grades_reasons_only():
+    task = copy.deepcopy(D1_TASK)
+    task["response"] = copy.deepcopy(CHOICE)
+    rec, r = compiled(task)
+    assert rec, r.errors
+    assert rec["question"]["response"] == CHOICE and rec["reveal"]["outcome"] is None
+    s = score(rec, "sell", ["guidance", "capex", "priced_in"])
+    assert s["score"] == 1.0 and s["score_estimate"] is None and s["response"]["value"] == "sell"
+    with pytest.raises(AttemptError):
+        score(rec, "up", ["guidance", "capex"])
+
+
+@pytest.mark.parametrize("options, message", [
+    ([{"id": "a", "text": "A"}], "at least 2 options"),
+    ([{"id": "a", "text": "A"}, {"id": "a", "text": "B"}], "unique lowercase ids"),
+    ([{"id": "a", "text": "A"}, {"id": "b"}], "needs text"),
+    ([{"id": "a", "text": "A"}, {"id": "b", "text": "It turned out well"}], "hindsight word"),
+])
+def test_choice_validation(options, message):
+    task = copy.deepcopy(D1_TASK)
+    task["response"] = {"kind": "choice", "options": options}
+    _, r = compiled(task)
+    assert any(message in e for e in r.errors), r.errors

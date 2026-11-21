@@ -91,3 +91,75 @@ items:  # draft by Yurii (with Claude), 2026-11-20, based on the cards above
     why: "COI, EDO and the family bonds ROS and ROD follow inflation after the first year. TOS is fixed; ROR floats with the rate."
     sources: [mf_bonds_offer]
     valid_until: 2026-12-31
+
+medium:  # draft by Claude (AI), 2026-11-21. Day X: 16 February 2022 (named only in the reveal)
+  - id: i2.m1
+    variant: day_x
+    content_version: 1
+    author: "draft by Claude (AI), 2026-11-21"
+    reviewer: null
+    sources: [gus_cpi, nbp_ref_rate, mf_bonds_offer]
+    # Facts used on day X (all public by 16 Feb 2022; checked 2026-11-21, see MANUAL_RESEARCH.md):
+    #   CPI y/y up to January 2022: GUS publishes no January flash; the preliminary 9.2% came out on
+    #   15 Feb 2022 (final 9.4%, 15 Mar). The chart shows final values, so January reads 9.4.
+    #   NBP hikes (effective dates) 7 Oct, 4 Nov, 9 Dec 2021, 5 Jan, 9 Feb 2022 (0.10 -> 2.75%): five since
+    #   October. The chart ends at January (2.25%); the February hike is stated in the brief.
+    #   Anti-inflation shield 2.0: VAT cuts on food (0%), fuel (8%), gas, electricity and heat, 1 Feb - 31 Jul 2022.
+    # Product terms are rules in our words, no real rates (obligacjeskarbowe.pl data is not for reuse).
+    # There is no 4-year fixed-rate retail bond (TOS is 3 years), hence the TOS + deposit option.
+    brief: >-
+      Kasia, 28, has 20,000 PLN saved for the deposit on a flat. She plans to
+      pay it in about four years, and she has a separate emergency fund, so
+      she does not expect to need this money earlier. The chart shows how
+      fast prices are rising compared with a year earlier, and the central
+      bank's rate, up to the latest figures. Prices are rising faster than
+      they have in many years. The central bank has raised its rate five
+      times since October, most recently last week. Since the start of this
+      month the government has cut taxes on food, fuel and energy until the
+      summer. Kasia is choosing between three safe
+      options. Assume that in the first year they all pay about the same rate.
+      Which would you choose for her, and why?
+    stimulus:
+      - kind: chart
+        type: line
+        cutoff: 2022-01-31          # the last published figures are January's
+        hide: [name, dates]
+        series:
+          - {series_id: gus_cpi_pl_m, from: 2019-01-01, to: 2025-12-01, transform: level, label: "Prices, % change on a year earlier"}
+          - {series_id: nbp_ref_rate_m, from: 2019-01-01, to: 2025-12-01, transform: level, label: "Central bank rate, %"}
+    response:
+      kind: choice
+      options:
+        - {id: deposit, text: "A 12-month bank deposit, renewed each year at the rate banks then offer"}
+        - {id: fixed, text: "A 3-year savings bond with one rate fixed for the whole term, then a 1-year deposit"}
+        - {id: indexed, text: "A 4-year inflation-indexed savings bond: a fixed rate in year one, then inflation plus a small margin"}
+    truth: none
+    reasons:
+      pick: {min: 2, max: 3}
+      boxes:
+        - {id: inflation_above, weight: 1.0, text: "Prices are rising faster than any of the rates on offer",
+           explain: "On day X inflation was well above deposit and bond rates, so money at a fixed rate was already losing buying power."}
+        - {id: indexed_follows, weight: 0.8, text: "An indexed bond follows prices, so she doesn't have to guess where inflation goes",
+           explain: "With four years to go and inflation high and uncertain, a payment linked to prices protects what the money buys, whatever happens."}
+        - {id: rates_rising, weight: 0.6, text: "The central bank is raising its rate, so deposit rates may be higher when she renews",
+           explain: "Renewing each year lets a deposit follow rising rates, but with a delay, and not necessarily as fast as prices."}
+        - {id: early_fee, weight: 0.3, text: "If her plans change, selling a bond back early costs a small fee",
+           explain: "Worth checking. She has a separate emergency fund, so it matters less for her."}
+        - {id: tax_cut, weight: 0.2, text: "The tax cuts will slow price rises for a few months",
+           explain: "True, but they are temporary. A four-year choice should not rest on a few months."}
+        - {id: fixed_certain, weight: -0.3, text: "A fixed rate is safest because she knows exactly how many PLN she will get",
+           explain: "She knows the number of PLN, not what they will buy. With inflation above the rate, a fixed rate locks in a loss of buying power."}
+        - {id: app, weight: 0.0, text: "Her bank's mobile app is easy to use",
+           explain: "Convenient, but it says nothing about what her money will buy."}
+        - {id: peak, weight: -1.0, text: "Inflation will pass 15% within a year",
+           explain: "Nobody knew that on day X. Using it is hindsight."}
+    reveal:
+      text: >-
+        Day X was 16 February 2022, in Poland. Inflation kept rising for about
+        another year, much further than most forecasts said, and then fell
+        back. The central bank raised its rate several more times. The indexed
+        bond kept up with prices best; the deposit followed the rate up, but
+        stayed below inflation for a long time; the fixed rate lost the most
+        buying power. Other futures were possible on day X: if inflation had
+        fallen quickly, the fixed rate would have done well. That is why we
+        grade your reasons, not the outcome.

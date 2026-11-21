@@ -27,11 +27,36 @@ synth_pl10y_d3:
   display: true
   synthetic: {anchor: 2024-03-15, start: 5.4, move: 0.22, horizon: 5, mode: additive, vol: 0.03, seed: 21}
 
-# Example of a real series once its licence is cleared (rows go in series.csv):
-# nbp_reference_rate:
-#   name: NBP reference rate
-#   unit: "%"
-#   frequency: daily
-#   source: NBP
-#   licence: Regulaminy NBP (to verify)
-#   display: false
+# ---- Real series for the demo Day-X tasks (i2.m1, p4.m1). Rows are in series.csv (imported 2026-11-21 by
+# series/import_demo_series.py). Licence checklist signed off by Yurii, 2026-11-21.
+# Monthly rows are dated on the 1st of the reference month (2022-01-01 = January 2022).
+
+gus_cpi_pl_m:
+  name: CPI Poland, % change on the same month a year earlier (GUS)
+  aliases: [CPI, GUS, consumer price index, Statistics Poland]
+  unit: "%"
+  frequency: monthly
+  source: GUS
+  licence: "stat.gov.pl copyright: reuse with the source given"
+  # stored as % y/y: GUS index "previous year = 100" minus 100 (e.g. 109.4 -> 9.4). Final values, not flash.
+  display: true
+
+nbp_ref_rate_m:
+  name: NBP reference rate
+  aliases: [NBP, reference rate, RPP, Monetary Policy Council, Narodowy Bank Polski]
+  unit: "%"
+  frequency: monthly
+  source: NBP
+  licence: "NBP regulations; credit 'Source: NBP, www.nbp.pl'"
+  # the rate in force on the last day of each month, built from the decision dates
+  display: true
+
+oecd_share_prices_pl_m:
+  name: OECD share price index, Poland
+  aliases: [OECD, WIG, WIG20, GPW, Warsaw Stock Exchange, SPASTT01PLM661N]
+  unit: "index, 2015 = 100"
+  frequency: monthly
+  source: OECD (Main Economic Indicators, dataset DSD_STES@DF_FINMARK)
+  licence: CC BY 4.0 (OECD terms). Download from OECD, not FRED
+  # price index (no dividends), monthly average of daily values
+  display: true
