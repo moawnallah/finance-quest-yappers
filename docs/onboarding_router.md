@@ -322,6 +322,33 @@ education prior. With the flat prior:
 The expectations were revised, with the reason in the test file. The demo
 paths did not change.
 
+## Demo mode (built 2026-11-21, `router/demo.py`)
+
+The router recommends a path for everyone, but in the demo only some nodes
+have content. Two demo paths are defined in `router/demo_paths.yaml`:
+- young adult: S1 → I1 → I2 → I4 → P1;
+- investor: I4 → I5 → P1 → P4, with P2 offered as a challenge.
+
+**The rule (decided 2026-11-21, option a):**
+- **Every node on the recommended path has content:** the user gets it.
+  If the path is part of a demo path, the user gets the whole demo path.
+  This is the investor case: the router's I4 → I5 becomes I4 → I5 → P1 →
+  P4.
+- **Otherwise:** "We're sorry: your recommended path would be X > Y > Z,
+  but it is not ready yet. Please choose one of the two paths we have
+  prepared." Both demo paths are offered. The closest comes first: the
+  largest overlap with the recommendation, then the router's priority.
+- **The pick is logged** as `path_chosen` with the recommended path. That
+  is a label for the next-step model: what people choose when their ideal
+  path is missing.
+
+| Persona | Status | Path |
+|---|---|---|
+| Young adult | ready | young_adult |
+| Investor | ready | investor (extended from I4 → I5) |
+| Student (F4 → S2) | not ready | picks one of the two |
+| Pre-retiree (O1 → L1) | not ready | picks one of the two |
+
 ## Shadow decision model: BASAL (experiment, planned 2026-11-21)
 
 **Idea (yours).** Next to the rule router, ask a typed decision model

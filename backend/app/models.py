@@ -258,3 +258,13 @@ class Consent(Base):
     user_id: Mapped[str] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), unique=True)
     consent_version: Mapped[str] = mapped_column(String(20))
     given_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
+
+
+class PathCheckin(Base):
+    """The end-of-path check-in: progress, confidence per area, next goal (docs/admin_and_profile.md)."""
+    __tablename__ = "path_checkins"
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    user_id: Mapped[str] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True)
+    path_id: Mapped[str] = mapped_column(String(30))
+    answers: Mapped[dict] = mapped_column(JSON)
+    ts: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)

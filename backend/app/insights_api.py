@@ -19,8 +19,8 @@ from app.config import AB_VARIANTS, BACKEND_DIR
 from app.db import get_db
 from app.deps import ApiError, current_user, log_event, require_admin
 from app.engines import catalog, node_status
-from app.models import (Attempt, BenchmarkAnswer, Consent, Event, Feedback, LlmEvent, Onboarding, Profile, RecoEvent,
-                        User)
+from app.models import (Attempt, BenchmarkAnswer, Consent, Event, Feedback, LlmEvent, Onboarding, PathCheckin, Profile,
+                        RecoEvent, User)
 
 ML_DIR = BACKEND_DIR / "ml"
 if str(ML_DIR) not in sys.path:
@@ -28,6 +28,7 @@ if str(ML_DIR) not in sys.path:
 
 import analytics  # noqa: E402
 import router as onboarding_router  # noqa: E402
+from router import demo  # noqa: E402
 from tutor.rules import mask  # noqa: E402
 
 router = APIRouter(tags=["insights"])
@@ -80,6 +81,7 @@ def onboarding(body: SurveyIn, user: User = Depends(current_user), db: Session =
         survey["buffer"], survey["products"] = None, None
     result = onboarding_router.route(survey, user.id)
     events = result.pop("events")
+    result["demo"] = demo.match(result, set(catalog().nodes))
     row = db.get(Onboarding, user.id) or Onboarding(user_id=user.id)
     row.survey, row.result, row.router_version = survey, result, result["router_version"]
     row.created_at = datetime.now(timezone.utc)
@@ -87,9 +89,58 @@ def onboarding(body: SurveyIn, user: User = Depends(current_user), db: Session =
     for e in events:
         db.add(RecoEvent(user_id=user.id, router_version=e["router_version"], event_type=e["event_type"],
                          node=e.get("node"), payload={k: v for k, v in e.items() if k not in ("ts", "user_pseudo_id")}))
+    db.add(RecoEvent(user_id=user.id, router_version=result["router_version"], event_type="demo_match",
+                     payload={"status": result["demo"]["status"], "path_id": result["demo"]["path_id"],
+                              "recommended": result["demo"]["recommended"]}))
     log_event(db, user, "onboarding_done", path=[p["node"] for p in result["path"]])
     db.commit()
-    return {k: result[k] for k in ("router_version", "knowledge_score", "band", "benchmarks", "path", "challenges", "goal")}
+    return {k: result[k] for k in ("router_version", "knowledge_score", "band", "benchmarks", "path", "challenges", "goal",
+                                   "demo")}
+
+
+class ChoosePathIn(BaseModel):
+    path_id: str = Field(description="One of the demo paths offered in the onboarding reply (demo.options[].id).")
+
+
+@router.post("/onboarding/choose-path")
+def choose_path(body: ChoosePathIn, user: User = Depends(current_user), db: Session = Depends(get_db)):
+    """The user's pick when the recommended path is not ready, or a switch to the other demo path.
+    Logged with the recommended path: a label for the next-step model."""
+    onb = db.get(Onboarding, user.id)
+    if not onb:
+        raise ApiError(409, "no_onboarding", "Send the survey first (POST /onboarding)")
+    if body.path_id not in demo.demo_paths():
+        raise ApiError(400, "invalid_request", f"path_id must be one of {sorted(demo.demo_paths())}")
+    result = dict(onb.result)
+    result["chosen_path"] = body.path_id
+    onb.result = result
+    db.add(RecoEvent(user_id=user.id, router_version=onb.router_version, event_type="path_chosen", node=None,
+                     payload={"chosen": body.path_id, "recommended": result["demo"]["recommended"],
+                              "status": result["demo"]["status"], "closest": result["demo"].get("closest")}))
+    db.commit()
+    p = demo.demo_paths()[body.path_id]
+    return {"path_id": body.path_id, "title": p["title"], "nodes": p["nodes"], "challenges": demo._challenges(p["nodes"])}
+
+
+class PathFinishIn(BaseModel):
+    """The end-of-path check-in (about 30 seconds)."""
+    path_id: str
+    progress: Literal["yes", "somewhat", "no"] = Field(description="Do you think you made progress?")
+    confidence: dict[str, int] = Field(default_factory=dict, description="Confidence 1-5 per area of the path, e.g. {'S1': 4}.")
+    next_goal: Literal["buffer", "first_investment", "retirement", "home", "keep_learning", "other"]
+
+
+@router.post("/paths/finish")
+def finish_path(body: PathFinishIn, user: User = Depends(current_user), db: Session = Depends(get_db)):
+    """Store the check-in and return the thanks screen: the demo note, the optional feedback ask, the other path."""
+    if any(not 1 <= v <= 5 for v in body.confidence.values()):
+        raise ApiError(400, "invalid_request", "confidence values must be 1-5")
+    db.add(PathCheckin(user_id=user.id, path_id=body.path_id, answers=body.model_dump(exclude={"path_id"})))
+    db.add(RecoEvent(user_id=user.id, router_version=onboarding_router.ROUTER_VERSION, event_type="path_finished",
+                     payload={"path_id": body.path_id, "progress": body.progress, "next_goal": body.next_goal}))
+    log_event(db, user, "path_finished", path_id=body.path_id)
+    db.commit()
+    return demo.finished(body.path_id)
 
 
 @router.get("/me/summary")
@@ -285,6 +336,15 @@ def reco_events(limit: int = 200, db: Session = Depends(get_db)):
     q = select(RecoEvent).order_by(RecoEvent.id.desc()).limit(min(limit, 1000))
     return [{"ts": e.ts.isoformat(), "user_id": e.user_id, "router_version": e.router_version,
              "event_type": e.event_type, "node": e.node, **e.payload} for e in db.scalars(q)]
+
+
+@router.get("/admin/client-insights", dependencies=admin)
+def admin_client_insights(min_group: int = 5, db: Session = Depends(get_db)):
+    """Aggregate overview of our users for stakeholders: profile, knowledge, learning needs, paths,
+    and what they said after the path. Groups smaller than min_group are hidden; nothing per person."""
+    onb = [{"survey": o.survey, "result": o.result} for o in db.scalars(select(Onboarding))]
+    chk = [{"path_id": c.path_id, "answers": c.answers} for c in db.scalars(select(PathCheckin))]
+    return analytics.client_insights(onb, chk, max(5, min_group))
 
 
 @router.get("/admin/node-opened", dependencies=admin)

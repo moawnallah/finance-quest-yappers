@@ -298,3 +298,71 @@ def profile_summary(attempts: list[dict], tree: dict[str, dict], node_states: di
         "activity": {"attempts_last_7_days": len(recent),
                      "active_days_last_7": len({_ts(a["submitted_at"]).date() for a in recent})},
     }
+
+
+# ---------------------------------------------------------------- client insights (aggregate only)
+
+def _shares(values: list, min_group: int) -> dict:
+    """Share per value; values with fewer than min_group people are hidden (None) so no small group stands out."""
+    c = Counter(v for v in values if v is not None)
+    n = sum(c.values())
+    return {str(k): (round(v / n, 3) if v >= min_group else None) for k, v in c.most_common()} if n else {}
+
+
+def client_insights(onboardings: list[dict], checkins: list[dict], min_group: int = 5) -> dict:
+    """Aggregate client overview for stakeholders (docs/admin_and_profile.md, "Client insights").
+
+    onboardings: [{survey, result}] with result["demo"] and optional result["chosen_path"].
+    checkins: [{path_id, answers: {progress, confidence: {area: 1-5}, next_goal}}].
+    Aggregates only; any group smaller than `min_group` is hidden. Nothing per person.
+    """
+    n = len(onboardings)
+    note = f"Aggregates only. Groups smaller than {min_group} people are hidden (null). Nothing is shown per person."
+    if n < min_group:
+        return {"users": n, "note": note, "hidden": True}
+    surveys = [o["survey"] for o in onboardings]
+    results = [o["result"] for o in onboardings]
+    products = [p for s in surveys for p in (s.get("products") or [])]
+    answered_products = sum(1 for s in surveys if s.get("products") is not None)
+    product_share = {p: (round(c / answered_products, 3) if c >= min_group else None)
+                     for p, c in Counter(products).most_common()} if answered_products else {}
+    need_nodes = Counter(k for r in results for k, v in (r.get("needs") or {}).items() if v >= 0.6)
+    overconfident = sum(1 for s, r in zip(surveys, results)
+                        if s.get("self_rating") in ("very_high", "quite_high") and (r.get("knowledge_score") or 0) <= 2)
+
+    def share_of(cond) -> float | None:
+        k = sum(1 for s in surveys if cond(s))
+        return round(k / n, 3) if k >= min_group else None
+
+    learning_needs = {
+        "no_buffer_or_under_one_month": share_of(lambda s: s.get("buffer") in ("none", "under_1")),
+        "has_consumer_loan": share_of(lambda s: "consumer_loan" in (s.get("products") or [])),
+        "wants_to_start_investing_without_investments": share_of(
+            lambda s: s.get("goal") == "first_investment" and "investment" not in (s.get("products") or [])),
+        "holds_crypto": share_of(lambda s: "crypto" in (s.get("products") or [])),
+        "retirement_goal_without_pension_product": share_of(
+            lambda s: s.get("goal") == "retirement" and "pension" not in (s.get("products") or [])),
+    }
+    conf = defaultdict(list)
+    for c in checkins:
+        for area, v in ((c.get("answers") or {}).get("confidence") or {}).items():
+            conf[area].append(v)
+    return {
+        "users": n, "note": note, "hidden": False,
+        "profile": {"age_band": _shares([s.get("age_band") for s in surveys], min_group),
+                    "goal": _shares([s.get("goal") for s in surveys], min_group),
+                    "horizon": _shares([s.get("horizon") for s in surveys], min_group),
+                    "buffer": _shares([s.get("buffer") for s in surveys], min_group),
+                    "products_held": product_share},
+        "knowledge": {"band": _shares([r.get("band") for r in results], min_group),
+                      "rate_high_but_score_0_to_2": round(overconfident / n, 3) if overconfident >= min_group else None},
+        "learning_needs": learning_needs,
+        "most_needed_topics": [{"node": k, "users": v} for k, v in need_nodes.most_common(8) if v >= min_group],
+        "paths": {"recommended_ready": _shares([(r.get("demo") or {}).get("status") for r in results], min_group),
+                  "chosen": _shares([r.get("chosen_path") or (r.get("demo") or {}).get("path_id") for r in results], min_group)},
+        "after_the_path": {"finished": len(checkins),
+                           "progress": _shares([(c.get("answers") or {}).get("progress") for c in checkins], min_group),
+                           "next_goal": _shares([(c.get("answers") or {}).get("next_goal") for c in checkins], min_group),
+                           "mean_confidence_by_area": {a: round(statistics.fmean(v), 2) for a, v in sorted(conf.items())
+                                                       if len(v) >= min_group}},
+    }

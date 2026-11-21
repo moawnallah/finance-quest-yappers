@@ -34,6 +34,15 @@ told.
 | Hard task | S1: a buffer rule tested on 1,000 futures | P4: a rebalancing rule tested on crashes | Score 51-100 and histogram (one of the two, see M4) |
 | End | Confidence before and after | Calibration gap shrinks | Measurement |
 
+**Flow in the app** (built 2026-11-21, API only):
+1. Survey.
+2. The path, or "not ready yet, choose one of the two".
+3. The nodes.
+4. The end-of-path check-in.
+5. Thanks, with optional feedback and "try the other path".
+
+Details: docs/admin_and_profile.md, "Demo mode and the end of a path".
+
 ## Paths in detail
 
 ### A. Young adult

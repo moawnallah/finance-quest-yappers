@@ -340,6 +340,57 @@ growth_index, percentiles), `activity` and `privacy`.
 - **The free-text fields** (feedback, tutor messages) are masked as in the
   tutor, and kept for 30 days.
 
+## Demo mode and the end of a path (built 2026-11-21)
+
+1. **Survey.** The survey stays for everyone, because the client profile
+   is valuable for stakeholders. There is no public skip button; the
+   presenter fills it in quickly for a persona.
+2. **Path.** See onboarding_router.md, "Demo mode": the recommended path,
+   or "not ready yet, choose one of the two" (`POST
+   /onboarding/choose-path`).
+3. **End-of-path check-in,** about 30 seconds (`POST /paths/finish`):
+   - "Do you think you made progress?" (yes / somewhat / no);
+   - confidence 1-5 in each area of the path;
+   - "What is your next goal?"
+4. **Thanks screen:** "Thank you for finishing the path. This is a demo,
+   and we are very happy you tested it: we hope you learned something you
+   can use. If you like, try the other path too."
+   - **Optional feedback:** one tap to rate, a comment if the user likes
+     (`POST /feedback` with `where: mission`, `kind: rating`). It is
+     optional because forced feedback gives poor answers; the check-in
+     already collects the structured data.
+   - **The other demo path** is offered.
+
+All of it is stored: the check-in in `path_checkins`; `path_chosen`,
+`path_finished` and `demo_match` in `reco_events`.
+
+## Client insights (aggregate, for stakeholders)
+
+`GET /admin/client-insights` gives an overview of our users that a bank
+could use to see which tools and education its customers need:
+- **profile:** age band, goal, horizon, buffer, products held;
+- **knowledge:** knowledge bands, and the share rating themselves high but
+  scoring 0-2;
+- **learning needs:**
+  - no buffer or under a month;
+  - consumer loan;
+  - wants to invest but holds nothing;
+  - crypto;
+  - retirement goal without a pension product;
+- **topics:** the most needed topics;
+- **paths:** ready vs not ready, and which demo path was chosen;
+- **after the path:** progress, next goal, confidence by area.
+
+**Privacy rules, built in:**
+- aggregates only; nothing is listed per person;
+- any group smaller than 5 people is hidden, and the threshold cannot be
+  set lower than 5;
+- the current consent text says "student project". Sharing data with a
+  bank, even aggregates under a bank's name, would need a consent text
+  that says so. Sharing individual profiles would need explicit consent
+  and a legal basis (GDPR profiling rules). Check with the Commerzbank
+  mentor before any pitch claim beyond "aggregate insights".
+
 ## API (built 2026-11-21, branch `admin-panel`)
 
 Routes are in `backend/app/insights_api.py`; the numbers come from
@@ -352,6 +403,9 @@ Routes are in `backend/app/insights_api.py`; the numbers come from
 | `POST /events/node-opened` | every node open | logs `node` and `source` (`recommended`, `self_chosen`, `explore_wheel`, `tutor_link`, `end_of_path`) |
 | `POST /feedback` | "Report a problem", mission rating | stores the report; the text is masked |
 | `GET /study/consent`, `POST /study/join` | hallway test | consent text and version; a session under a random participant id (no name) |
+| `POST /onboarding/choose-path` | "not ready yet" screen, "try the other path" | stores the pick, logs `path_chosen` |
+| `POST /paths/finish` | end of a path | stores the check-in; returns the thanks message, the optional feedback ask, the other path |
+| `GET /admin/client-insights` | stakeholders | aggregate client overview, groups under 5 hidden |
 | `GET /admin/overview` | view A | tiles and alerts (reports red, item flags amber, advice red) |
 | `GET /admin/items` | view B | item and task quality from first attempts; the hard panel (acceptance, most failed test, points histogram, growth, `duration_ms` p50/p95) |
 | `GET /admin/calibration` | view C | weekly confidence vs score overall and by age band; onboarding self-rating vs knowledge score |

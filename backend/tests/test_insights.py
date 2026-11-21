@@ -105,3 +105,33 @@ def test_profile_summary_and_node_clicks(client, user):
     client.post("/events/node-opened", headers=user, json={"node": "S1", "source": "recommended"})
     clicks = client.get("/admin/node-opened", headers=ADMIN).json()
     assert clicks["by_source"]["self_chosen"] >= 1 and 0 < clicks["self_chosen_share"] < 1
+
+
+STUDENT = {"age_band": "18-24", "decisions": "someone_else", "goal": "buffer", "horizon": "under_3",
+           "self_rating": "quite_high", "buffer": None, "products": ["consumer_loan"],
+           "knowledge": {"Q2": {"correct": False, "confidence": 4}, "Q3": {"correct": False, "confidence": 4},
+                         "Q4": {"correct": False, "confidence": 3}, "Q5": {"correct": True, "confidence": 3},
+                         "Q6": {"correct": False, "confidence": 4}}}
+
+
+def test_demo_not_ready_then_choose_and_finish(client, user):
+    d = client.post("/onboarding", headers=user, json=STUDENT).json()["demo"]
+    assert d["status"] == "not_ready" and "not ready yet" in d["message"] and len(d["options"]) == 2
+    chosen = client.post("/onboarding/choose-path", headers=user, json={"path_id": d["closest"]}).json()
+    assert chosen["nodes"][0] in ("S1", "I4")
+    assert client.post("/onboarding/choose-path", headers=user, json={"path_id": "nope"}).status_code == 400
+    end = client.post("/paths/finish", headers=user, json={"path_id": d["closest"], "progress": "somewhat",
+                                                            "confidence": {"S1": 4}, "next_goal": "keep_learning"}).json()
+    assert end["other_path"]["id"] != d["closest"] and end["feedback"]["optional"] is True
+    events = client.get("/admin/reco-events", headers=ADMIN).json()
+    assert {"path_chosen", "path_finished", "demo_match"} <= {e["event_type"] for e in events}
+
+
+def test_client_insights_are_aggregate_only(client):
+    first = client.get("/admin/client-insights", headers=ADMIN).json()
+    for _ in range(6):   # enough users that the young-adult group is no longer hidden
+        t = client.post("/auth/session", json={"display_name": "C"}).json()["token"]
+        client.post("/onboarding", headers={"Authorization": f"Bearer {t}"}, json=YOUNG)
+    r = client.get("/admin/client-insights", headers=ADMIN).json()
+    assert r["hidden"] is False and r["users"] >= 6 and r["profile"]["age_band"]["25-39"] is not None
+    assert "user_id" not in json.dumps(r) and first["users"] < r["users"]

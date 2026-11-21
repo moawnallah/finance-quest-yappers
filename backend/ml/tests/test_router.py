@@ -94,3 +94,33 @@ def test_tree_agrees_with_the_node_files():
         node = tree()[data["node"]]
         assert data.get("after", []) == node["after"], data["node"]
         assert data.get("title") == node["title"], data["node"]
+
+
+# ---------------------------------------------------------------- demo mode
+
+from router.demo import finished, match  # noqa: E402
+
+BUILT = {"S1", "I1", "I2", "I4", "I5", "P1", "P2", "P4", "F1", "F2", "F3", "S4", "D1", "D3"}
+
+
+def test_demo_young_adult_gets_the_path_directly():
+    d = match(route(YOUNG), BUILT)
+    assert d["status"] == "ready" and d["path_id"] == "young_adult" and d["message"] is None
+
+
+def test_demo_investor_router_path_extends_to_the_investor_path():
+    # The router gives I4 > I5; it is part of the investor demo path, so the user gets the whole path.
+    d = match(route(INVESTOR), BUILT)
+    assert d["path_id"] == "investor" and d["path"] == ["I4", "I5", "P1", "P4"] and "P2" in d["challenges"]
+
+
+def test_demo_path_not_ready_offers_both_paths():
+    d = match(route(STUDENT), BUILT)
+    assert d["status"] == "not_ready" and d["missing"] == ["F4", "S2"]
+    assert {o["id"] for o in d["options"]} == {"young_adult", "investor"} and d["closest"] == d["options"][0]["id"]
+    assert "Cost of credit" in d["message"] and "not ready yet" in d["message"]
+
+
+def test_finishing_offers_the_other_path_and_optional_feedback():
+    f = finished("young_adult")
+    assert f["other_path"]["id"] == "investor" and f["feedback"]["optional"] is True

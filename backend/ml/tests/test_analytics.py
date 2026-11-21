@@ -95,3 +95,20 @@ def test_profile_mastery_moves_with_first_attempts_and_badge_needs_20():
     assert s1["mastery"] > 0.5 and p["calibration"]["gap"] == 0.0 and not p["calibration"]["well_calibrated_badge"]
     rows20 = [att("u", f"t{i}", 1.0, p=1.0, node="I1", minute=i) for i in range(20)]
     assert profile_summary(rows20, tree, now=T0)["calibration"]["well_calibrated_badge"]
+
+
+def test_client_insights_hide_small_groups_and_show_nothing_per_person():
+    from analytics import client_insights
+    onb = [{"survey": {"age_band": "25-39", "goal": "first_investment", "buffer": "under_1", "products": ["life_insurance"],
+                       "self_rating": "quite_high"},
+            "result": {"band": "medium", "knowledge_score": 2, "needs": {"S1": 1.0}, "demo": {"status": "ready", "path_id": "young_adult"}}}
+           for _ in range(6)]
+    onb.append({"survey": {"age_band": "55+", "goal": "retirement", "buffer": "6_plus", "products": ["pension"]},
+                "result": {"band": "high", "knowledge_score": 5, "needs": {}, "demo": {"status": "not_ready"}}})
+    assert client_insights(onb[:4], [])["hidden"] is True                       # fewer than 5 users: nothing shown
+    r = client_insights(onb, [])
+    assert r["profile"]["age_band"] == {"25-39": 0.857, "55+": None}           # the single 55+ person is hidden
+    assert r["learning_needs"]["no_buffer_or_under_one_month"] == 0.857
+    assert r["learning_needs"]["retirement_goal_without_pension_product"] is None
+    assert r["knowledge"]["rate_high_but_score_0_to_2"] == 0.857 and r["most_needed_topics"] == [{"node": "S1", "users": 6}]
+    assert "per person" in r["note"]
