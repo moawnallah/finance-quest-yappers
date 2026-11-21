@@ -15,6 +15,7 @@ dependencies:
   google_fonts: ^6.2.1
   http: ^1.6.0
   shared_preferences: ^2.5.6
+  audioplayers: ^6.8.1
 
 dev_dependencies:
   flutter_test:
@@ -26,3 +27,5 @@ flutter:
   assets:
     - assets/roadmap.json
     - assets/eu_benchmark.json
+    - assets/steps.json
+    - assets/sfx/

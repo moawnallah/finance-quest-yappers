@@ -58,6 +58,14 @@ void main() {
     expect(calls, containsAll(['POST /auth/session', 'GET /skills']));
   });
 
+  // "How sure are you?": the 4 (Sure) step of the one-line picker.
+  Future<void> tapSure(WidgetTester tester) async {
+    final f = find.byKey(ValueKey('confidence-4'));
+    await tester.ensureVisible(f);
+    await tester.tap(f);
+    await tester.pumpAndSettle();
+  }
+
   testWidgets('task run: all easy kinds, then the day-X chart task', (tester) async {
     final ids = (fx['_order'] as List).cast<String>();
     final state = await pump(tester, TaskRunScreen(run: TaskRun(title: 'Test run', taskIds: ids)));
@@ -65,21 +73,21 @@ void main() {
 
     // single
     await tapText(tester, opt(ids[0], 0));
-    await tapText(tester, '4 · Sure');
+    await tapSure(tester);
     await checkAndNext(tester, 'Correct');
     // multi
     await tapText(tester, opt(ids[1], 0));
-    await tapText(tester, '4 · Sure');
+    await tapSure(tester);
     await checkAndNext(tester, '%');
     // true / false
     await tapText(tester, 'True');
-    await tapText(tester, '4 · Sure');
+    await tapSure(tester);
     await checkAndNext(tester, '%');
     // numeric (slider)
     await tester.ensureVisible(find.byType(Slider));
     await tester.tap(find.byType(Slider));
     await tester.pumpAndSettle();
-    await tapText(tester, '4 · Sure');
+    await tapSure(tester);
     await tapText(tester, 'Check my answer');
     expect(find.textContaining('Answer:'), findsOneWidget);
     await tapText(tester, 'Next');
@@ -93,7 +101,8 @@ void main() {
     final boxes = (fx['GET /tasks/d1.m1']['task']['reasons']['boxes'] as List).cast<Map<String, dynamic>>();
     await tapText(tester, boxes.firstWhere((b) => b['id'] == 'guidance')['text'] as String);
     await tapText(tester, boxes.firstWhere((b) => b['id'] == 'priced_in')['text'] as String);
-    await tapText(tester, '3 · Fairly');
+    await tester.tap(find.byKey(ValueKey('confidence-3')));
+    await tester.pumpAndSettle();
     await tapText(tester, 'Check my answer');
     expect(find.textContaining('What happened: down'), findsOneWidget);
     expect(find.textContaining('score your reasons'), findsOneWidget);

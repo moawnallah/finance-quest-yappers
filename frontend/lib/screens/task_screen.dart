@@ -8,6 +8,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../data/app_state.dart';
+import '../data/sfx.dart';
 import '../widgets/common.dart';
 import 'skills_screen.dart' show ErrorPanel;
 
@@ -17,7 +18,9 @@ class TaskRun {
   final List<String> taskIds;
   final String context; // practice | prerequisite | test_out
   final String? forNode;
-  TaskRun({required this.title, required this.taskIds, this.context = 'practice', this.forNode});
+  final String? skill; // the mission this run belongs to, so progress is remembered
+  final int doneBefore; // questions already finished in this mission (resume)
+  TaskRun({required this.title, required this.taskIds, this.context = 'practice', this.forNode, this.skill, this.doneBefore = 0});
 }
 
 class TaskRunScreen extends StatefulWidget {
@@ -44,6 +47,8 @@ class _TaskRunScreenState extends State<TaskRunScreen> {
   final List<double> scores = [];
   Map<String, dynamic>? lastStatus;
   bool completedNode = false;
+  int earned = 0; // Scales earned in this run
+  final List<(int, double)> confScore = []; // (how sure 1-5, score 0-1) per scored answer
 
   @override
   void initState() {
@@ -58,6 +63,12 @@ class _TaskRunScreenState extends State<TaskRunScreen> {
   }
 
   void _next() {
+    // Finishing the run records one confidence-vs-score point for Progress.
+    if (index + 1 >= widget.run.taskIds.length && confScore.isNotEmpty) {
+      final c = confScore.map((e) => e.$1).reduce((a, b) => a + b) / confScore.length;
+      final sc = confScore.map((e) => e.$2).reduce((a, b) => a + b) / confScore.length;
+      context.read<AppState>().addCalibration(widget.run.title, c, sc);
+    }
     setState(() {
       index++;
       answer = null;
@@ -86,11 +97,21 @@ class _TaskRunScreenState extends State<TaskRunScreen> {
         startedAt: startedAt,
       );
       final score = (r['score'] as num?)?.toDouble();
-      if (score != null) scores.add(score);
-      if (score == 1) s.addXp(Rewards.correctAnswer);
+      if (widget.run.skill != null) s.markAnswered(widget.run.skill!, task['id'] as String);
+      if (score != null) {
+        scores.add(score);
+        if (confidence != null) confScore.add((confidence!, score));
+        score >= 1 ? Sfx.correct() : Sfx.wrong();
+      }
+      if (score == 1) {
+        s.addXp(Rewards.correctAnswer);
+        earned += Rewards.correctAnswer;
+      }
       if (r['node_completed'] == true) {
         completedNode = true;
         s.addXp(Rewards.missionDone);
+        earned += Rewards.missionDone;
+        s.earn('first_steps');
       }
       setState(() {
         result = r;
@@ -123,7 +144,18 @@ class _TaskRunScreenState extends State<TaskRunScreen> {
         title: Text(widget.run.title),
         leading: IconButton(icon: Icon(Icons.close), tooltip: 'Close', onPressed: () => context.pop()),
       ),
-      body: FutureBuilder<Map<String, dynamic>>(
+      body: AnimatedSwitcher(
+        duration: Duration(milliseconds: 320),
+        switchInCurve: Curves.easeOutCubic,
+        switchOutCurve: Curves.easeInCubic,
+        transitionBuilder: (child, a) {
+          final incoming = child.key == ValueKey(index);
+          return SlideTransition(
+            position: Tween(begin: Offset(incoming ? 1 : -1, 0), end: Offset.zero).animate(a),
+            child: child,
+          );
+        },
+        child: KeyedSubtree(key: ValueKey(index), child: FutureBuilder<Map<String, dynamic>>(
         future: current,
         builder: (context, snap) {
           if (snap.connectionState != ConnectionState.done) return Center(child: CircularProgressIndicator());
@@ -133,10 +165,13 @@ class _TaskRunScreenState extends State<TaskRunScreen> {
           final medium = t['level'] == 'medium';
           final done = result != null;
           return ListView(padding: EdgeInsets.all(20), children: [
-            LinearProgressIndicator(value: (index + (done ? 1 : 0)) / total, minHeight: 8, color: kPrimary, borderRadius: BorderRadius.circular(4)),
+            LinearProgressIndicator(
+              value: (widget.run.doneBefore + index + (done ? 1 : 0)) / (widget.run.doneBefore + total),
+              minHeight: 8, color: kPrimary, borderRadius: BorderRadius.circular(4),
+            ),
             SizedBox(height: 16),
             Text(
-              medium ? 'DAY X · ${index + 1} OF $total' : '${_kindLabel(task)} · ${index + 1} OF $total',
+              medium ? 'DAY X · ${widget.run.doneBefore + index + 1} OF ${widget.run.doneBefore + total}' : '${_kindLabel(task)} · ${widget.run.doneBefore + index + 1} OF ${widget.run.doneBefore + total}',
               style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, letterSpacing: .6, color: kPrimaryText),
             ),
             SizedBox(height: 8),
@@ -162,6 +197,7 @@ class _TaskRunScreenState extends State<TaskRunScreen> {
               ),
           ]);
         },
+      )),
       ),
     );
   }
@@ -243,9 +279,34 @@ class _TaskRunScreenState extends State<TaskRunScreen> {
       }
       final feedback = kind == 'reflection' ? (reveal['feedback'] as List)[answer as int] as String : null;
       final why = feedback ?? reveal['why'] as String?;
-      if (why != null) out.addAll([SizedBox(height: 12), TutorBubble(text: why)]);
+      if (why != null) out.addAll([SizedBox(height: 12), TutorBubble(text: why, onAsk: () => _askTutor(task, reveal, why))]);
     }
     return out;
+  }
+
+  /// Opens the tutor chat with this question, the user's answer, the right
+  /// answer and the explanation.
+  void _askTutor(Map<String, dynamic> task, Map<String, dynamic> reveal, String why) {
+    final opts = (task['options'] as List?)?.cast<String>();
+    String? text(Object? v) {
+      if (v == null) return null;
+      if (v is bool) return v ? 'True' : 'False';
+      if (v is int && opts != null && v >= 0 && v < opts.length) return opts[v];
+      if (v is List) return v.map(text).join(', ');
+      return '$v${reveal['unit'] != null ? ' ${reveal['unit']}' : ''}';
+    }
+    final picked = task['kind'] == 'multi' ? text(multi.toList()..sort()) : text(answer);
+    final score = (result?['score'] as num?)?.toDouble();
+    context.read<AppState>().tutorContext = TutorContext(
+      node: task['node'] as String?,
+      taskId: task['id'] as String?,
+      question: task['q'] as String,
+      picked: picked,
+      correct: text(reveal['answer']),
+      explanation: why,
+      wasRight: score == null ? null : score >= 1,
+    );
+    context.push('/tutor-chat');
   }
 
   // ---------------------------------------------------------------- medium day-X tasks
@@ -346,6 +407,20 @@ class _TaskRunScreenState extends State<TaskRunScreen> {
         SizedBox(height: 8),
         if (avg != null)
           Text('Average score: ${(avg * 100).round()}%', textAlign: TextAlign.center, style: TextStyle(fontSize: 16, color: kBody)),
+        if (earned > 0) ...[
+          SizedBox(height: 12),
+          Center(
+            child: Container(
+              padding: EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+              decoration: BoxDecoration(color: kPrimarySoft, borderRadius: BorderRadius.circular(999)),
+              child: Row(mainAxisSize: MainAxisSize.min, children: [
+                ScaleIcon(size: 20),
+                SizedBox(width: 6),
+                Text('+$earned Scales', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: kPrimaryText)),
+              ]),
+            ),
+          ),
+        ],
         if (st != null && !completedNode) ...[
           SizedBox(height: 16),
           Panel(
@@ -513,10 +588,46 @@ class _ConfidencePicker extends StatelessWidget {
 
   static const labels = ['Guessing', 'Unsure', 'Fairly', 'Sure', 'Certain'];
 
+  // One line: five steps from 1 (guessing) to 5 (certain), with the words at the ends.
   @override
-  Widget build(BuildContext context) => Wrap(spacing: 6, runSpacing: 6, children: [
-        for (var i = 1; i <= 5; i++)
-          ChoiceChip(label: Text('$i · ${labels[i - 1]}'), selected: value == i, onSelected: (_) => onChanged(i)),
+  Widget build(BuildContext context) => Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+        Row(children: [
+          for (var i = 1; i <= 5; i++) ...[
+            if (i > 1) SizedBox(width: 6),
+            Expanded(
+              child: Semantics(
+                button: true,
+                selected: value == i,
+                label: '$i, ${labels[i - 1]}',
+                excludeSemantics: true,
+                child: InkWell(
+                  key: ValueKey('confidence-$i'),
+                  borderRadius: BorderRadius.circular(10),
+                  onTap: () => onChanged(i),
+                  child: AnimatedContainer(
+                    duration: Duration(milliseconds: 150),
+                    height: 44,
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      color: value == i ? kPrimary : kSurface,
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: value == i ? kPrimary : kBorder),
+                    ),
+                    child: Text('$i', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: value == i ? Colors.white : kInk)),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ]),
+        SizedBox(height: 4),
+        Row(children: [
+          Text('Guessing', style: TextStyle(fontSize: 11, color: kMuted)),
+          Spacer(),
+          if (value != null) Text(labels[value! - 1], style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: kPrimaryText)),
+          Spacer(),
+          Text('Certain', style: TextStyle(fontSize: 11, color: kMuted)),
+        ]),
       ]);
 }
 

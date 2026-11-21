@@ -123,6 +123,10 @@ Future<bool> googleSignInDemo(BuildContext context, {bool signIn = true}) async 
       ],
     ),
   );
-  if (ok == true && signIn && context.mounted) context.read<AppState>().signIn('Google user');
+  if (ok == true && context.mounted) {
+    final s = context.read<AppState>();
+    s.signInMethod = 'google';
+    if (signIn) s.signIn('Google user');
+  }
   return ok == true;
 }

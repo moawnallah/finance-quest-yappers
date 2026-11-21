@@ -1,0 +1,26 @@
+{
+  "note": "Draft 'build your plan' tasks for the block question (frontend only until the backend scores them). steps = the expected plan in order; traps = blocks that do not belong.",
+  "tasks": {
+    "S1": {
+      "id": "s1.steps1",
+      "q": "Your washing machine breaks and the repair costs 1,500 zł. What steps would you take?",
+      "steps": ["Pay the repair from your emergency fund", "Check how much is left in the fund", "Top the fund back up over the next months"],
+      "traps": ["Sell your investments in a hurry", "Put it on a credit card and forget about it", "Take a quick online loan"],
+      "why": "An emergency fund exists for exactly this. Use it, see what is left, then rebuild it slowly, so you never have to sell investments at a bad moment or borrow at high cost."
+    },
+    "P4": {
+      "id": "p4.steps1",
+      "q": "Markets fall 30% in two months. Your plan is 60% shares and 40% bonds. What steps would you take?",
+      "steps": ["Check that your emergency fund is untouched", "Remind yourself why you invested and for how long", "Compare your current mix with the 60/40 plan", "Rebalance back to 60/40 if it has drifted"],
+      "traps": ["Sell all your shares to stop the losses", "Move everything into the share that fell most", "Check prices every hour"],
+      "why": "A crash is when a plan earns its keep: make sure your safety net is fine, remember your horizon, and rebalance to the mix you chose instead of reacting to the news."
+    },
+    "I5": {
+      "id": "i5.steps1",
+      "q": "You are choosing between two global index funds. What steps would you take?",
+      "steps": ["Read each fund's KID", "Compare the yearly costs", "Check which index each fund follows", "Decide how much to put in each month"],
+      "traps": ["Pick the one that did best last year", "Buy the one a friend recommended without checking"],
+      "why": "The KID gives you the facts in a standard format. Costs and the index matter for the long run; last year's winner and tips from friends do not tell you much."
+    }
+  }
+}

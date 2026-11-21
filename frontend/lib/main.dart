@@ -8,50 +8,64 @@ import 'package:provider/provider.dart';
 import 'data/app_state.dart';
 import 'screens/onboarding_screen.dart';
 import 'screens/wheel_screen.dart';
-import 'screens/tree_screen.dart';
-import 'screens/mission_screen.dart';
 import 'screens/time_machine_screen.dart';
-import 'screens/result_screen.dart';
 import 'screens/placement_screen.dart';
 import 'screens/progress_screen.dart';
 import 'screens/shell.dart';
 import 'screens/tutor_screen.dart';
 import 'screens/league_screen.dart';
+import 'screens/admin_screen.dart';
 import 'screens/signin_screen.dart';
 import 'screens/skills_screen.dart';
 import 'screens/skill_screen.dart';
 import 'screens/task_screen.dart';
-import 'widgets/common.dart' show appDark;
+import 'package:flutter/foundation.dart' show kIsWeb;
+import 'widgets/common.dart' show appDark, BadgeWatcher, PageWidth;
+import 'data/sfx.dart';
+
+/// A soft whoosh when a page opens or closes (not for dialogs or sheets).
+class _SfxObserver extends NavigatorObserver {
+  @override
+  void didPush(Route route, Route? previousRoute) {
+    if (route is PageRoute && previousRoute != null) Sfx.whoosh();
+  }
+
+  @override
+  void didPop(Route route, Route? previousRoute) {
+    if (route is PageRoute) Sfx.whoosh();
+  }
+}
 
 void main() {
   runApp(ChangeNotifierProvider(create: (_) => AppState()..load(), child: FinanceQuestApp()));
 }
 
+/// Root navigator, so the badge pop-up can open from anywhere.
+final rootNavigatorKey = GlobalKey<NavigatorState>();
+
 final _router = GoRouter(
+  navigatorKey: rootNavigatorKey,
+  observers: [_SfxObserver()],
   initialLocation: '/',
   routes: [
-    GoRoute(path: '/', builder: (_, __) => OnboardingScreen()),
-    GoRoute(path: '/signin', builder: (_, __) => SignInScreen()),
-    GoRoute(path: '/placement', builder: (_, st) => PlacementScreen(retest: st.uri.queryParameters['retest'] == '1')),
+    GoRoute(path: '/', builder: (_, __) => PageWidth(max: 460, child: OnboardingScreen())),
+    GoRoute(path: '/signin', builder: (_, __) => PageWidth(max: 460, child: SignInScreen())),
+    GoRoute(path: '/placement', builder: (_, st) => PageWidth(child: PlacementScreen(retest: st.uri.queryParameters['retest'] == '1'))),
     ShellRoute(
       builder: (context, state, child) => AppShell(location: state.uri.path, child: child),
       routes: [
         GoRoute(path: '/wheel', builder: (_, __) => WheelScreen()),
-        GoRoute(path: '/skills', builder: (_, __) => SkillsScreen()),
         GoRoute(path: '/tutor', builder: (_, __) => TutorScreen()),
         GoRoute(path: '/progress', builder: (_, __) => ProgressScreen()),
         GoRoute(path: '/league', builder: (_, __) => LeagueScreen()),
       ],
     ),
-    GoRoute(path: '/slice/:key', builder: (_, s) => TreeScreen(sliceKey: s.pathParameters['key']!)),
-    GoRoute(
-      path: '/mission/:key/:node',
-      builder: (_, s) => MissionScreen(sliceKey: s.pathParameters['key']!, nodeId: s.pathParameters['node']!),
-    ),
-    GoRoute(path: '/skill/:id', builder: (_, s) => SkillScreen(nodeId: s.pathParameters['id']!)),
-    GoRoute(path: '/skill-run', builder: (_, s) => TaskRunScreen(run: s.extra as TaskRun)),
-    GoRoute(path: '/time-machine', builder: (_, __) => TimeMachineScreen()),
-    GoRoute(path: '/result', builder: (_, __) => ResultScreen()),
+    GoRoute(path: '/skills', builder: (_, __) => PageWidth(child: SkillsScreen())),
+    GoRoute(path: '/tutor-chat', builder: (_, __) => PageWidth(child: TutorScreen(fromQuestion: true))),
+    GoRoute(path: '/admin', builder: (_, __) => PageWidth(max: 1100, child: AdminScreen())),
+    GoRoute(path: '/skill/:id', builder: (_, s) => PageWidth(child: SkillScreen(nodeId: s.pathParameters['id']!))),
+    GoRoute(path: '/skill-run', builder: (_, s) => PageWidth(child: TaskRunScreen(run: s.extra as TaskRun))),
+    GoRoute(path: '/time-machine', builder: (_, __) => PageWidth(child: TimeMachineScreen())),
   ],
 );
 
@@ -124,10 +138,15 @@ class FinanceQuestApp extends StatelessWidget {
         final scale = mq.textScaler.scale(1) * (state.largeText ? 1.3 : 1.0);
         return MediaQuery(
           data: mq.copyWith(textScaler: TextScaler.linear(scale.clamp(1.0, 2.0))),
-          child: Center(
-            // Phone-width column on desktop browsers, full width on phones.
-            child: ConstrainedBox(constraints: BoxConstraints(maxWidth: 480), child: child),
-          ),
+          // Wide web uses the whole window; elsewhere a phone-width column.
+          child: kIsWeb && mq.size.width >= 900
+              ? BadgeWatcher(navigatorKey: rootNavigatorKey, child: child ?? SizedBox())
+              : Center(
+                  child: ConstrainedBox(
+                    constraints: BoxConstraints(maxWidth: 480),
+                    child: BadgeWatcher(navigatorKey: rootNavigatorKey, child: child ?? SizedBox()),
+                  ),
+                ),
         );
       },
     );

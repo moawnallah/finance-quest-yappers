@@ -43,6 +43,53 @@
 
   <title>CrocoCash</title>
   <link rel="manifest" href="manifest.json">
+  <!-- Mermaid (pinned) draws the tutor's charts and diagrams. crocoMermaid.toPng
+       parses the code first (throws on invalid syntax, so the app can ask the
+       tutor to repair it), renders it with plain-text labels, and returns a PNG
+       so Flutter can show it as an image. -->
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@11.4.1/dist/mermaid.min.js"></script>
+  <script>
+    window.crocoMermaid = {
+      toPng: async function (code, dark) {
+        mermaid.initialize({
+          startOnLoad: false,
+          securityLevel: 'strict',
+          theme: 'base',
+          htmlLabels: false,
+          flowchart: { htmlLabels: false },
+          themeVariables: dark
+            ? { background: '#1D1D1D', primaryColor: '#26381F', primaryTextColor: '#F1F5EF', primaryBorderColor: '#8CDE6E',
+                lineColor: '#8CDE6E', textColor: '#F1F5EF', pie1: '#8CDE6E', pie2: '#3FAE3A', pie3: '#0E8430', pie4: '#B8EEA5', pie5: '#56973E',
+                xyChart: { backgroundColor: '#1D1D1D', titleColor: '#F1F5EF', xAxisLabelColor: '#D5E0D1', yAxisLabelColor: '#D5E0D1',
+                           xAxisLineColor: '#7E8F7A', yAxisLineColor: '#7E8F7A', plotColorPalette: '#8CDE6E, #3FAE3A' } }
+            : { background: '#FFFFFF', primaryColor: '#E4F8DB', primaryTextColor: '#102A16', primaryBorderColor: '#0E8430',
+                lineColor: '#0E8430', textColor: '#102A16', pie1: '#0E8430', pie2: '#3FAE3A', pie3: '#8DE46D', pie4: '#B8EEA5', pie5: '#56973E',
+                xyChart: { backgroundColor: '#FFFFFF', titleColor: '#102A16', plotColorPalette: '#0E8430, #8DE46D' } }
+        });
+        await mermaid.parse(code);
+        const id = 'croco' + Date.now() + Math.floor(Math.random() * 1000);
+        let { svg } = await mermaid.render(id, code);
+        // Give the SVG a fixed size from its viewBox so it rasterises crisply.
+        const vb = /viewBox="([\d.\-]+) ([\d.\-]+) ([\d.]+) ([\d.]+)"/.exec(svg);
+        // Widen the viewBox by a margin so edge labels (like the last year) are not cut off.
+        const pad = 24;
+        if (vb) svg = svg.replace(vb[0], 'viewBox="' + (+vb[1] - pad) + ' ' + (+vb[2] - pad) + ' ' + (+vb[3] + 2 * pad) + ' ' + (+vb[4] + 2 * pad) + '"');
+        const w = vb ? Math.ceil(+vb[3] + 2 * pad) : 800, h = vb ? Math.ceil(+vb[4] + 2 * pad) : 500;
+        svg = svg.replace(/<svg([^>]*?)\swidth="[^"]*"/, '<svg$1').replace('<svg', '<svg width="' + w + '" height="' + h + '"');
+        const url = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
+        const img = new Image();
+        await new Promise(function (ok, fail) { img.onload = ok; img.onerror = function () { fail(new Error('could not draw the diagram')); }; img.src = url; });
+        const scale = 2, c = document.createElement('canvas');
+        c.width = w * scale; c.height = h * scale;
+        const ctx = c.getContext('2d');
+        ctx.fillStyle = dark ? '#1D1D1D' : '#FFFFFF';
+        ctx.fillRect(0, 0, c.width, c.height);
+        ctx.scale(scale, scale);
+        ctx.drawImage(img, 0, 0, w, h);
+        return c.toDataURL('image/png').split(',')[1];
+      }
+    };
+  </script>
 </head>
 <body>
   <!--

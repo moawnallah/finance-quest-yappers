@@ -28,8 +28,8 @@ def test_onboarding_gives_the_demo_path_and_logs_events(client, user):
     r = client.post("/onboarding", headers=user, json=YOUNG)
     assert r.status_code == 200
     assert [p["node"] for p in r.json()["path"]] == ["S1", "I1", "I2", "I4", "P1"]
-    events = client.get("/admin/reco-events", headers=ADMIN).json()
-    assert any(e["event_type"] == "path_issued" and e["path"][0] == "S1" for e in events)
+    events = client.get("/admin/reco-events", headers=ADMIN).json()["items"]   # Mo's route
+    assert any(e["type"] == "path_issued" and e["path"][0] == "S1" for e in events)
 
 
 def test_hard_task_view_hides_the_solution(client, user):
@@ -123,8 +123,8 @@ def test_demo_not_ready_then_choose_and_finish(client, user):
     end = client.post("/paths/finish", headers=user, json={"path_id": d["closest"], "progress": "somewhat",
                                                             "confidence": {"S1": 4}, "next_goal": "keep_learning"}).json()
     assert end["other_path"]["id"] != d["closest"] and end["feedback"]["optional"] is True
-    events = client.get("/admin/reco-events", headers=ADMIN).json()
-    assert {"path_chosen", "path_finished", "demo_match"} <= {e["event_type"] for e in events}
+    events = client.get("/admin/reco-events", params={"limit": 500}, headers=ADMIN).json()["items"]
+    assert {"path_chosen", "path_finished", "demo_match"} <= {e["type"] for e in events}
 
 
 def test_client_insights_are_aggregate_only(client):

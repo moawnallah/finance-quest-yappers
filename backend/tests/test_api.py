@@ -110,3 +110,47 @@ def test_leaderboard(client, auth):
 
 def test_meta_lists_badges(client):
     assert "survived_2008" in client.get("/meta").json()["badges"]
+
+
+def test_admin_monitoring_endpoints(client, auth):
+    """Admin views need the key in the header; LLM calls come back with masked text and pseudonymous users."""
+    for path in ("/admin/summary", "/admin/events", "/admin/llm-events", "/admin/reco-events"):
+        assert client.get(path).status_code == 403
+        assert client.get(path, headers={"X-Admin-Key": "wrong"}).status_code == 403
+    key = {"X-Admin-Key": "test-admin-key"}
+    from app.admin import log_llm_event, log_reco_event
+    from app.db import SessionLocal
+    with SessionLocal() as db:
+        log_llm_event(db, None, mode="explain_concept", intent="question", model_role="tutor_small",
+                      model="ollama/gemma4:12b", latency_ms=1200, checks_failed=[], fallback_used=False,
+                      flagged_for_review=False, prompt_masked="What is diversification?", answer_masked="Spreading money...")
+        log_reco_event(db, None, "path_issued", router_version="v1", path=["S1", "I1"])
+        db.commit()
+    s = client.get("/admin/summary", headers=key).json()
+    assert s["llm_calls"] >= 1 and s["reco_events"] >= 1 and s["users"] >= 1
+    items = client.get("/admin/llm-events", headers=key).json()["items"]
+    assert items[0]["prompt"] == "What is diversification?" and items[0]["model"] == "ollama/gemma4:12b"
+    ev = client.get("/admin/events", headers=key).json()
+    assert ev["items"] and all(len(i["user"] or "x" * 10) == 10 for i in ev["items"])  # pseudonymous ids only
+    assert client.get("/admin/reco-events", headers=key).json()["items"][0]["path"] == ["S1", "I1"]
+
+
+def test_tutor_falls_back_and_cleans_diagrams(client, auth, monkeypatch):
+    """No model reachable: the stored explanation comes back and the call is logged.
+    With a (fake) model: unsafe or non-Mermaid diagrams are dropped, valid ones pass."""
+    from app import tutor_api
+    monkeypatch.setattr(tutor_api, "OLLAMA_API_BASE", "http://127.0.0.1:9")  # nothing listens here
+    ctx = {"question": "What is an emergency fund for?", "explanation": "Money kept for surprises."}
+    r = client.post("/tutor", headers=auth, json={"message": "Why was I wrong?", "context": ctx}).json()
+    assert r["fallback"] is True and r["text"] == "Money kept for surprises." and r["mermaid"] is None
+
+    good = "xychart-beta\n    x-axis [2026, 2027]\n    line [1000, 1050]"
+    monkeypatch.setattr(tutor_api, "call_model", lambda m: ({"text": "Here it is.", "mermaid": good}, 10, 5, 5))
+    r = client.post("/tutor", headers=auth, json={"message": "Draw a line chart of compound growth"}).json()
+    assert r["mermaid"] == good and r["fallback"] is False
+    monkeypatch.setattr(tutor_api, "call_model", lambda m: ({"text": "x", "mermaid": "flowchart TD\n A --> B\n click A call evil()"}, 10, 5, 5))
+    assert client.post("/tutor", headers=auth, json={"message": "Draw a diagram"}).json()["mermaid"] is None
+    key = {"X-Admin-Key": "test-admin-key"}
+    items = client.get("/admin/llm-events", headers=key).json()["items"]
+    assert any("diagram_rejected" in i["checks_failed"] for i in items)
+    assert tutor_api.mask("mail me at a.b@x.pl or +48 600 700 800") == "mail me at [email] or [phone]"

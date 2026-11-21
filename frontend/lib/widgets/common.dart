@@ -1,8 +1,10 @@
 import 'dart:math' as math;
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../data/app_state.dart';
+import '../data/sfx.dart';
 
 // Palette from the Figma frames (docs/design/Lightmode.pdf and Darkmode.pdf):
 // greens on white in light mode, greens on near-black in dark mode.
@@ -48,6 +50,20 @@ Color get kNavBand => _p(0xFFB8EEA5, 0xFF47673C);
 Color riskColor(int risk) => [
       Color(0xFF1F7A55), Color(0xFF3D8B5E), Color(0xFF8A7A1E), Color(0xFFB8551A), Color(0xFF7F1D1D)
     ][(risk - 1).clamp(0, 4)];
+
+/// Web on a wide screen (desktop browser): use the whole window. Phones and
+/// narrow windows keep the phone layout.
+bool isWideWeb(BuildContext context) => kIsWeb && MediaQuery.sizeOf(context).width >= 900;
+
+/// Centres a page in a readable column on wide web; no change on phones.
+class PageWidth extends StatelessWidget {
+  final Widget child;
+  final double max;
+  PageWidth({super.key, required this.child, this.max = 860});
+  @override
+  Widget build(BuildContext context) =>
+      isWideWeb(context) ? Center(child: ConstrainedBox(constraints: BoxConstraints(maxWidth: max), child: child)) : child;
+}
 
 /// Top header shown on every main screen: current level with progress to the
 /// next one, streak and Scales on the left, the user's avatar on the right
@@ -96,6 +112,8 @@ class StatsBar extends StatelessWidget implements PreferredSizeWidget {
           SizedBox(width: 2),
         ],
         Expanded(
+          child: GestureDetector(
+          onTap: () => GoRouter.of(context).go('/progress'),
           child: Container(
             padding: EdgeInsets.fromLTRB(14, 8, 12, 8),
             decoration: BoxDecoration(
@@ -134,6 +152,7 @@ class StatsBar extends StatelessWidget implements PreferredSizeWidget {
               SizedBox(height: 2),
               Text(next == null ? 'Top level' : '${next.minXp - s.xp} Scales to ${next.name}', style: TextStyle(fontSize: 10, color: kMuted)),
             ]),
+          ),
           ),
         ),
         SizedBox(width: 12),
@@ -175,17 +194,64 @@ class StatsBar extends StatelessWidget implements PreferredSizeWidget {
 void showSettingsSheet(BuildContext context) {
   showModalBottomSheet(
     context: context,
-    showDragHandle: true,
     isScrollControlled: true,
-    backgroundColor: kBg,
+    // The sheet paints its own background (below) so it follows a theme switch
+    // made from inside the sheet; a fixed backgroundColor would stay stale.
+    backgroundColor: Colors.transparent,
     builder: (ctx) => Consumer<AppState>(builder: (ctx, s, _) {
       final p = s.profile;
-      return SafeArea(
+      return AnimatedContainer(
+        duration: Duration(milliseconds: 200),
+        decoration: BoxDecoration(color: kBg, borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+        child: SafeArea(
         child: Padding(
-          padding: EdgeInsets.fromLTRB(20, 0, 20, 20),
+          padding: EdgeInsets.fromLTRB(20, 10, 20, 20),
           child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text(p.name, style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: kInk)),
-            Text('Goal: ${p.goal} · ${p.horizonYears} years', style: TextStyle(color: kMuted)),
+            Center(child: Container(width: 36, height: 4, margin: EdgeInsets.only(bottom: 14), decoration: BoxDecoration(color: kBorder, borderRadius: BorderRadius.circular(2)))),
+            // Account: name (editable), how the user signed in, sign out.
+            Row(children: [
+              CircleAvatar(
+                radius: 24,
+                backgroundColor: kPrimarySoft,
+                child: Text(p.name.isEmpty ? '?' : p.name[0].toUpperCase(),
+                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: kPrimaryText)),
+              ),
+              SizedBox(width: 12),
+              Expanded(
+                child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                  Row(children: [
+                    Flexible(child: Text(p.name, overflow: TextOverflow.ellipsis, style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: kInk))),
+                    IconButton(
+                      tooltip: 'Edit name',
+                      visualDensity: VisualDensity.compact,
+                      icon: Icon(Icons.edit_outlined, size: 18, color: kPrimaryText),
+                      onPressed: () => _editName(ctx, s),
+                    ),
+                  ]),
+                  Text(
+                    s.email ?? switch (s.signInMethod) { 'google' => 'Signed in with Google (demo)', 'guest' => 'Guest, not signed in', _ => 'Not signed in' },
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(color: kMuted),
+                  ),
+                ]),
+              ),
+            ]),
+            SizedBox(height: 6),
+            Text('Goal: ${p.goal} · ${p.horizonYears} years', style: TextStyle(color: kMuted, fontSize: 13)),
+            if (s.isAdmin) ...[
+              SizedBox(height: 10),
+              ListTile(
+                contentPadding: EdgeInsets.zero,
+                leading: Icon(Icons.admin_panel_settings_outlined, color: kPrimaryText),
+                title: Text('Admin panel'),
+                subtitle: Text('Logs, events and tutor calls'),
+                trailing: Icon(Icons.chevron_right),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  GoRouter.of(context).push('/admin');
+                },
+              ),
+            ],
             SizedBox(height: 16),
             Text('Appearance', style: TextStyle(fontWeight: FontWeight.w700, color: kInk)),
             SizedBox(height: 8),
@@ -200,17 +266,53 @@ void showSettingsSheet(BuildContext context) {
               onSelectionChanged: (v) => s.setThemeMode(v.first),
             ),
             SizedBox(height: 12),
+            SwitchListTile(contentPadding: EdgeInsets.zero, title: Text('Sound effects'), value: s.soundOn, onChanged: s.setSound),
             SwitchListTile(contentPadding: EdgeInsets.zero, title: Text('Larger text'), value: s.largeText, onChanged: s.setLargeText),
             SwitchListTile(contentPadding: EdgeInsets.zero, title: Text('List instead of the wheel'), value: s.listView, onChanged: s.setListView),
             SizedBox(height: 8),
             Text('Daily goal (Scales)', style: TextStyle(fontWeight: FontWeight.w700, color: kInk)),
             SizedBox(height: 8),
             DailyGoalPicker(),
+            SizedBox(height: 16),
+            OutlinedButton.icon(
+              icon: Icon(Icons.logout, color: kRed),
+              label: Text(s.guest ? 'Leave guest mode' : 'Sign out', style: TextStyle(color: kRed)),
+              style: OutlinedButton.styleFrom(minimumSize: Size.fromHeight(48), side: BorderSide(color: kRed.withValues(alpha: 0.5))),
+              onPressed: () {
+                Navigator.pop(ctx);
+                s.signOut();
+                GoRouter.of(context).go('/');
+              },
+            ),
           ]),
+        ),
         ),
       );
     }),
   );
+}
+
+/// Edit the display name (shown in the header, the league and the tutor).
+Future<void> _editName(BuildContext ctx, AppState s) async {
+  final c = TextEditingController(text: s.profile.name);
+  final name = await showDialog<String>(
+    context: ctx,
+    builder: (d) => AlertDialog(
+      title: Text('Your name'),
+      content: TextField(
+        controller: c,
+        autofocus: true,
+        maxLength: 30,
+        decoration: InputDecoration(labelText: 'Name shown in the app'),
+        onSubmitted: (v) => Navigator.pop(d, v),
+      ),
+      actions: [
+        TextButton(onPressed: () => Navigator.pop(d), child: Text('Cancel')),
+        FilledButton(onPressed: () => Navigator.pop(d, c.text), child: Text('Save')),
+      ],
+    ),
+  );
+  if (name != null) s.rename(name);
 }
 
 /// Daily goal choice in Scales (used in settings and after the quick check).
@@ -390,10 +492,13 @@ class Panel extends StatelessWidget {
 /// (Gemini, education only, labelled as AI); here it shows the stored "why".
 class TutorBubble extends StatelessWidget {
   final String text;
-  TutorBubble({super.key, required this.text});
+  final VoidCallback? onAsk; // opens the tutor chat about this question
+  TutorBubble({super.key, required this.text, this.onAsk});
 
   @override
-  Widget build(BuildContext context) => Panel(
+  Widget build(BuildContext context) => onAsk == null ? _panel() : InkWell(borderRadius: BorderRadius.circular(16), onTap: onAsk, child: _panel());
+
+  Widget _panel() => Panel(
         border: kTutorBorder,
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           Row(children: [
@@ -405,6 +510,16 @@ class TutorBubble extends StatelessWidget {
           ]),
           SizedBox(height: 6),
           Text(text, style: TextStyle(height: 1.45, color: kBody)),
+          if (onAsk != null) ...[
+            SizedBox(height: 10),
+            Row(children: [
+              Icon(Icons.chat_bubble_outline, size: 16, color: kPrimaryText),
+              SizedBox(width: 6),
+              Text('Ask the tutor about this', style: TextStyle(fontWeight: FontWeight.w700, color: kPrimaryText)),
+              Spacer(),
+              Icon(Icons.chevron_right, color: kPrimaryText),
+            ]),
+          ],
         ]),
       );
 }
@@ -433,4 +548,82 @@ class _GooglePainter extends CustomPainter {
   }
   @override
   bool shouldRepaint(covariant CustomPainter old) => false;
+}
+
+// ---- Badges: one icon and colour per badge, and a pop-up when one is earned.
+const badgeIcons = {
+  'first_steps': Icons.flag_rounded,
+  'placement': Icons.explore_rounded,
+  'goal': Icons.track_changes_rounded,
+};
+const badgeColors = {
+  'first_steps': Color(0xFF0E8430),
+  'placement': Color(0xFF2E6FD8),
+  'goal': Color(0xFFE08A00),
+};
+
+class BadgeMedal extends StatelessWidget {
+  final String id;
+  final bool earned;
+  final double size;
+  BadgeMedal({super.key, required this.id, this.earned = true, this.size = 44});
+  @override
+  Widget build(BuildContext context) => Container(
+        width: size, height: size,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          color: earned ? badgeColors[id] : kLine,
+          border: Border.all(color: earned ? Colors.white : kBorder, width: 2),
+          boxShadow: earned ? [BoxShadow(color: (badgeColors[id] ?? kPrimary).withValues(alpha: 0.35), blurRadius: 8)] : null,
+        ),
+        child: Icon(badgeIcons[id] ?? Icons.emoji_events, size: size * 0.52, color: earned ? Colors.white : kFaint),
+      );
+}
+
+/// Shows "Badge earned" whenever AppState queues one. Lives above the router
+/// (MaterialApp builder) and uses the root navigator's context.
+class BadgeWatcher extends StatefulWidget {
+  final Widget child;
+  final GlobalKey<NavigatorState> navigatorKey;
+  BadgeWatcher({super.key, required this.child, required this.navigatorKey});
+  @override
+  State<BadgeWatcher> createState() => _BadgeWatcherState();
+}
+
+class _BadgeWatcherState extends State<BadgeWatcher> {
+  bool _showing = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final s = context.watch<AppState>();
+    final id = s.pendingBadge;
+    if (id != null && !_showing) {
+      _showing = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) async {
+        final ctx = widget.navigatorKey.currentContext;
+        s.clearPendingBadge();
+        if (ctx != null) {
+          Sfx.badge();
+          final b = badgeDefs.firstWhere((x) => x.id == id);
+          await showDialog(
+            context: ctx,
+            builder: (d) => AlertDialog(
+              title: Text('Badge earned', textAlign: TextAlign.center),
+              content: Column(mainAxisSize: MainAxisSize.min, children: [
+                BadgeMedal(id: id, size: 84),
+                SizedBox(height: 14),
+                Text(b.title, style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: kInk)),
+                SizedBox(height: 4),
+                Text(b.rule, textAlign: TextAlign.center, style: TextStyle(color: kMuted)),
+              ]),
+              actionsAlignment: MainAxisAlignment.center,
+              actions: [FilledButton(onPressed: () => Navigator.pop(d), child: Text('Nice'))],
+            ),
+          );
+        }
+        _showing = false;
+      });
+    }
+    return widget.child;
+  }
 }

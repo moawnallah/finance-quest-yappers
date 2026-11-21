@@ -101,7 +101,7 @@ class _PlacementScreenState extends State<PlacementScreen> {
     final bandLabel = score >= 4 ? '4 or 5 correct' : score >= 2 ? '2 or 3 correct' : '0 or 1 correct';
     final b = Map<String, dynamic>.from(s.bands[band] ?? {});
     final before = s.profile.placementScore;
-    final focus = s.focusSlices.map((k) => s.roadmap!.slice(k).label).toList();
+    final focus = s.focusSlices.map((k) => panelLabels[k] ?? k).toList();
     return Scaffold(
       appBar: AppBar(title: Text(widget.retest ? 'Your progress' : 'Your starting point')),
       body: ListView(padding: EdgeInsets.all(20), children: [
@@ -136,7 +136,7 @@ class _PlacementScreenState extends State<PlacementScreen> {
             child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
               Text('Your focus on the wheel', style: TextStyle(fontWeight: FontWeight.w700, color: kPrimaryText)),
               SizedBox(height: 4),
-              Text('The questions you missed point to: ${focus.join(', ')}. These get a blue marker on the wheel.',
+              Text('The questions you missed point to: ${focus.join(', ')}. Their roadmaps are marked as your focus.',
                   style: TextStyle(color: kBody)),
             ]),
           ),

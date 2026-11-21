@@ -53,6 +53,13 @@ def _attempts(db: Session, user_id: str | None = None) -> list[Attempt]:
     return list(db.scalars(q))
 
 
+def _llm_rows(db: Session) -> list[dict]:
+    """Mo's llm_events rows as dicts for analytics.tutor_overview (no text)."""
+    return [{"ts": e.ts, "intent": e.intent, "checks_failed": e.checks_failed or [], "fallback_used": e.fallback_used,
+             "flagged_for_review": e.flagged_for_review, "latency_ms": e.latency_ms, "model": e.model}
+            for e in db.scalars(select(LlmEvent))]
+
+
 def _reports(db: Session) -> list[dict]:
     return [{"target_id": f.target_id, "kind": f.kind, "status": f.status} for f in db.scalars(select(Feedback))]
 
@@ -86,9 +93,11 @@ def onboarding(body: SurveyIn, user: User = Depends(current_user), db: Session =
     row.survey, row.result, row.router_version = survey, result, result["router_version"]
     row.created_at = datetime.now(timezone.utc)
     db.add(row)
-    for e in events:
+    for e in events:  # Mo's reco_events columns (app/models.py); the reason text goes in reason_term
         db.add(RecoEvent(user_id=user.id, router_version=e["router_version"], event_type=e["event_type"],
-                         node=e.get("node"), payload={k: v for k, v in e.items() if k not in ("ts", "user_pseudo_id")}))
+                         node=e.get("node"), predicted_m=e.get("predicted_m"), need=e.get("need"),
+                         overconfidence_term=e.get("overconfidence_term"), priority=e.get("priority"),
+                         reason_term=(e.get("reason_term") or "")[:200] or None, path=e.get("path")))
     db.add(RecoEvent(user_id=user.id, router_version=result["router_version"], event_type="demo_match",
                      payload={"status": result["demo"]["status"], "path_id": result["demo"]["path_id"],
                               "recommended": result["demo"]["recommended"]}))
@@ -286,7 +295,7 @@ def overview(db: Session = Depends(get_db)):
     day = datetime.now(timezone.utc) - timedelta(days=1)
     rows = _rows(_attempts(db))
     items = analytics.item_stats([a for a in rows if a["level"] in ("easy", "medium")])
-    llm = [e.payload | {"ts": e.ts} for e in db.scalars(select(LlmEvent))]
+    llm = _llm_rows(db)
     tutor = analytics.tutor_overview(llm) if llm else None
     alerts = [{"kind": "report", **a} for a in analytics.report_alerts(_reports(db))]
     alerts += [{"kind": "item", "target_id": i["task_id"], "flags": i["flags"], "level": "amber"} for i in items if i["flags"]]
@@ -326,16 +335,11 @@ def admin_calibration(db: Session = Depends(get_db)):
 @router.get("/admin/advice-watch", dependencies=admin)
 def advice_watch(db: Session = Depends(get_db)):
     """Tutor overview (view D); empty until the tutor writes llm_events."""
-    llm = [e.payload | {"ts": e.ts} for e in db.scalars(select(LlmEvent))]
+    llm = _llm_rows(db)
     return analytics.tutor_overview(llm) if llm else {"n": 0}
 
 
-@router.get("/admin/reco-events", dependencies=admin)
-def reco_events(limit: int = 200, db: Session = Depends(get_db)):
-    """The latest router and recommender events (view E source)."""
-    q = select(RecoEvent).order_by(RecoEvent.id.desc()).limit(min(limit, 1000))
-    return [{"ts": e.ts.isoformat(), "user_id": e.user_id, "router_version": e.router_version,
-             "event_type": e.event_type, "node": e.node, **e.payload} for e in db.scalars(q)]
+# GET /admin/reco-events is Mo's route (app/admin.py).
 
 
 @router.get("/admin/client-insights", dependencies=admin)

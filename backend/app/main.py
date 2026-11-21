@@ -21,10 +21,14 @@ from app.models import (Answer, BenchmarkAnswer, BenchmarkQuestion, BenchmarkSta
 from app import schemas as s
 from app.insights_api import router as insights_router
 from app.tasks_api import router as skills_router
+from app.admin import router as admin_router
+from app.tutor_api import router as tutor_router
 
 app = FastAPI(title="Finance Quest API", version="0.1.0")
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
 app.include_router(skills_router)
+app.include_router(admin_router)
+app.include_router(tutor_router)
 app.include_router(insights_router)
 
 if ON_VERCEL and DATABASE_URL.startswith("sqlite:////tmp/"):
