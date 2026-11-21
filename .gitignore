@@ -16,3 +16,4 @@ backend/ml/eval/runs/
 *.db
 *.db-wal
 *.db-shm
+backend/ml/experiments/basal_shadow/runs/
