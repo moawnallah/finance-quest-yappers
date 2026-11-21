@@ -69,7 +69,7 @@ class _TimeMachineScreenState extends State<TimeMachineScreen> {
             color: kPrimarySoft,
             border: kPrimarySoft,
             child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              MascotPlaceholder(size: 56),
+              MascotPlaceholder(size: 72, pose: 'think'),
               SizedBox(width: 12),
               Expanded(
                 child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [

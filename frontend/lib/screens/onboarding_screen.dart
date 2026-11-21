@@ -159,17 +159,18 @@ class _WelcomeState extends State<_Welcome> {
               child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
                 SizedBox(height: 8),
                 Row(children: [
-                  Container(
-                    width: 40, height: 40,
-                    decoration: BoxDecoration(color: kPrimary, borderRadius: BorderRadius.circular(11)),
-                    alignment: Alignment.bottomCenter,
-                    child: Padding(padding: EdgeInsets.only(bottom: 9), child: CrocoEyes(width: 28)),
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(11),
+                    child: Image.asset('assets/logo.png', width: 44, height: 44, semanticLabel: 'CrocoCash logo'),
                   ),
                   SizedBox(width: 10),
                   Text('CrocoCash', style: GoogleFonts.lora(fontSize: 22, fontWeight: FontWeight.w700, color: kInk)),
                 ]),
                 Spacer(),
-                Text('Invest with confidence.', style: GoogleFonts.lora(fontSize: 32, fontWeight: FontWeight.w700, color: kInk, height: 1.1)),
+Row(crossAxisAlignment: CrossAxisAlignment.end, children: [
+                  Expanded(child: Text('Invest with confidence.', style: GoogleFonts.lora(fontSize: 32, fontWeight: FontWeight.w700, color: kInk, height: 1.1))),
+                  MascotPlaceholder(size: 96, pose: 'wave'),
+                ]),
                 SizedBox(height: 8),
                 Text('Short, practical lessons on investment types, for every stage of life.',
                     style: TextStyle(fontSize: 16, color: kMuted, height: 1.4)),

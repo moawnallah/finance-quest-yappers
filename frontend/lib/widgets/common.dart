@@ -122,6 +122,10 @@ class StatsBar extends StatelessWidget implements PreferredSizeWidget {
           IconButton(icon: Icon(Icons.arrow_back), tooltip: 'Back', onPressed: () => nav.maybePop()),
           SizedBox(width: 2),
         ],
+        if (isWideWeb(context)) ...[
+          _TopNav(),
+          SizedBox(width: 12),
+        ],
         Expanded(
           child: Semantics(
           container: true,
@@ -172,10 +176,6 @@ class StatsBar extends StatelessWidget implements PreferredSizeWidget {
           ),
           ),
         ),
-        if (isWideWeb(context)) ...[
-          SizedBox(width: 12),
-          _TopNav(),
-        ],
         SizedBox(width: 12),
         Semantics(
           container: true, // its own node: otherwise merged into the header and unreachable for screen readers
@@ -533,26 +533,23 @@ class _EyesPainter extends CustomPainter {
 
 /// Placeholder for the future mascot, so we can see how much space it takes.
 /// A dashed outline with a simple face; swap the inside for the real artwork.
+/// The CrocoCash mascot (assets/mascot, drawn by docs/mascot/make_mascot.py).
+/// Poses: wave (hello), teach (explaining), think, cheer (success), oops (mistake), read.
 class MascotPlaceholder extends StatelessWidget {
   final double size;
   final String? say; // optional speech bubble
-  MascotPlaceholder({super.key, this.size = 64, this.say});
+  final String pose;
+  MascotPlaceholder({super.key, this.size = 64, this.say, this.pose = 'wave'});
+
+  static const poses = ['wave', 'teach', 'think', 'cheer', 'oops', 'read'];
 
   @override
   Widget build(BuildContext context) {
     final face = Semantics(
-      label: 'Mascot placeholder',
-      child: CustomPaint(
-        painter: _DashedRRect(kWheelRim),
-        child: Container(
-          width: size, height: size,
-          decoration: BoxDecoration(color: kPrimarySoft, borderRadius: BorderRadius.circular(size * 0.3)),
-          child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-            Icon(Icons.cruelty_free_outlined, size: size * 0.5, color: kPrimaryText),
-            if (size >= 56) Text('mascot', style: TextStyle(fontSize: (size * 0.13).clamp(8, 13).toDouble(), color: kMuted)),
-          ]),
-        ),
-      ),
+      label: 'CrocoCash mascot',
+      image: true,
+      child: Image.asset('assets/mascot/${poses.contains(pose) ? pose : 'wave'}.png',
+          width: size, height: size, fit: BoxFit.contain, filterQuality: FilterQuality.medium),
     );
     if (say == null) return face;
     return Row(crossAxisAlignment: CrossAxisAlignment.center, children: [
@@ -627,7 +624,7 @@ class TutorBubble extends StatelessWidget {
         border: kTutorBorder,
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           Row(children: [
-            MascotPlaceholder(size: 36),
+            MascotPlaceholder(size: 40, pose: 'teach'),
             SizedBox(width: 8),
             Text('AI tutor', style: TextStyle(fontWeight: FontWeight.w700, color: kPrimaryText)),
             Spacer(),

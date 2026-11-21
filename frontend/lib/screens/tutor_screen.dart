@@ -462,7 +462,7 @@ class _TutorScreenState extends State<TutorScreen> {
   Widget _bubble(TutorMessage m) => Align(
         alignment: m.mine ? Alignment.centerRight : Alignment.centerLeft,
         child: Row(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.end, children: [
-          if (!m.mine) ...[MascotPlaceholder(size: 28), SizedBox(width: 6)],
+          if (!m.mine) ...[MascotPlaceholder(size: 36, pose: 'teach'), SizedBox(width: 6)],
           Flexible(
             child: Container(
               margin: EdgeInsets.only(bottom: 10),
