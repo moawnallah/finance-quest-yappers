@@ -210,6 +210,7 @@ class SkillSummary(BaseModel):
 class SkillDetail(BaseModel):
     node: dict[str, Any] = Field(description="The easy engine's node view: cards (with resolved links) and items, without answers.")
     medium: list[dict[str, Any]] = Field(description="Medium task question views for this node, without truth, weights or explanations.")
+    hard: list[dict[str, Any]] = Field(default_factory=list, description="Hard task question views (Blockly blocks, toolbox, starter), without the reference solution.")
     status: SkillStatus = Field(description="This user's completion of the node.")
 
 
@@ -220,12 +221,12 @@ class DrawnTestOut(BaseModel):
 
 
 class TaskOut(BaseModel):
-    level: Literal["easy", "medium"] = Field(description="Which engine renders it: 'easy' item or 'medium' task.")
+    level: Literal["easy", "medium", "hard"] = Field(description="Which engine renders it: 'easy' item, 'medium' task or 'hard' block task.")
     task: dict[str, Any] = Field(description="The question view, without answers, truth or weights.")
 
 
 class AttemptIn(BaseModel):
-    response: Any = Field(description="Easy: option index (single, reflection), list of indexes (multi), boolean (true_false) or number (numeric). Medium: the direction, e.g. 'down'.")
+    response: Any = Field(description="Easy: option index (single, reflection), list of indexes (multi), boolean (true_false) or number (numeric). Medium: the direction, e.g. 'down'. Hard: the saved Blockly workspace JSON, or the program JSON.")
     reasons: list[str] | None = Field(default=None, description="Medium only: picked reason box ids, between pick.min and pick.max.")
     confidence: int | None = Field(default=None, ge=1, le=5, description="'How sure are you?' 1-5. Ask on every scored item; stored, never scored.")
     context: AttemptContext = Field(default="practice", description="'practice' for normal play; 'prerequisite' or 'test_out' when answering a drawn test, with for_node.")
@@ -239,8 +240,8 @@ class AttemptIn(BaseModel):
 class AttemptOut(BaseModel):
     attempt_id: int = Field(description="Id of the stored attempt.")
     task_id: str = Field(description="Item or task id.")
-    level: Literal["easy", "medium"] = Field(description="Engine that scored it.")
-    score: float | None = Field(description="0-1; null for reflections (not scored).")
+    level: Literal["easy", "medium", "hard"] = Field(description="Engine that scored it.")
+    score: float | None = Field(description="0-1; null for reflections (not scored) and rejected hard programs.")
     score_estimate: float | None = Field(description="Medium estimate part; null for easy items and day-X tasks.")
     score_reasons: float | None = Field(description="Medium reasons part (0-1); null for easy items.")
     confidence: int | None = Field(description="The confidence sent, null for reflections.")
@@ -248,3 +249,6 @@ class AttemptOut(BaseModel):
     reveal: dict[str, Any] = Field(description="What to show after answering: the answer and 'why' (easy), or outcome, per-box explanations and sources (medium).")
     status: SkillStatus = Field(description="Completion of the node this attempt counts toward, after this attempt.")
     node_completed: bool = Field(description="True if this attempt completed the node; show a completion moment.")
+    accepted: bool | None = Field(default=None, description="Hard only: all obligatory tests passed.")
+    points: int | None = Field(default=None, description="Hard only: resilience points 51-100 when accepted.")
+    growth_index: float | None = Field(default=None, description="Hard only: growth vs the reference solution = 100.")

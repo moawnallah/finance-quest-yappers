@@ -10,7 +10,8 @@ Purpose: agree what the admin panel and the profile show, where each number
 comes from, and what we must log now so that a "what next" model can be
 trained later.
 
-Status: decisions taken 2026-11-21 (end of file); nothing built yet. The
+Status: decisions taken 2026-11-21 (end of file). Built on branch
+`admin-panel` (section "API (built)"). Screens are not built yet. The
 existing pieces are named where they exist:
 - Mo's tables: `users`, `profiles`, `attempts`, `events`,
   `benchmark_answers`, `user_badges`;
@@ -339,7 +340,53 @@ growth_index, percentiles), `activity` and `privacy`.
 - **The free-text fields** (feedback, tutor messages) are masked as in the
   tutor, and kept for 30 days.
 
-## The analytics module (to build after review)
+## API (built 2026-11-21, branch `admin-panel`)
+
+Routes are in `backend/app/insights_api.py`; the numbers come from
+`backend/ml/analytics`. Admin routes need the `X-Admin-Key` header.
+
+| Route | For | Returns |
+|---|---|---|
+| `POST /onboarding` | survey screen | knowledge score, band, benchmarks, path, challenges, goal; stores the survey, the result and `reco_events` |
+| `GET /me/summary` | profile | path, goal, challenges, benchmarks, panels with node bands and done flags, calibration (gap, words, Brier, weekly, badge), hard results, activity |
+| `POST /events/node-opened` | every node open | logs `node` and `source` (`recommended`, `self_chosen`, `explore_wheel`, `tutor_link`, `end_of_path`) |
+| `POST /feedback` | "Report a problem", mission rating | stores the report; the text is masked |
+| `GET /study/consent`, `POST /study/join` | hallway test | consent text and version; a session under a random participant id (no name) |
+| `GET /admin/overview` | view A | tiles and alerts (reports red, item flags amber, advice red) |
+| `GET /admin/items` | view B | item and task quality from first attempts; the hard panel (acceptance, most failed test, points histogram, growth, `duration_ms` p50/p95) |
+| `GET /admin/calibration` | view C | weekly confidence vs score overall and by age band; onboarding self-rating vs knowledge score |
+| `GET /admin/advice-watch` | view D | tutor overview with the advice alert (empty until the tutor writes `llm_events`) |
+| `GET /admin/reco-events` | view E | the latest router events |
+| `GET /admin/node-opened` | view I | clicks by source and the self-chosen share |
+| `GET /admin/feedback`, `PATCH /admin/feedback/{id}` | view G | reports with red alerts; status changes are logged |
+| `GET /admin/study`, `DELETE /admin/study/{participant_id}` | view H | paired before/after results; withdrawal deletes everything for that code |
+
+**Hard tasks in the task API:**
+- `GET /tasks/{id}` and `GET /skills/{node}` serve hard tasks, including
+  `question.blockly`.
+- `POST /tasks/{id}/attempts` accepts a Blockly workspace or a program.
+  It returns `accepted`, `points` and `growth_index`, with the test
+  results and story in `reveal.result`.
+- The attempt stores `points`, `growth_index`, `failed_test` and
+  `duration_ms`.
+
+**The challenge rule** is in `node_status`: a passed test-out completes the
+whole node.
+
+**Migration:** `7c1e5a9d2b40` adds the tables and the attempt fields. On
+Vercel the tables are created at start-up, as before.
+
+**Tests:** 8 in `backend/tests/test_insights.py` and 9 in
+`backend/ml/tests/test_analytics.py`.
+
+**Not built yet:**
+- the screens;
+- `POST /tutor` and its `llm_events` writer;
+- the end-of-path screen's `GET /me/next-steps`;
+- the first-attempt rule for completion in `node_status` (Mo's fix 2; the
+  admin metrics already use first attempts).
+
+## The analytics module (built 2026-11-21)
 
 | Function | Input rows | Output | Test |
 |---|---|---|---|
