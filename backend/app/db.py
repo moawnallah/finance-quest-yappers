@@ -7,7 +7,12 @@ from sqlalchemy.orm import DeclarativeBase, Session, sessionmaker
 from app.config import DATABASE_URL
 
 is_sqlite = DATABASE_URL.startswith("sqlite")
-engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False} if is_sqlite else {})
+engine = (
+    create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
+    if is_sqlite
+    # Serverless instances sleep: check each pooled connection before use and keep the pool small.
+    else create_engine(DATABASE_URL, pool_pre_ping=True, pool_size=2, max_overflow=3, pool_recycle=300)
+)
 
 if is_sqlite:
     @event.listens_for(engine, "connect")
