@@ -283,3 +283,49 @@ def test_shadow_sends_the_basal_auth_header(monkeypatch):
     seen.clear()
     shadow.ask({"q": 1}, "http://basal.test")
     assert "authorization" not in seen
+
+
+def test_basal_decides_the_path_and_the_router_is_the_fallback(client, user, monkeypatch):
+    """BASAL_MODE=primary: a confident BASAL answer sets the path; unreachable or unsure falls back to the router."""
+    from sqlalchemy import select
+    from app import path_decider
+    from app.db import SessionLocal
+    from app.models import RecoEvent
+    from router import shadow
+    router_path = [p["node"] for p in client.post("/onboarding", headers=user, json=YOUNG).json()["path"]]
+    monkeypatch.setenv("BASAL_URL", "http://basal.test")
+    monkeypatch.setenv("BASAL_MODE", "primary")
+    path_decider._cache.clear()
+
+    def answers(start, conf):
+        return {"model": "basal-2.0-4.5B", "answers": {f"start_{k}": {"type": "noul", "noul": p, "confidence": conf}
+                                                      for k, p in start.items()}}
+    # BASAL wants F3 and F1 (F1 is a prerequisite of F3, so it goes first) and says no to the router's
+    # first step; that step answers the learner's goal, so it stays.
+    monkeypatch.setattr(shadow, "ask", lambda r, b: (answers({"F1": 0.7, "F3": 0.9, router_path[0]: 0.1}, 0.9), 80))
+    got = [p["node"] for p in client.post("/onboarding", headers=user, json=YOUNG).json()["path"]]
+    assert set(got) == {"F1", "F3", router_path[0]} and got.index("F1") < got.index("F3") and got != router_path
+
+    path_decider._cache.clear()  # unsure: the router decides
+    monkeypatch.setattr(shadow, "ask", lambda r, b: (answers({"F1": 0.7, "F3": 0.9}, 0.4), 80))
+    assert [p["node"] for p in client.post("/onboarding", headers=user, json=YOUNG).json()["path"]] == router_path
+
+    path_decider._cache.clear()  # down: the router decides, onboarding still works
+
+    def boom(r, b):
+        raise TimeoutError("no GPU")
+    monkeypatch.setattr(shadow, "ask", boom)
+    assert [p["node"] for p in client.post("/onboarding", headers=user, json=YOUNG).json()["path"]] == router_path
+    with SessionLocal() as db:
+        rows = [r.payload for r in db.scalars(select(RecoEvent).where(RecoEvent.event_type == "path_decision")
+                                              .order_by(RecoEvent.id.desc()).limit(3))]
+    assert [r["decided_by"] for r in rows] == ["rules", "rules", "basal"]
+    assert rows[0]["fallback"] == "unreachable" and rows[1]["fallback"] == "low_confidence"
+
+
+def test_a_thin_basal_path_is_topped_up_from_the_router():
+    from app.path_decider import basal_path
+    result = {"path": [{"node": "S1", "title": "Emergency fund", "reason": "goal"}, {"node": "F1", "title": "x", "reason": "r"},
+                       {"node": "I2", "title": "y", "reason": "r"}]}
+    got = [p["node"] for p in basal_path(result, [{"node": "S1", "start_p": 0.9}])]
+    assert len(got) == 3 and set(got) == {"S1", "F1", "I2"} and got.index("F1") < got.index("S1")  # F1 is S1's prerequisite

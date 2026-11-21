@@ -29,6 +29,7 @@ if str(ML_DIR) not in sys.path:
 import analytics  # noqa: E402
 import router as onboarding_router  # noqa: E402
 from router import demo, shadow  # noqa: E402
+from app import path_decider  # noqa: E402
 from tutor.rules import mask  # noqa: E402
 
 router = APIRouter(tags=["insights"])
@@ -108,7 +109,10 @@ def onboarding(body: SurveyIn, user=Depends(viewer), db: Session = Depends(get_d
                          node=e.get("node"), predicted_m=e.get("predicted_m"), need=e.get("need"),
                          overconfidence_term=e.get("overconfidence_term"), priority=e.get("priority"),
                          reason_term=(e.get("reason_term") or "")[:200] or None, path=e.get("path")))
-    shadow_row = shadow.shadow(survey, result)  # BASAL in shadow mode: logged only, None unless BASAL_URL is set
+    decision = result.pop("decision", {})
+    if decision.get("mode") == "primary":  # BASAL decided (or the router did, with the reason): one row either way
+        db.add(RecoEvent(user_id=user.id, router_version=result["router_version"], event_type="path_decision", payload=decision))
+    shadow_row = None if decision.get("mode") == "primary" else shadow.shadow(survey, result)  # shadow mode: logged only
     if shadow_row is not None:
         db.add(RecoEvent(user_id=user.id, router_version=result["router_version"], event_type="shadow_decision",
                          payload=shadow_row))
@@ -126,6 +130,8 @@ def _route(body: "SurveyIn", user) -> tuple[dict, dict]:
     if survey["age_band"] == "under_18":  # no buffer or product questions for minors
         survey["buffer"], survey["products"] = None, None
     result = onboarding_router.route(survey, user.id)
+    result, decision = path_decider.decide(survey, result)  # BASAL first when BASAL_MODE=primary, else the router
+    result["decision"] = decision
     result["demo"] = demo.match(result, set(catalog().nodes))
     return survey, result
 
@@ -291,6 +297,7 @@ def _path_view(res: dict, created_at, user, db: Session) -> dict:
         steps.append({"node": k, "title": t.get(k, {}).get("title", k), "panel": t.get(k, {}).get("panel"),
                       "level": t.get(k, {}).get("level"), "reason": reasons.get(k), "live": live,
                       "done": bool(st and st.get("done")), "answered": (st or {}).get("items_answered", 0),
+                      "correct": (st or {}).get("items_correct", 0),
                       "total": (st or {}).get("items_total", 0)})
     nxt = next((x["node"] for x in steps if x["live"] and not x["done"]), None)
     path_id = chosen if source == "chosen" else demo_block.get("path_id") if source == "demo" else (
