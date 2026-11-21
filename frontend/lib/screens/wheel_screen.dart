@@ -246,7 +246,7 @@ class _RoadmapHeader extends StatelessWidget {
             Text(panelLabels[panel] ?? panel, style: GoogleFonts.lora(fontSize: 24, fontWeight: FontWeight.w700, color: kInk, height: 1.1)),
             SizedBox(height: 2),
             Text(panelQuestions[panel] ?? '', maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(fontSize: 13, color: kBody)),
-            Text('$done of ${ks.length} missions done${focus ? ' · your focus' : ''}', style: TextStyle(fontSize: 12, color: kMuted)),
+            Text(ks.isEmpty ? 'Coming soon' : '$done of ${ks.length} missions done${focus ? ' · your focus' : ''}', style: TextStyle(fontSize: 12, color: kMuted)),
           ]),
         ),
         Semantics(
@@ -290,6 +290,19 @@ class _Tree extends StatelessWidget {
   Widget build(BuildContext context) {
     final s = context.watch<AppState>();
     final ks = s.skillsIn(panel);
+    if (ks.isEmpty) {
+      return Padding(
+        padding: EdgeInsets.fromLTRB(32, 40, 32, 48),
+        child: Column(children: [
+          Icon(Icons.construction_rounded, size: 40, color: kFaint),
+          SizedBox(height: 10),
+          Text('Missions for ${panelLabels[panel]} are coming soon.', textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: kInk)),
+          SizedBox(height: 4),
+          Text(panelQuestions[panel] ?? '', textAlign: TextAlign.center, style: TextStyle(color: kMuted)),
+        ]),
+      );
+    }
     final ids = {for (final k in ks) k['id'] as String};
     final byId = {for (final k in ks) k['id'] as String: k};
     List<String> inPanel(Map<String, dynamic> k) => [for (final a in s.knownAfter(k)) if (ids.contains(a)) a];
@@ -697,7 +710,7 @@ class _WheelPainter extends CustomPainter {
       final doneN = ks.where(s.skillDone).length;
       final faceStyle = GoogleFonts.lora(fontSize: r * (isSel ? 0.055 : 0.046), fontWeight: FontWeight.w600, color: kFaceLabel);
       final faceArc = math.min(step, 1.4) * (face - r * 0.12) * 0.9;
-      _arcText(canvas, face - r * 0.11, mid, isSel ? '$doneN/${ks.length} MISSIONS DONE' : '${ks.length} MISSIONS', faceStyle, faceArc);
+      _arcText(canvas, face - r * 0.11, mid, ks.isEmpty ? 'COMING SOON' : isSel ? '$doneN/${ks.length} MISSIONS DONE' : '${ks.length} MISSIONS', faceStyle, faceArc);
       if (p == start) {
         _arcText(canvas, face - r * 0.2, mid, 'START', faceStyle.copyWith(fontSize: r * (isSel ? 0.075 : 0.055), fontWeight: FontWeight.w700), faceArc);
       }

@@ -176,7 +176,10 @@ class AppState extends ChangeNotifier {
     }
   }
 
-  List<String> get panels => [for (final p in panelOrder) if (skills.any((k) => k['panel'] == p)) p];
+  /// All seven skills-tree panels, always shown on the wheel; the ones without
+  /// published skills yet appear as "coming soon".
+  List<String> get panels => skills.isEmpty ? [] : panelOrder;
+  bool panelReady(String p) => skills.any((k) => k['panel'] == p);
   List<Map<String, dynamic>> skillsIn(String panel) => [for (final k in skills) if (k['panel'] == panel) k];
   Map<String, dynamic>? skillById(String id) => skills.where((k) => k['id'] == id).firstOrNull;
 
