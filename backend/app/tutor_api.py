@@ -36,6 +36,7 @@ OLLAMA_API_BASE = os.getenv("OLLAMA_API_BASE", "http://127.0.0.1:11434")
 TUTOR_MODEL = os.getenv("TUTOR_MODEL", "gemma4:12b")
 TUTOR_ENABLED = os.getenv("TUTOR_ENABLED", "true").lower() != "false"
 PROMPT_VERSION = os.getenv("PROMPT_VERSION", "tutor-v1")
+TUTOR_TIMEOUT = float(os.getenv("TUTOR_TIMEOUT", "90"))  # seconds; the first call also loads the model
 SKILL_DIR = Path(__file__).resolve().parent.parent / "ml" / "prompts" / "skills"
 
 VISUAL = re.compile(r"\b(chart|graph|plot|diagram|figure|visuali[sz]e|draw|flow ?chart|pie|timeline|bar|line chart|picture)\b", re.I)
@@ -80,20 +81,34 @@ def clean_mermaid(code: str | None) -> str | None:
     return code
 
 
+def parse_reply(content: str) -> dict:
+    """The model is asked for JSON but some local models can't force it: take the
+    first {...} block, strip ``` fences, and fall back to plain text."""
+    text = re.sub(r"^```(?:json)?\s*|\s*```$", "", content.strip(), flags=re.M)
+    m = re.search(r"\{.*\}", text, re.S)
+    if m:
+        try:
+            d = json.loads(m.group(0))
+            if isinstance(d, dict):
+                return d
+        except json.JSONDecodeError:
+            pass
+    return {"text": text, "mermaid": None}
+
+
 def call_model(messages: list[dict]) -> tuple[dict, int, int, int]:
     """One chat call to Ollama in JSON mode. Returns (parsed, latency_ms, tokens_in, tokens_out)."""
-    body = json.dumps({"model": TUTOR_MODEL, "messages": messages, "stream": False, "format": "json",
-                       "options": {"temperature": 0.3}}).encode()
+    # think=False: Gemma 4 otherwise reasons privately for ~50 s before answering.
+    body = json.dumps({"model": TUTOR_MODEL, "messages": messages, "stream": False, "think": False,
+                       "keep_alive": "30m", "options": {"temperature": 0.3}}).encode()
     req = urllib.request.Request(f"{OLLAMA_API_BASE}/api/chat", data=body, headers={"Content-Type": "application/json"})
     t0 = time.monotonic()
-    with urllib.request.urlopen(req, timeout=60) as r:
+    with urllib.request.urlopen(req, timeout=TUTOR_TIMEOUT) as r:
         out = json.loads(r.read())
     latency = int((time.monotonic() - t0) * 1000)
-    content = out.get("message", {}).get("content", "{}")
-    try:
-        parsed = json.loads(content)
-    except json.JSONDecodeError:
-        parsed = {"text": content, "mermaid": None}
+    if "error" in out:
+        raise OSError(out["error"])
+    parsed = parse_reply(out.get("message", {}).get("content", ""))
     return parsed, latency, out.get("prompt_eval_count") or 0, out.get("eval_count") or 0
 
 
