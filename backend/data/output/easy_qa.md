@@ -1,11 +1,9 @@
 # Easy part of the nodes: QA report
 
-Nodes: 14 · ✅ 0 · ⚠️ 14 · ❌ 0 (❌ nodes are left out of easy.json)
+Nodes: 11 · ✅ 0 · ⚠️ 11 · ❌ 0 (❌ nodes are left out of easy.json)
 
 | | node | cards | items | check items | prerequisite pool |
 |---|---|---|---|---|---|
-| ⚠️ | D1 | 0 | 2 | 2 | 2 |
-| ⚠️ | D3 | 0 | 2 | 2 | 2 |
 | ⚠️ | F1 | 0 | 3 | 2 | - |
 | ⚠️ | F2 | 0 | 3 | 2 | 2 |
 | ⚠️ | F3 | 0 | 3 | 2 | 2 |
@@ -14,16 +12,12 @@ Nodes: 14 · ✅ 0 · ⚠️ 14 · ❌ 0 (❌ nodes are left out of easy.json)
 | ⚠️ | I4 | 2 | 3 | 2 | 2 |
 | ⚠️ | I5 | 4 | 3 | 2 | 4 |
 | ⚠️ | P1 | 3 | 3 | 2 | 4 |
-| ⚠️ | P2 | 3 | 3 | 2 | 4 |
+| ⚠️ | P2 | 3 | 3 | 2 | 2 |
 | ⚠️ | P4 | 3 | 3 | 2 | 2 |
 | ⚠️ | S1 | 4 | 3 | 2 | 2 |
-| ⚠️ | S4 | 0 | 3 | 2 | 2 |
 
-## D1
-- ⚠️ D1: no reviewer yet: the node must not go live
-
-## D3
-- ⚠️ D3: no reviewer yet: the node must not go live
+## Prerequisite graph
+- ⚠️ P2: prerequisite S4 has no node file yet
 
 ## F1
 - ⚠️ F1: no reviewer yet: the node must not go live
@@ -59,6 +53,3 @@ Nodes: 14 · ✅ 0 · ⚠️ 14 · ❌ 0 (❌ nodes are left out of easy.json)
 
 ## S1
 - ⚠️ S1: no reviewer yet: the node must not go live
-
-## S4
-- ⚠️ S4: no reviewer yet: the node must not go live

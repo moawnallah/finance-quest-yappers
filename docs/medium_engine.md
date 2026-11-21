@@ -14,7 +14,7 @@ describes the code in `backend/data/medium/`. Status: 2026-11-20, owner Yurii.
 | Part | Implemented | Later (spec) |
 |---|---|---|
 | Stimulus | `chart` (line) | `table`, `offer`, `text`, `messages` |
-| Response | `direction` (up / down / flat) | `number`, `choice`, `labels` |
+| Response | `direction` (up / down / flat), `choice` (one option; recorded, not scored on day X) | `number`, `labels` |
 | Truth | `none` (day X), `outcome` (the realised direction) | `calculator`, `fixed` |
 | Reasons | weighted boxes, the spec's scoring | - |
 | Variant | `day_x` | `estimate`, `label` (validated, but need the kinds above) |

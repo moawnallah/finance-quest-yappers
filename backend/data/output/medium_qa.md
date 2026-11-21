@@ -4,11 +4,11 @@ Tasks: 2 · ✅ 0 · ⚠️ 2 · ❌ 0 (❌ tasks are left out of medium_tasks.j
 
 | | id | variant | outcome | data |
 |---|---|---|---|---|
-| ⚠️ | d1.m1 | day_x | down (-8 %) | synthetic |
-| ⚠️ | d3.m1 | day_x | up (+0.22 pp) | synthetic |
+| ⚠️ | i2.m1 | day_x |  | GUS, NBP |
+| ⚠️ | p4.m1 | day_x |  | OECD (Main Economic Indicators, dataset DSD_STES@DF_FINMARK) |
 
-## d1.m1 (D1.yaml)
+## i2.m1 (I2.yaml)
 - ⚠️ no reviewer yet: the task must not go live
 
-## d3.m1 (D3.yaml)
+## p4.m1 (P4.yaml)
 - ⚠️ no reviewer yet: the task must not go live

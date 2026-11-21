@@ -1,4 +1,4 @@
-# D3 Macro news: CPI, rate decisions. Items and the medium task so far; cards and the hard task come later.
+# SAMPLE for the engine tests (synthetic yield path); not a demo node. Real content lives in backend/content/nodes.
 # SAMPLE: synthetic yield path; replace with a real series once its licence is cleared.
 node: D3
 panel: DECISIONS

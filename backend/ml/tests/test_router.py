@@ -100,7 +100,7 @@ def test_tree_agrees_with_the_node_files():
 
 from router.demo import finished, match  # noqa: E402
 
-BUILT = {"S1", "I1", "I2", "I4", "I5", "P1", "P2", "P4", "F1", "F2", "F3", "S4", "D1", "D3"}
+BUILT = {"S1", "I1", "I2", "I4", "I5", "P1", "P2", "P4", "F1", "F2", "F3"}   # nodes with content after the demo trim
 
 
 def test_demo_young_adult_gets_the_path_directly():

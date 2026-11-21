@@ -14,10 +14,10 @@
 - {id: mc11, user: investor, mode: explain_concept, node: P1, message: "Why did both shares and bonds fall in 2022?"}
 - {id: mc12, user: investor, mode: explain_concept, node: P4, message: "What is rebalancing and why decide it in advance?"}
 - {id: mc13, user: investor, mode: explain_concept, node: P2, message: "How should my horizon change my mix?"}
-- {id: mc14, user: investor, mode: hint, node: D1, task: d1.m1, hint_level: 1, message: "I don't know where to start."}
-- {id: mc15, user: investor, mode: hint, node: D1, task: d1.m1, hint_level: 2, message: "Can you give me a similar example?"}
-- {id: mc16, user: investor, mode: hint, node: D3, task: d3.m1, hint_level: 3, message: "What on the screen matters most?"}
-- {id: mc17, user: investor, mode: explain_result, node: D1, task: d1.m1, attempt: "d1.m1:submitted", draft: {direction: up, reasons: [beat, chart_pattern]}, message: "Why was my answer wrong?"}
-- {id: mc18, user: young_adult, mode: explain_result, node: D3, task: d3.m1, attempt: "d3.m1:submitted", draft: {direction: up, reasons: [fewer_cuts, core]}, message: "What did I get right?"}
+- {id: mc14, user: young_adult, mode: hint, node: I2, task: i2.m1, hint_level: 1, message: "I don't know where to start."}
+- {id: mc15, user: young_adult, mode: hint, node: I2, task: i2.m1, hint_level: 2, message: "Can you give me a similar example?"}
+- {id: mc16, user: investor, mode: hint, node: P4, task: p4.m1, hint_level: 3, message: "What on the screen matters most?"}
+- {id: mc17, user: young_adult, mode: explain_result, node: I2, task: i2.m1, attempt: "i2.m1:submitted", draft: {response: fixed, reasons: [fixed_certain, app]}, message: "Why was my answer wrong?"}
+- {id: mc18, user: investor, mode: explain_result, node: P4, task: p4.m1, attempt: "p4.m1:submitted", draft: {response: rebalance, reasons: [horizon, rule]}, message: "What did I get right?"}
 - {id: mc19, user: young_adult, mode: rephrase, node: I1, last_answer: "Volatility describes the dispersion of returns around their mean; a wider distribution implies a higher probability of large deviations in both directions.", message: "Simpler please."}
 - {id: mc20, user: young_adult, mode: recommend_reading, node: P1, message: "I failed the diversification task twice. What should I read?"}

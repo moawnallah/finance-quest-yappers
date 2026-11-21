@@ -21,13 +21,13 @@ cards:
   - id: p4.c2
     title: "Selling after a fall locks in the loss"
     body: >-
-      A fall is a loss on paper until you sell. In 2020, US shares (S&P 500
-      with dividends) ended the year up 18.0%, despite the sharp fall in
-      March. Someone who sold in March missed the recovery. Someone who kept a
-      rule, holding or rebalancing, did not.
-    example: "10,000 PLN in US shares at the start of 2020 ended the year at about 11,802 (ignoring the currency)."
+      A fall is a loss on paper until you sell. In 2008, US shares (S&P 500
+      with dividends) fell 36.6%; in 2009 they rose 25.9%. Someone who sold
+      at the end of 2008 kept the loss and missed the rebound. Someone who
+      kept a rule, holding or rebalancing, did not.
+    example: "10,000 PLN in US shares at the start of 2008: about 6,345 at the end of 2008, about 7,991 at the end of 2009 if held (ignoring the currency)."
     links: [damodaran_histret]
-    checked: "2020: +18.02%, Damodaran table. The size of the March fall is not stated because we have not checked a monthly source."
+    checked: "2008: -36.55%, 2009: +25.94%, Damodaran table; 6,345 x 1.2594 = 7,991 (our calculation). Uses 2008, not 2020, so the card does not give away the outcome of the day-X task p4.m1 (March 2020)."
 
   - id: p4.c3
     title: "Write your rule before the storm"
@@ -69,8 +69,75 @@ items:  # draft by Yurii (with Claude), 2026-11-20, based on the cards above
       - "Buy more of whatever fell most, without a plan"
     feedback:
       - "That is the point of a rule: it protects you from deciding in a panic."
-      - "Selling after a fall locks in the loss. In 2020, those who sold in March missed the recovery."
+      - "Selling after a fall locks in the loss. After 2008, those who sold at the bottom missed the rebound in 2009."
       - "Acting without a plan is the same problem in the other direction. A written rule is calmer."
+
+medium:  # draft by Claude (AI), 2026-11-21. Day X: 31 March 2020 (named only in the reveal)
+  - id: p4.m1
+    variant: day_x
+    content_version: 1
+    author: "draft by Claude (AI), 2026-11-21"
+    reviewer: null
+    sources: [oecd_share_prices_pl]
+    # Facts used on day X (all public by 31 Mar 2020; checked 2026-11-21, see MANUAL_RESEARCH.md):
+    #   WHO called COVID-19 a pandemic on 11 Mar; Poland closed schools (12 Mar) and its borders (15 Mar);
+    #   NBP board announced bond purchases on 16 Mar; the MPC cut the reference rate 1.50 -> 1.00% on
+    #   17 Mar (effective 18 Mar); the "anti-crisis shield" law took effect on 1 Apr 2020.
+    #   OECD index: Feb 2020 108.5, Mar 82.6 (-24%); a 60/40 mix from February is about 53/47 in March.
+    #   Back above the February level by Dec 2020 (107.0) / Jan 2021 (111.6).
+    # The chart is a monthly average price index (no dividends); March's average is known at the end of March.
+    brief: >-
+      Marek, 35, saves for his retirement, more than 20 years away. He had
+      100,000 PLN invested: 60% in a broad Polish share fund and 40% in a bond
+      fund. In calm times he decided that 60/40 is his target mix. Over the
+      past few weeks share prices fell fast as a new virus spread and
+      governments closed schools, shops and borders. The central bank cut
+      its rate, and the government announced aid for firms and workers. His
+      share fund is now well below 60% of his money. What should he do, and
+      why?
+    stimulus:
+      - kind: chart
+        type: line
+        cutoff: 2020-03-31
+        hide: [name, dates]
+        series:
+          - {series_id: oecd_share_prices_pl_m, from: 2018-01-01, to: 2021-12-01, transform: index100, label: "Polish share prices"}
+    response:
+      kind: choice
+      options:
+        - {id: sell, text: "Sell the share fund and keep the money in cash until things calm down"}
+        - {id: hold, text: "Do nothing and keep the mix as it is now"}
+        - {id: rebalance, text: "Rebalance: move money from the bond fund into shares, back to 60/40"}
+        - {id: all_in, text: "Move everything into shares while they are cheap"}
+    truth: none
+    reasons:
+      pick: {min: 2, max: 3}
+      boxes:
+        - {id: horizon, weight: 1.0, text: "He won't need this money for more than 20 years",
+           explain: "A long horizon leaves time to recover from a fall. Money needed next year would be a different case."}
+        - {id: rule, weight: 0.8, text: "He chose his 60/40 target in calm times for exactly this kind of moment",
+           explain: "A rule made in advance protects him from deciding in fear, and it tells him to buy shares after a fall."}
+        - {id: timing, weight: 0.6, text: "Nobody knows when the fall will stop, so selling means guessing when to buy back too",
+           explain: "To gain from selling he would have to be right twice: when to get out and when to get back in."}
+        - {id: lock_loss, weight: 0.4, text: "Selling now turns a fall on paper into a real loss",
+           explain: "Partly right: the loss becomes final only if he stays out. The bigger problem is having to time the way back in."}
+        - {id: support, weight: 0.2, text: "The central bank and the government are acting to support the economy",
+           explain: "True on day X, but nobody could know how much it would help. It is no reason to change a long-term plan."}
+        - {id: coupon, weight: 0.0, text: "His bond fund pays interest",
+           explain: "True, but it doesn't help him decide what to do with the mix."}
+        - {id: news_fear, weight: -0.5, text: "The news is frightening, so prices will keep falling",
+           explain: "The bad news was already known and already in the prices. Fear is a feeling, not a forecast."}
+        - {id: recovery, weight: -1.0, text: "Share prices will be back near their old level within a year",
+           explain: "Nobody knew that on day X. Using it is hindsight."}
+    reveal:
+      text: >-
+        Day X was the end of March 2020, the first weeks of the COVID-19
+        pandemic. Polish share prices recovered over the following months.
+        Selling at that point would have made the fall final; holding kept the
+        plan; rebalancing bought shares after they had fallen. It could have
+        gone the other way: in 2008 prices kept falling for months. A rule
+        made in calm times works in both cases; a forecast made in fear does
+        not. The chart is a price index without dividends.
 
 hard:  # draft by Claude (AI), 2026-11-21. Engine: docs/hard_engine.md
   - id: p4.h1

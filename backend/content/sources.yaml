@@ -92,3 +92,27 @@
   tier: B
   licence: facts_own_words  # rules stated in our words, link only
   read_on: 2026-11-20
+
+- id: gus_cpi
+  title: "Miesięczne wskaźniki cen towarów i usług konsumpcyjnych od 1982 roku (CPI, monthly)"
+  publisher: Główny Urząd Statystyczny (GUS)
+  url: https://stat.gov.pl/obszary-tematyczne/ceny-handel/wskazniki-cen/wskazniki-cen-towarow-i-uslug-konsumpcyjnych-pot-inflacja-/miesieczne-wskazniki-cen-towarow-i-uslug-konsumpcyjnych-od-1982-roku
+  tier: A
+  licence: gus_copyright_source  # stat.gov.pl/copyright: copying and own studies allowed, source must be given; checked by Yurii 2026-11-21
+  read_on: 2026-11-21
+
+- id: nbp_ref_rate
+  title: "Basic NBP interest rates: history"
+  publisher: Narodowy Bank Polski (NBP)
+  url: https://static.nbp.pl/dane/stopy/stopy_procentowe_archiwum.xml
+  tier: A
+  licence: nbp_terms_source  # NBP website terms: credit "Source: NBP, www.nbp.pl"; checked by Yurii 2026-11-21
+  read_on: 2026-11-21
+
+- id: oecd_share_prices_pl
+  title: "Share prices, Poland (OECD, dataset DSD_STES@DF_FINMARK, POL.M.SHARE.IX; also FRED SPASTT01PLM661N)"
+  publisher: OECD
+  url: https://data-explorer.oecd.org/
+  tier: A
+  licence: cc_by_4_0  # OECD default; checked by Yurii 2026-11-21. Downloaded from OECD, not FRED (FRED: no commercial redistribution without permission)
+  read_on: 2026-11-21

@@ -2,188 +2,6 @@
   "schema_version": 1,
   "nodes": [
     {
-      "node": "D1",
-      "panel": "DECISIONS",
-      "title": "What moves a price",
-      "after": [
-        "I4"
-      ],
-      "status": "draft",
-      "live": false,
-      "cards": [],
-      "items": [
-        {
-          "id": "d1.e1",
-          "node": "D1",
-          "level": "easy",
-          "kind": "single",
-          "content_version": 1,
-          "check": true,
-          "scored": true,
-          "difficulty": 0.0,
-          "question": {
-            "kind": "single",
-            "q": "A company reports a record profit, but its share price falls. What is the most likely reason?",
-            "options": [
-              "Investors expected even more, or the outlook got worse",
-              "The stock exchange made a mistake",
-              "Record profits are always bad news"
-            ],
-            "confidence": {
-              "min": 1,
-              "max": 5
-            }
-          },
-          "reveal": {
-            "answer": 0,
-            "why": "Prices react to results compared with expectations, and to what the company says about the future.",
-            "sources": []
-          },
-          "meta": {
-            "secrets": {
-              "strings": [
-                "Investors expected even more, or the outlook got worse"
-              ],
-              "numbers": []
-            }
-          }
-        },
-        {
-          "id": "d1.e2",
-          "node": "D1",
-          "level": "easy",
-          "kind": "multi",
-          "content_version": 1,
-          "check": true,
-          "scored": true,
-          "difficulty": 0.0,
-          "question": {
-            "kind": "multi",
-            "q": "Which of these can move a share price on results day? Pick all that apply.",
-            "options": [
-              "Results compared with what analysts expected",
-              "The company's outlook for the next quarter",
-              "The colour of the company's logo",
-              "A surprise change in interest rates on the same day"
-            ],
-            "confidence": {
-              "min": 1,
-              "max": 5
-            }
-          },
-          "reveal": {
-            "answer": [
-              0,
-              1,
-              3
-            ],
-            "why": "Surprises move prices: results vs expectations, the outlook, and market-wide news such as rates.",
-            "sources": []
-          },
-          "meta": {
-            "secrets": {
-              "strings": [
-                "Results compared with what analysts expected",
-                "The company's outlook for the next quarter",
-                "A surprise change in interest rates on the same day"
-              ],
-              "numbers": []
-            }
-          }
-        }
-      ],
-      "meta": {
-        "content_file": "D1.yaml",
-        "author": "Yurii",
-        "reviewer": null,
-        "checked": {}
-      }
-    },
-    {
-      "node": "D3",
-      "panel": "DECISIONS",
-      "title": "Macro news: CPI, rate decisions",
-      "after": [
-        "F2"
-      ],
-      "status": "draft",
-      "live": false,
-      "cards": [],
-      "items": [
-        {
-          "id": "d3.e1",
-          "node": "D3",
-          "level": "easy",
-          "kind": "single",
-          "content_version": 1,
-          "check": true,
-          "scored": true,
-          "difficulty": 0.0,
-          "question": {
-            "kind": "single",
-            "q": "Inflation comes in higher than expected. What usually happens to expected interest rates?",
-            "options": [
-              "They rise: rate cuts look less likely",
-              "They fall",
-              "Nothing: inflation and interest rates are unrelated"
-            ],
-            "confidence": {
-              "min": 1,
-              "max": 5
-            }
-          },
-          "reveal": {
-            "answer": 0,
-            "why": "Central banks raise or hold rates to fight inflation, so a hot reading pushes expected rates up.",
-            "sources": []
-          },
-          "meta": {
-            "secrets": {
-              "strings": [
-                "They rise: rate cuts look less likely"
-              ],
-              "numbers": []
-            }
-          }
-        },
-        {
-          "id": "d3.e2",
-          "node": "D3",
-          "level": "easy",
-          "kind": "true_false",
-          "content_version": 1,
-          "check": true,
-          "scored": true,
-          "difficulty": 0.0,
-          "question": {
-            "kind": "true_false",
-            "q": "When bond yields rise, the prices of bonds people already hold fall.",
-            "confidence": {
-              "min": 1,
-              "max": 5
-            }
-          },
-          "reveal": {
-            "answer": true,
-            "why": "Newer bonds pay more, so older ones with lower payments become less attractive and their price drops.",
-            "sources": []
-          },
-          "meta": {
-            "secrets": {
-              "strings": [],
-              "numbers": []
-            }
-          }
-        }
-      ],
-      "meta": {
-        "content_file": "D3.yaml",
-        "author": "Yurii",
-        "reviewer": null,
-        "checked": {}
-      }
-    },
-    {
       "node": "F1",
       "panel": "FOUNDATIONS",
       "title": "Budget and cash flow",
@@ -1713,8 +1531,8 @@
         {
           "id": "p4.c2",
           "title": "Selling after a fall locks in the loss",
-          "body": "A fall is a loss on paper until you sell. In 2020, US shares (S&P 500 with dividends) ended the year up 18.0%, despite the sharp fall in March. Someone who sold in March missed the recovery. Someone who kept a rule, holding or rebalancing, did not.",
-          "example": "10,000 PLN in US shares at the start of 2020 ended the year at about 11,802 (ignoring the currency).",
+          "body": "A fall is a loss on paper until you sell. In 2008, US shares (S&P 500 with dividends) fell 36.6%; in 2009 they rose 25.9%. Someone who sold at the end of 2008 kept the loss and missed the rebound. Someone who kept a rule, holding or rebalancing, did not.",
+          "example": "10,000 PLN in US shares at the start of 2008: about 6,345 at the end of 2008, about 7,991 at the end of 2009 if held (ignoring the currency).",
           "links": [
             {
               "id": "damodaran_histret",
@@ -1832,7 +1650,7 @@
           "reveal": {
             "feedback": [
               "That is the point of a rule: it protects you from deciding in a panic.",
-              "Selling after a fall locks in the loss. In 2020, those who sold in March missed the recovery.",
+              "Selling after a fall locks in the loss. After 2008, those who sold at the bottom missed the rebound in 2009.",
               "Acting without a plan is the same problem in the other direction. A written rule is calmer."
             ],
             "why": null,
@@ -1852,7 +1670,7 @@
         "reviewer": null,
         "checked": {
           "p4.c1": "Our worked example: 60% of 8,000 = 4,800; shares at 4,000 need +800. Definition: reviewer to add a source.",
-          "p4.c2": "2020: +18.02%, Damodaran table. The size of the March fall is not stated because we have not checked a monthly source.",
+          "p4.c2": "2008: -36.55%, 2009: +25.94%, Damodaran table; 6,345 x 1.2594 = 7,991 (our calculation). Uses 2008, not 2020, so the card does not give away the outcome of the day-X task p4.m1 (March 2020).",
           "p4.c3": "App guidance, no external fact."
         }
       }
@@ -2058,139 +1876,6 @@
           "s1.c3": "EUR 100,000 per depositor per bank, joint accounts counted by share: bfg_limit. Domestic banks and credit unions covered: bfg_guarantee. 'Safe, accessible': CFPB.",
           "s1.c4": "EB525 vol. C Poland, Q8, weighted: no savings 19.8% + under 1 month 10.5% = 30.3%; age 18-24: 20.4% + 21.5% = 41.9% (unweighted n = 98, margin about 10 points)."
         }
-      }
-    },
-    {
-      "node": "S4",
-      "panel": "SAFETY",
-      "title": "Goals and horizon",
-      "after": [
-        "F3"
-      ],
-      "status": "draft",
-      "live": false,
-      "cards": [],
-      "items": [
-        {
-          "id": "s4.e1",
-          "node": "S4",
-          "level": "easy",
-          "kind": "numeric",
-          "content_version": 1,
-          "check": true,
-          "scored": true,
-          "difficulty": 0.0,
-          "question": {
-            "kind": "numeric",
-            "q": "You want 12,000 PLN for a car deposit in 2 years. Ignoring interest, how much do you need to save each month?",
-            "unit": "PLN",
-            "input": {
-              "min": 0,
-              "max": 2000,
-              "step": 10
-            },
-            "confidence": {
-              "min": 1,
-              "max": 5
-            }
-          },
-          "reveal": {
-            "answer": 500,
-            "unit": "PLN",
-            "tolerance": {
-              "kind": "absolute",
-              "band": 10
-            },
-            "why": "12,000 / 24 months = 500 PLN a month.",
-            "sources": []
-          },
-          "meta": {
-            "secrets": {
-              "strings": [],
-              "numbers": [
-                500
-              ]
-            }
-          }
-        },
-        {
-          "id": "s4.e2",
-          "node": "S4",
-          "level": "easy",
-          "kind": "single",
-          "content_version": 1,
-          "check": true,
-          "scored": true,
-          "difficulty": 0.0,
-          "question": {
-            "kind": "single",
-            "q": "Which of these is a goal you can plan for?",
-            "options": [
-              "Save more money",
-              "Have 12,000 PLN for a car deposit by June 2028",
-              "Be better with money"
-            ],
-            "confidence": {
-              "min": 1,
-              "max": 5
-            }
-          },
-          "reveal": {
-            "answer": 1,
-            "why": "A plannable goal has an amount and a date, so you can work out the monthly saving and the right mix.",
-            "sources": []
-          },
-          "meta": {
-            "secrets": {
-              "strings": [
-                "Have 12,000 PLN for a car deposit by June 2028"
-              ],
-              "numbers": []
-            }
-          }
-        },
-        {
-          "id": "s4.e3",
-          "node": "S4",
-          "level": "easy",
-          "kind": "single",
-          "content_version": 1,
-          "check": false,
-          "scored": true,
-          "difficulty": 0.0,
-          "question": {
-            "kind": "single",
-            "q": "Money for a goal one year away: which fits best?",
-            "options": [
-              "A bank deposit or short-term bonds",
-              "Shares of one company",
-              "A 10-year bond you may need to sell early"
-            ],
-            "confidence": {
-              "min": 1,
-              "max": 5
-            }
-          },
-          "reveal": {
-            "answer": 0,
-            "why": "A goal one year away cannot wait for a recovery after a bad year in shares, and cashing in a 10-year savings bond early costs a fee.",
-            "sources": []
-          },
-          "meta": {
-            "secrets": {
-              "strings": [
-                "A bank deposit or short-term bonds"
-              ],
-              "numbers": []
-            }
-          }
-        }
-      ],
-      "meta": {
-        "content_file": "S4.yaml",
-        "author": "draft by Claude (AI), 2026-11-20",
-        "reviewer": null,
-        "checked": {}
       }
     }
   ]

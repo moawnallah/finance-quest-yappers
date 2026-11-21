@@ -52,14 +52,14 @@ def test_hard_task_scoring_through_the_api(client, user):
 
 
 def test_passed_challenge_completes_the_node(client, user):
-    # Decided 2026-11-21: a passed test-out completes the whole node, even one with a medium task (D1).
-    items = client.get("/skills/D1/test-out", headers=user).json()["items"]
+    # Decided 2026-11-21: a passed test-out completes the whole node, even one with a medium task (I2).
+    items = client.get("/skills/I2/test-out", headers=user).json()["items"]
     assert items
     status = None
     for it in items:
         r = client.post(f"/tasks/{it['id']}/attempts", headers=user,
                         json={"response": ITEMS[it["id"]]["reveal"]["answer"], "confidence": 4,
-                              "context": "test_out", "for_node": "D1"})
+                              "context": "test_out", "for_node": "I2"})
         status = r.json()["status"]
     assert status["done"] is True and status["test_out"]["passed"] is True
 
