@@ -4,9 +4,9 @@ Nodes: 11 · ✅ 0 · ⚠️ 11 · ❌ 0 (❌ nodes are left out of easy.json)
 
 | | node | cards | items | check items | prerequisite pool |
 |---|---|---|---|---|---|
-| ⚠️ | F1 | 0 | 3 | 2 | - |
-| ⚠️ | F2 | 0 | 3 | 2 | 2 |
-| ⚠️ | F3 | 0 | 3 | 2 | 2 |
+| ⚠️ | F1 | 3 | 3 | 2 | - |
+| ⚠️ | F2 | 3 | 3 | 2 | 2 |
+| ⚠️ | F3 | 3 | 3 | 2 | 2 |
 | ⚠️ | I1 | 3 | 3 | 2 | 2 |
 | ⚠️ | I2 | 4 | 3 | 2 | 4 |
 | ⚠️ | I4 | 2 | 3 | 2 | 2 |
@@ -24,6 +24,7 @@ Nodes: 11 · ✅ 0 · ⚠️ 11 · ❌ 0 (❌ nodes are left out of easy.json)
 
 ## F2
 - ⚠️ F2: no reviewer yet: the node must not go live
+- ⚠️ f2.c2: 0 links (the spec asks for 1-2)
 
 ## F3
 - ⚠️ F3: no reviewer yet: the node must not go live

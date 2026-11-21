@@ -1,4 +1,5 @@
-# Items only so far: they feed the prerequisite tests of I2 and D3 and the router's test-out for F2.
+# Not on a demo path. Its check items feed the prerequisite tests of later nodes (I2) and the
+# router's test-out; the cards are what a user reads after failing such a test.
 node: F2
 panel: FOUNDATIONS
 title: "Inflation and real value"
@@ -6,6 +7,40 @@ after: [F1]
 author: "draft by Claude (AI), 2026-11-20"
 reviewer: null
 status: draft
+
+cards:
+  - id: f2.c1
+    title: "Inflation: the same money buys less"
+    body: >-
+      Inflation is the rise in prices of what households buy. In Poland, the
+      statistics office (GUS) measures it every month from a fixed basket of
+      goods and services. When prices rise, each zloty buys a little less,
+      even if the number on your account stays the same.
+    example: "In December 2019, prices in Poland were 3.4% higher than a year earlier (GUS). 100 PLN then bought what about 96.70 PLN had bought a year before."
+    links: [gus_cpi, ecb_what_is_inflation]
+    checked: "GUS CPI, same month previous year = 100: Dec 2019 = 103.4 (series.csv, gus_cpi_pl_m). 100 / 1.034 = 96.71 (Claude, 2026-11-21)."
+
+  - id: f2.c2
+    title: "Real return: interest minus inflation"
+    body: >-
+      What matters is not how much your balance grows, but how much more it
+      can buy. A quick rule: real return is about the interest rate minus
+      inflation. If inflation is higher than the rate you earn, your savings
+      lose buying power even while the balance grows.
+    example: "An account pays 3% a year and prices rise 5%. 10,000 PLN becomes 10,300 PLN, but buys about 1.9% less than a year earlier."
+    checked: "1.03 / 1.05 - 1 = -1.90% (Claude, 2026-11-21)."
+
+  - id: f2.c3
+    title: "Reading the inflation number"
+    body: >-
+      The headline inflation rate compares prices with the same month a year
+      earlier. A rate of 3% means prices are 3% higher than twelve months
+      ago, not that they rose 3% this month. When the rate falls, prices are
+      still rising, only more slowly. Prices fall only when the rate is below
+      zero.
+    example: "Poland, 2020 (GUS): the rate fell from 4.6% in March to 2.4% in December, yet prices in December were still 2.4% higher than a year earlier."
+    links: [gus_cpi, ecb_what_is_inflation]
+    checked: "GUS CPI, same month previous year = 100: Mar 2020 = 104.6, Dec 2020 = 102.4 (series.csv, gus_cpi_pl_m). Uses 2019-2020 only, so it does not overlap the I2 Day-X chart window after its cutoff."
 
 items:
   - id: f2.e1

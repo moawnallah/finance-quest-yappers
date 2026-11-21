@@ -116,3 +116,45 @@
   tier: A
   licence: cc_by_4_0  # OECD default; checked by Yurii 2026-11-21. Downloaded from OECD, not FRED (FRED: no commercial redistribution without permission)
   read_on: 2026-11-21
+
+# ---- Sources for the F1-F3 cards, read by Claude on 2026-11-21 (to be confirmed by Yurii). Link only, facts in own words.
+
+- id: cfpb_budgeting
+  title: "Budgeting: How to create a budget and stick with it (blog, 5 June 2019, archived)"
+  publisher: Consumer Financial Protection Bureau (US)
+  url: https://www.consumerfinance.gov/about-us/blog/budgeting-how-to-create-a-budget-and-stick-with-it/
+  tier: B
+  licence: facts_own_words  # CFPB legal notices: "Information created by the CFPB is in the public domain"; citation requested
+  read_on: 2026-11-21
+
+- id: fcac_budget
+  title: "Module 1: How do I prepare a budget?"
+  publisher: Financial Consumer Agency of Canada (Canada.ca)
+  url: https://www.canada.ca/en/financial-consumer-agency/services/financial-basics/financial-basics-videos/financial-basics-video-budgeting.html
+  tier: B
+  licence: facts_own_words  # canada.ca/en/transparency/terms.html: reproduction only non-commercial, so link only, no copied text
+  read_on: 2026-11-21
+
+- id: ecb_what_is_inflation
+  title: "What is inflation?"
+  publisher: European Central Bank
+  url: https://www.ecb.europa.eu/ecb-and-you/explainers/tell-me-more/html/what_is_inflation.en.html
+  tier: B
+  licence: facts_own_words  # ECB disclaimer & copyright: free use if reproduced accurately with the ECB cited as the source
+  read_on: 2026-11-21
+
+- id: sec_saving_investing_tips
+  title: "Tips for Teaching Students About Saving and Investing"
+  publisher: U.S. Securities and Exchange Commission
+  url: https://www.sec.gov/investor/students/tips.htm
+  tier: B
+  licence: facts_own_words  # sec.gov/privacy: information on sec.gov "may be copied or further distributed ... without the SEC's permission"; citation requested
+  read_on: 2026-11-21
+
+- id: stlfed_compound_interest
+  title: "How Does Compound Interest Work? (Open Vault blog, 12 September 2018)"
+  publisher: Federal Reserve Bank of St. Louis
+  url: https://www.stlouisfed.org/open-vault/2018/september/how-compound-interest-works
+  tier: B
+  licence: facts_own_words  # blog reuse not covered by their reprint permission (research only), so link only, no copied text
+  read_on: 2026-11-21

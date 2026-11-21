@@ -1,4 +1,5 @@
-# Items only so far: they feed the prerequisite test of S1 and the router's test-out for F1.
+# Not on a demo path. Its check items feed the prerequisite tests of later nodes (S1) and the
+# router's test-out; the cards are what a user reads after failing such a test.
 node: F1
 panel: FOUNDATIONS
 title: "Budget and cash flow"
@@ -6,6 +7,40 @@ after: []
 author: "draft by Claude (AI), 2026-11-20"
 reviewer: null
 status: draft
+
+cards:
+  - id: f1.c1
+    title: "Income minus costs is your surplus"
+    body: >-
+      A budget starts with two lists: what comes in each month (net pay, after
+      tax) and what goes out. Subtract the costs from the income. What is left
+      is your surplus: the money you can save or invest. If it is negative, you
+      are spending more than you earn, and the gap is paid by savings or debt.
+    example: "Net pay 5,800 PLN; rent 2,000, food 1,200, bills 500, transport 300, phone and internet 100. Costs 4,100 PLN, surplus 1,700 PLN."
+    links: [cfpb_budgeting]
+    checked: "Arithmetic: 2,000 + 1,200 + 500 + 300 + 100 = 4,100; 5,800 - 4,100 = 1,700 (Claude, 2026-11-21)."
+
+  - id: f1.c2
+    title: "Fixed and variable costs"
+    body: >-
+      Fixed costs are the same every month: rent, a loan instalment, a
+      subscription. Variable costs change: groceries, fuel, eating out. Fixed
+      costs are hard to cut quickly, so they set the floor of your budget.
+      Variable costs are where you can adjust when money is tight.
+    example: "If fixed costs are 3,000 PLN and variable costs 1,500 PLN, cutting variable costs by a fifth saves 300 PLN a month; fixed costs stay at 3,000."
+    links: [fcac_budget]
+    checked: "Arithmetic: 1,500 / 5 = 300 (Claude, 2026-11-21)."
+
+  - id: f1.c3
+    title: "Spread yearly costs over the months"
+    body: >-
+      Some costs come once or twice a year: insurance, car service, school
+      things, holidays. If you plan only for monthly bills, these feel like
+      surprises. Divide each yearly cost by 12 and set that amount aside every
+      month, so the money is there when the bill arrives.
+    example: "A 2,400 PLN yearly bill is 200 PLN a month. Three such bills add 600 PLN to your monthly costs."
+    links: [fcac_budget]
+    checked: "Arithmetic: 2,400 / 12 = 200; 3 x 200 = 600 (Claude, 2026-11-21)."
 
 items:
   - id: f1.e1
