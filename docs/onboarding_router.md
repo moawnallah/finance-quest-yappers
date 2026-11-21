@@ -8,36 +8,44 @@ Readers:
 Purpose: how the first survey places a user in the skills tree
 ([skills_tree.md](skills_tree.md)) with few questions.
 
-Status: draft on branch `skills-tree`, 2026-11-20. A reference run on
-personas is reported below. The parameters are to tune.
+Status: implemented 2026-11-21 in `backend/ml/router` (section
+"Implementation"), with the personas as tests. The parameters are to tune
+once real first-item outcomes exist.
 
 ## Idea in one paragraph
 
 - **The questions.** The survey reuses the Flash Eurobarometer 525 (2023)
-  questions, so every answer can be compared with Poland and the EU, by age
-  and education.
+  questions, so every answer can be compared with Poland and the EU, and
+  with the user's age group.
 - **The router has no trained model.** We have no microdata. It combines:
-  - a Rasch ability estimate from the 5 knowledge items, with a prior mean
-    shifted by age and education;
+  - a Rasch ability estimate from the 5 knowledge items, with the same
+    prior for everyone: placement depends on what you answer, not on who
+    you are;
   - static distributions from the Polish EB525 tables;
   - explicit need rules from the behaviour answers.
 - **The first item of every node checks the router.** Elo updates take
   over from there.
 
-## The survey: 14 answers, about 3-4 minutes
+## The survey: 12 answers, about 3 minutes
 
 | # | Question | Source | Used for |
 |---|---|---|---|
-| 1 | Age band (18-24, 25-39, 40-54, 55+; under 18 maps to 18-24 for benchmarks) | EB525 crosstab | prior mean, needs, benchmarks |
-| 2 | Education level (low / medium / high) | EB525 crosstab (ISCED) | prior mean, benchmarks |
-| 3 | Who makes money decisions at home (me / with someone / someone else) | EB525 crosstab | needs (F1) |
-| 4 | Goal (buffer, first investment, retirement, home, other) | ours | needs |
-| 5 | Horizon of that goal (under 3 years, 3-10, over 10) | ours | needs (S4, I2) |
-| 6 | Self-rating of financial knowledge | EB525 Q1 | calibration gap at the start |
-| 7-11 | Five knowledge items, each followed by "how sure are you?" (1-5) | EB525 Q2-Q6 | ability θ, node mastery, overconfidence |
-| 12 | Three behaviour statements on one screen | EB525 Q7_1-3 | needs (F1, S4); EB behaviour score |
-| 13 | How long could you live without income | EB525 Q8 | need for S1 |
-| 14 | Products held in the last 2 years (multi-select) | EB525 Q9 | needs (F4, S2, L1, L2, I4, I5, I7, D4) |
+| 1 | Age band (18-24, 25-39, 40-54, 55+; under 18 maps to 18-24 for benchmarks) | EB525 crosstab | needs, benchmarks |
+| 2 | Who makes money decisions at home (me / with someone / someone else) | EB525 crosstab | needs (F1) |
+| 3 | Goal (buffer, first investment, retirement, home, other) | ours | needs |
+| 4 | Horizon of that goal (under 3 years, 3-10, over 10) | ours | needs (S4, I2) |
+| 5 | Self-rating of financial knowledge | EB525 Q1 | calibration gap at the start |
+| 6-10 | Five knowledge items, each followed by "how sure are you?" (1-5) | EB525 Q2-Q6 | ability θ, node mastery, overconfidence |
+| 11 | "If you lost your main source of income today, how long could you continue to cover your living expenses, without borrowing any money or moving house?" | EB525 Q8, full wording | need for S1 |
+| 12 | Products held in the last 2 years (multi-select) | EB525 Q9 | needs (F4, S2, L1, L2, I4, I5, I7, D4) |
+
+**Removed on 2026-11-20 (your decision):**
+- **Education.** The prior it fed added about 1 point of band agreement, and
+  ranking a starting level by education reads as profiling.
+- **The three behaviour statements (Q7).** About 91-92% of Polish adults
+  agree with two of the three, so they say little about a person. They
+  only fed the EU overall score and two weak need rules.
+
 
 **No income question.** Income stays out, as agreed earlier.
 
@@ -59,22 +67,21 @@ copied from the EB525 report or the questionnaire file in the dataset.
 
 ## What the user gets back right after the survey
 
-1. **Their EB525 score**, computed exactly as in the report:
-   - knowledge 0-5 (one point per correct answer; "don't know" counts as
-     wrong);
-   - behaviour 0-3 (statements agreed with), rescaled to 0-5;
-   - overall 0-10 = knowledge + behaviour × 5/3;
-   - bands: low ≤ 5, medium > 5 and < 9, high 9-10.
+1. **Their EB525 knowledge score**, computed as in the report:
+   - 0-5, one point per correct answer; "don't know" counts as wrong;
+   - bands: low 0-1, medium 2-3, high 4-5.
+
+   Without Q7 there is no overall 0-10 score.
 2. **Benchmarks:** "you vs Poland vs your age group", from the tables below.
 3. **The first path:** 3-5 nodes, each with one sentence saying why. The
    sentence comes from the largest term in the priority formula.
 
 ## Router algorithm
 
-1. **Prior mean** μ = μ_age + μ_edu (table below). This is additive, which
-   assumes no interaction between age and education.
-2. **Ability θ:** the EAP estimate on a grid, from a prior N(μ, 1) and the
-   Rasch likelihood of the 5 answers.
+1. **Prior:** N(0, 1) for everyone. No demographic shift; see "Removed"
+   above and check 1 below.
+2. **Ability θ:** the EAP estimate on a grid, from the prior and the Rasch
+   likelihood of the 5 answers.
    - Item difficulties b:
      - Q3 (inflation) −0.91;
      - Q5 (risk-return) −0.33;
@@ -101,8 +108,8 @@ copied from the EB525 report or the questionnaire file in the dataset.
    - The interest boost from the Explore wheel (skills_tree.md) adds to
      this later.
 7. **Path.**
-   - Nodes with m ≥ 0.8 are "probably known". They get a 2-item test-out,
-     not the full node.
+   - Nodes with m ≥ 0.8 are "probably known". They are offered as a
+     **challenge** (see below), not as the full node.
    - Targets are the top 2 non-known E/M nodes by priority. H nodes are
      never first targets.
    - Add every target's unmet prerequisites (m < 0.6), recursively.
@@ -112,13 +119,28 @@ copied from the EB525 report or the questionnaire file in the dataset.
    updates θ_k. From then on, the two-sided Elo updates both the user and
    the item ratings.
 
+**Challenge (test-out), decided 2026-11-21.**
+- **What the user sees:** "Already know this? Take the 2-question challenge
+  and skip the node."
+  - On nodes the router marks "probably known", the offer is highlighted
+    on the path.
+  - On any other unlocked node, it is available but not pushed.
+- **The challenge:** 2 of the node's own check items, drawn and seeded by
+  the easy engine. Both right means the whole node is done. Mastery is set
+  to at least 0.8, and the path moves on.
+- **One attempt per node.** If it fails, the user does the node normally,
+  and the failure lowers θ_k like any first item. One attempt limits lucky
+  guesses: two 3-option items pass by chance about 1 time in 9.
+- **Logged** as a `reco_events` row of type `test_out`, with `observed`.
+  This is the router's cheapest accuracy signal.
+
 **Need rules (proposal):**
 
 | Survey signal | Nodes | n |
 |---|---|---|
 | Q8: no savings or under 1 month | S1 | 1.0 |
 | Q8: 1-3 months | S1 | 0.6 |
-| Q9: consumer loan, or Q7_1 disagree | F4, S2 | 0.8 |
+| Q9: consumer loan | F4, S2 | 0.8 |
 | Q9: mortgage | L2 | 0.8 |
 | Q9: no investment product and goal "first investment" | I1, I2, P1 | 0.8, 0.7, 0.6 |
 | Q9: holds an investment product | I4, I5, P1 | 0.7 |
@@ -128,24 +150,15 @@ copied from the EB525 report or the questionnaire file in the dataset.
 | Age 55+ | L3, O1 | 0.8 |
 | Age 18-24 | F1, F4, O1 | 0.6 |
 | Horizon under 3 years | S4, I2 | 0.7 |
-| Q7_2 disagree (does not track expenses) | F1 | 0.8 |
-| Q7_3 disagree (no long-term goals) | S4 | 0.8 |
 | Someone else makes money decisions | F1 | 0.6 |
 | Q1 high self-rating and knowledge score ≤ 2 | D4 | 0.8 |
 
-**Prior means fitted to EB525 vol. C, Poland, weighted.** Each μ is fitted
-so that the mean predicted share correct over the 5 items matches the
-group's shares (least squares).
-
-| Category | μ |
-|---|---|
-| Age 18-24 | −0.19 |
-| Age 25-39 | −0.11 |
-| Age 40-54 | +0.10 |
-| Age 55+ | +0.03 |
-| Education low | −0.21 |
-| Education medium | −0.22 |
-| Education high | +0.49 |
+**Prior means (dropped; kept here as the record behind check 1).**
+- Fitted to EB525 vol. C, Poland, weighted.
+- Age: 18-24 −0.19; 25-39 −0.11; 40-54 +0.10; 55+ +0.03.
+- Education: low −0.21; medium −0.22; high +0.49.
+- EB525 also has a "still studying" group, which a version with education
+  would have needed for school pupils.
 
 ## Checks
 
@@ -163,8 +176,9 @@ Reading:
   (SD of category means 0.34 against 1.0 within).
 - The simulation assumes the additive model is true, so the real gain is
   probably smaller.
-- The prior is kept because it costs one table lookup. The main value of the
-  categories is the benchmarks and the need rules, not the forecast.
+- Decision (2026-11-20): dropped. One point of band agreement does not
+  justify placing people by education. Age stays for benchmarks and need
+  rules only.
 - Earlier simulation: 3 own items on top of the 5 raise the correlation
   from 0.69 to 0.78. That helps more than any prior.
 
@@ -178,6 +192,10 @@ written before the run. The run is a scratch script on the algorithm above.
 | Student, 20: BNPL, does not track expenses, rates themself high | 1 of 5 | F1 → F3 → F4 | Yes. D4 has the same priority as F1 and comes next |
 | Self-directed investor, 35: funds and crypto | 5 of 5 | I4 → I5 (10 nodes "probably known") | Yes. I7 is H, so it is never a first target |
 | Pre-retiree, 60 | 3 of 5 | O1 → I2 | Partly: L3 (the main need) is H, so it is not a target yet. Show it as the goal of the path |
+
+The run was made before the 2026-11-20 simplification: it used the
+age and education prior and the Q7 rules. M2 reruns these personas as
+tests on the simplified router.
 
 What the run changed in the design:
 - **Prerequisites between m = 0.4 and 0.6 become test-outs** (1 minute),
@@ -232,6 +250,175 @@ user.
 - **Now:** log the full survey, the router output (m, n, priority, path,
   reasons) and every first attempt from day one. The attempt record in
   task_engines.md already has the fields. Add `router_version`.
+
+## Implementation (backend/ml/router, 2026-11-21)
+
+```python
+from router import route
+result = route(survey, user_pseudo_id)
+```
+
+| Part | File | Notes |
+|---|---|---|
+| Tree | `router/tree.yaml` | The 32 nodes with title, panel, level and prerequisites. The machine-readable copy of docs/skills_tree.md; a test checks that every node file in `backend/content/nodes` has the same `title` and `after` |
+| Benchmarks | `router/benchmarks.yaml` | EB525 vol. C Poland, weighted: items correct, knowledge bands, self-rating "high", buffer under one month; all ages and by age group |
+| Algorithm | `router/router.py` | Ability (EAP, flat prior), mastery, needs, priority, path, challenges, goal, `reco_events` rows |
+
+**Survey input:**
+
+```json
+{"age_band": "25-39", "decisions": "me", "goal": "first_investment", "horizon": "over_10",
+ "self_rating": "quite_high", "buffer": "under_1", "products": ["life_insurance"],
+ "knowledge": {"Q2": {"correct": true, "confidence": 3}, "Q4": {"correct": null}}}
+```
+
+- `age_band`: `under_18`, `18-24`, `25-39`, `40-54`, `55+`.
+- `decisions`: `me`, `with_someone`, `someone_else`.
+- `goal`: `buffer`, `first_investment`, `retirement`, `home`, `other`.
+- `horizon`: `under_3`, `3_10`, `over_10`.
+- `self_rating`: `very_high`, `quite_high`, `average`, `quite_low`,
+  `very_low`, `dont_know`.
+- `buffer` (Q8): `none`, `under_1`, `1_3`, `3_6`, `6_plus`, or `null` if
+  skipped.
+- `products` (Q9): any of `pension`, `life_insurance`,
+  `non_life_insurance`, `mortgage`, `consumer_loan`, `investment`,
+  `crypto`, `none`; or `null` if skipped.
+- `knowledge`: Q2-Q6 with `correct` (`true`, `false`, or `null` for "don't
+  know", which counts as wrong) and `confidence` 1-5.
+
+**Output:**
+- `knowledge_score` (0-5) and `band`;
+- `benchmarks` (you vs Poland vs your age group);
+- `theta`, `mastery`, `needs`, `priority` per node;
+- `path`: up to 5 nodes, each with a reason;
+- `challenges`: nodes offered as a 2-question challenge, each with a reason;
+- `goal`: a higher-priority node, often H, shown as the path's goal;
+- `events`: `reco_events` rows, one `path_issued`, then one per path node
+  and one per challenge;
+- `router_version`.
+
+**Mastery thresholds for prerequisites:**
+- m < 0.4: the prerequisite becomes a full node on the path;
+- 0.4-0.6: it becomes a challenge;
+- 0.6 or more: it is met;
+- 0.8 or more: the node is "probably known", and if it is an ancestor of
+  the path it is offered as a challenge.
+
+**Persona results (tests in `backend/ml/tests/test_router.py`):**
+
+| Persona | Path | Challenges | Goal |
+|---|---|---|---|
+| Young adult (demo): under a month of savings, wants to invest; Q2, Q3 right | S1 → I1 → I2 → I4 → P1 | F1 | - |
+| Investor (demo): holds funds, 5 of 5 | I4 → I5 | F1, F3, I1 (+ other known ancestors) | - |
+| Student: consumer loan, someone else manages money, 1 of 5 | F4 → S2 | F3, S1 | - |
+| Pre-retiree: goal retirement, 3 of 5 | O1 → L1 | S4 | L3 |
+
+**First run vs hand-written expectations.** Two personas differed from
+the hand calculation. The hand calculation had used the dropped age and
+education prior. With the flat prior:
+- the young adult's θ is −0.18, so F2 is met;
+- the student's F3 (m 0.43) is a challenge.
+
+The expectations were revised, with the reason in the test file. The demo
+paths did not change.
+
+## Shadow decision model: BASAL (experiment, planned 2026-11-21)
+
+**Idea (yours).** Next to the rule router, ask a typed decision model
+whether each candidate node is right for this learner. Compare the two,
+and keep the algorithm as the base the model falls back to.
+
+**What BASAL is**, from its README (github.com/rkinas/basal, v2.8.1,
+read 2026-11-21):
+- **Engine.** An inference engine and models for "typed decisions" in
+  Polish and English. It returns a probability for each allowed option in
+  one forward pass, without generating text, so it cannot answer outside
+  the options.
+- **Licence:** Apache-2.0.
+- **Models:** basal-2.0 mini (1.5B), 4.5B (the recommended start) and max
+  (11B), built on Bielik v3. Also experimental basal-omni models.
+- **API.** `POST /v1/systemone` with a `state` (text or JSON) and named,
+  typed `questions`.
+  - Types: `choice`, `noul` (probability of yes), `score`, `multi`; `act`
+    and `tool` are experimental.
+  - Each answer has a probability per option, the chosen key and a
+    `confidence`.
+  - The full response format is in its `docs/API.md`, not yet read.
+- **Calibration** is reported as ECE on its own benchmark (basal-2.0 4.5B:
+  0.060). The README warns that calibration is cautious on unseen tasks.
+- **`deferred: true`** exists only for `act` and `tool`, with `max_error`.
+  For our yes/no questions we set our own threshold on `confidence`.
+- **Hardware.**
+  - A GPU (CUDA 12.8) or Apple Silicon (MLX); the README also lists Ollama
+    and llama.cpp.
+  - Throughput on one H100 with 16 clients: 32 decisions/s for 4.5B.
+  - No single-request latency is given, so we measure it on Mo's GPU.
+
+**Set-up: shadow mode.** The router decides every path. BASAL's answers
+are only logged as `reco_events` rows of type `shadow_decision`. They never
+change what a user sees in the demo.
+
+**One request per user** (illustrative; check the exact fields in
+`docs/API.md`):
+
+```json
+{
+  "state": {
+    "age_band": "25-39", "goal": "first investment", "horizon": "10+ years",
+    "buffer_months": "under 1", "products": ["life insurance"],
+    "self_rating": "quite high",
+    "answers": {"Q2": "correct", "Q3": "correct", "Q4": "wrong", "Q5": "correct", "Q6": "wrong"},
+    "confidence": {"Q2": 3, "Q3": 4, "Q4": 4, "Q5": 4, "Q6": 4},
+    "candidates": [{"node": "S1", "title": "Emergency fund", "level": "E", "router_mastery": 0.66}]
+  },
+  "questions": {
+    "ready_S1": {"type": "noul", "instructions": "Will this learner answer the first check question of 'Emergency fund' correctly?"},
+    "start_S1": {"type": "noul", "instructions": "Should this learner study 'Emergency fund' now, given the goal and the gaps?"}
+  }
+}
+```
+
+- `ready_<node>` predicts the same thing as the router's mastery m_k: the
+  first item in the node. So the two can be compared on the same outcomes.
+- `start_<node>` is the decision itself, compared with the router's path.
+- No personal data goes in: bands and answers only, the same rule as for
+  the tutor.
+- A variant without `router_mastery` in the state tests whether BASAL adds
+  anything on its own.
+
+**Fallback rule.** If BASAL's `confidence` is below τ, the algorithm
+decides. τ starts at 0.7 and is fitted on data later.
+
+**What we can measure now, on personas** (the 5 from check 2, plus
+perturbations; about 30 requests):
+
+| Metric | How | Why it matters |
+|---|---|---|
+| Agreement with the router | `start_` vs path membership; correlation of `ready_` with m_k | Shows where the two disagree, and those are the cases to read |
+| Stability | Shuffle candidates; reword the goal; change fields that should not matter | A decision model must not flip on wording |
+| Share below τ | Count | How often the fallback would run |
+| Latency and cost | Per request, on Mo's GPU | Whether it fits the onboarding screen |
+
+**What needs real outcomes** (the challenges and first items, from the
+hallway test and later users):
+- Brier score and log loss of `ready_` vs m_k on the same first items;
+- a reliability diagram;
+- recalibration of both (Platt or isotonic) on a held-out split.
+
+Replace the rules for a node only where BASAL is better on held-out data.
+With about 50 outcomes from the hallway test, this is a first look, not a
+result.
+
+**For the pitch:** "We tested an AI decision model against a transparent
+baseline. It runs in shadow mode until the data shows it is better
+calibrated." This is honest, and it shows AI used as a measured component.
+
+**Resolves the branch:** the persona measurement above.
+
+**Next steps:**
+1. Read BASAL's `docs/API.md`.
+2. Start `basal-serve` on Mo's GPU with basal-2.0 4.5B.
+3. Write the request builder in `backend/ml/router`.
 
 ## Facts for the pitch
 

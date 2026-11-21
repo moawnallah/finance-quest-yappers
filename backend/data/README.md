@@ -48,3 +48,12 @@ reveal_view(tasks[tid])                                    # return with the sco
 ```
 
 The samples (D1, D3) use synthetic series, because no real series has passed the licence checklist yet.
+
+## Hard engine and simulation core
+
+Guides: [docs/hard_engine.md](../../docs/hard_engine.md) (block language, Blockly, scoring) and [docs/market_sim.md](../../docs/market_sim.md) (market paths, portfolio). `sim/` is the simulation core: `household` and `market` (synthetic, replay, bootstrap, fictional) plus `portfolio`. `series_store.py` (the kernel's series store) feeds both the medium charts and `sim.market`. `hard/` checks, converts (Blockly) and runs block programs; tasks live under `hard:` in the node files.
+
+```bash
+python build.py --strict      # easy + medium + hard -> output/*.json and QA reports
+python -m pytest tests
+```

@@ -1,0 +1,20 @@
+# Polish benchmarks for the survey result screen.
+# Source: Flash Eurobarometer 525 (2023), volume C, Poland, weighted %, read 2026-11-20/21.
+# Licence: European Commission reuse notice (Decision 2011/833/EU): credit the source, do not distort.
+# Unweighted n: all 1003; 18-24: 98 (margin about +-10 points); 25-39: 270; 40-54: 276; 55+: 359.
+source: "Flash Eurobarometer 525 (2023), Poland, weighted"
+groups: [all, "18-24", "25-39", "40-54", "55+"]
+items_correct:      # % answering each knowledge item correctly
+  Q2: {all: 36.4, "18-24": 32.8, "25-39": 37.2, "40-54": 35.0, "55+": 37.6}
+  Q3: {all: 68.1, "18-24": 54.2, "25-39": 60.1, "40-54": 69.5, "55+": 75.4}
+  Q4: {all: 21.6, "18-24": 31.2, "25-39": 22.6, "40-54": 21.2, "55+": 19.2}
+  Q5: {all: 56.7, "18-24": 53.2, "25-39": 57.6, "40-54": 63.6, "55+": 52.0}
+  Q6: {all: 53.5, "18-24": 51.1, "25-39": 49.2, "40-54": 55.7, "55+": 55.2}
+knowledge_band:     # % with a low (0-1), medium (2-3) or high (4-5) knowledge score
+  low:    {all: 25.1, "18-24": 26.0, "25-39": 29.3, "40-54": 20.2, "55+": 25.6}
+  medium: {all: 55.0, "18-24": 61.5, "25-39": 53.0, "40-54": 60.5, "55+": 51.1}
+  high:   {all: 19.9, "18-24": 12.4, "25-39": 17.6, "40-54": 19.3, "55+": 23.3}
+self_rating_high:   # % rating their knowledge very or quite high (Q1)
+  {all: 39.6, "18-24": 53.6, "25-39": 48.7, "40-54": 44.5, "55+": 27.3}
+buffer_under_one_month:   # % with no emergency savings or less than one month (Q8)
+  {all: 30.3, "18-24": 41.9, "25-39": 29.2, "40-54": 25.8, "55+": 31.4}

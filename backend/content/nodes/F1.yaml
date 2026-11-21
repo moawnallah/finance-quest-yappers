@@ -1,0 +1,37 @@
+# Items only so far: they feed the prerequisite test of S1 and the router's test-out for F1.
+node: F1
+panel: FOUNDATIONS
+title: "Budget and cash flow"
+after: []
+author: "draft by Claude (AI), 2026-11-20"
+reviewer: null
+status: draft
+
+items:
+  - id: f1.e1
+    kind: numeric
+    q: "Net pay is 6,500 PLN a month. Rent 2,200, food 1,400, bills 600, transport 400 and a loan instalment 500. What is left each month?"
+    answer: 1400
+    unit: PLN
+    tolerance: {kind: absolute, band: 50}
+    input: {min: 0, max: 5000, step: 50}
+    why: "6,500 - (2,200 + 1,400 + 600 + 400 + 500) = 6,500 - 5,100 = 1,400 PLN."
+    check: true
+  - id: f1.e2
+    kind: numeric
+    q: "Car insurance costs 1,800 PLN once a year. How much should you put aside each month so it is not a surprise?"
+    answer: 150
+    unit: PLN
+    tolerance: {kind: absolute, band: 10}
+    input: {min: 0, max: 500, step: 10}
+    why: "1,800 / 12 = 150 PLN a month. Spreading yearly costs over the months keeps the budget honest."
+    check: true
+  - id: f1.e3
+    kind: single
+    q: "Which of these is a fixed monthly cost?"
+    options:
+      - "Rent"
+      - "Eating out"
+      - "A weekend trip"
+    answer: 0
+    why: "Rent is the same every month. Eating out and trips change, so they are variable costs."

@@ -42,7 +42,7 @@ cards:
       credit unions is guaranteed by the Bank Guarantee Fund (BFG) up to the
       PLN equivalent of EUR 100,000 per person in each bank.
     example: "A 14,400 PLN buffer in one Polish bank is fully within the guarantee."
-    links: [bfg_limit, bfg_guarantee, cfpb_emergency_fund]
+    links: [bfg_limit, bfg_guarantee]
     checked: "EUR 100,000 per depositor per bank, joint accounts counted by share: bfg_limit. Domestic banks and credit unions covered: bfg_guarantee. 'Safe, accessible': CFPB."
 
   - id: s1.c4
@@ -86,3 +86,87 @@ items:  # draft by Yurii (with Claude), 2026-11-20, based on the cards above
     answer: 1
     why: "It must be safe and quick to reach. Shares and crypto can fall exactly when you need the money."
     sources: [cfpb_emergency_fund]
+
+hard:  # draft by Claude (AI), 2026-11-21. Engine: docs/hard_engine.md
+  - id: s1.h1
+    level: hard
+    content_version: 1
+    author: "draft by Claude (AI), 2026-11-21"
+    reviewer: null
+    sources: [cfpb_emergency_fund]
+    brief: >-
+      Ania, 27, earns 6,500 PLN a month after tax and needs 4,800 PLN for
+      essentials. She has 8,000 PLN saved and no debt. Write her monthly rule
+      for the next 24 months: how much goes to her safety buffer and how much
+      is invested. Money she does not assign is spent. Two tests must pass:
+      she never uses her credit card during a 2-month job loss, and she
+      invests at least 15,000 PLN over the two years. Then we test your rule
+      against other surprises.
+    palette: [if_else, compare, and, not, math, number, save_to_buffer, invest, pay_debt, sell_investments]
+    vars: [cash, shortfall, buffer_months, costs, card_debt, invested, employed, month]
+    limits: {max_blocks: 25, max_depth: 4}
+    starter_program: {every_month: []}
+    household: {income: 6500, costs: 4800, buffer: 8000, buffer_rate: 0.04, card_rate: 0.20}
+    world: {months: 24, market: {kind: synthetic, seed: 2026112101, mean: 0.005, sd: 0.04}}
+    assumptions:
+      - "The buffer account pays 4% a year; card debt costs 20% a year (both illustrative)."
+      - "Share fund returns are synthetic: about 0.5% a month on average, with ups and downs. Not a forecast."
+      - "Money you do not assign in a month is spent."
+      - "If a month's money runs out, the buffer pays first, then the credit card."
+      - "The surprises and their likelihoods are illustrative, chosen for teaching."
+      - "After the tests, your rule also runs through 200 random 10-year futures: how often it never needed the card, and how much it grew (median), compared with the reference solution = 100."
+    obligatory:
+      - {name: "Job loss in month 6, lasting 2 months: never use the card", override: {job_loss: [[6, 2]]}, check: {no_card_debt: true}}
+      - {name: "A normal 24 months: at least 15,000 PLN invested", override: {}, check: {contributed_at_least: 15000}}
+    optional:
+      - {name: "Car repair, 3,000 PLN in month 3", probability: 0.25, override: {shocks: {3: 3000}}}
+      - {name: "Prices up 10% from month 6", probability: 0.20, override: {price_rise: [6, 0.10]}}
+      - {name: "Medical bill, 1,500 PLN in month 15", probability: 0.15, override: {shocks: {15: 1500}}}
+      - {name: "Job loss in month 10, lasting 4 months", probability: 0.10, override: {job_loss: [[10, 4]]}}
+      - {name: "Two shocks in one year: 3,000 PLN in month 3 and 2,500 PLN in month 8", probability: 0.08, override: {shocks: {3: 3000, 8: 2500}}}
+      - {name: "Job loss in month 6, lasting 3 months", probability: 0.05, override: {job_loss: [[6, 3]]}}
+    futures: {n: 200, months: 120, seed: 11, job_loss_per_month: 0.01, job_loss_months: [2, 5], shock_per_month: 0.04, shock_amount: [1000, 4000]}
+    reference_program:
+      every_month:
+        - block: if_else
+          if: {block: compare, op: ">", left: {block: var, name: card_debt}, right: {block: number, value: 0}}
+          then: [{block: pay_debt, amount: {block: var, name: cash}}]
+          else:
+            - block: if_else
+              if: {block: compare, op: "<", left: {block: var, name: buffer_months}, right: {block: number, value: 3}}
+              then: [{block: save_to_buffer, amount: {block: var, name: cash}}]
+              else: [{block: invest, amount: {block: var, name: cash}}]
+    known_bad_programs:
+      - name: "Invest everything"
+        fails: "Job loss in month 6, lasting 2 months: never use the card"
+        program: {every_month: [{block: invest, amount: {block: var, name: cash}}]}
+      - name: "Save everything"
+        fails: "A normal 24 months: at least 15,000 PLN invested"
+        program: {every_month: [{block: save_to_buffer, amount: {block: var, name: cash}}]}
+      - name: "Spend everything"
+        fails: "Job loss in month 6, lasting 2 months: never use the card"
+        program: {every_month: []}
+    baseline_bots:
+      - name: "Invests everything"
+        program: {every_month: [{block: invest, amount: {block: var, name: cash}}]}
+      - name: "Buffer of 2 months, then invests"
+        program:
+          every_month:
+            - block: if_else
+              if: {block: compare, op: "<", left: {block: var, name: buffer_months}, right: {block: number, value: 2}}
+              then: [{block: save_to_buffer, amount: {block: var, name: cash}}]
+              else: [{block: invest, amount: {block: var, name: cash}}]
+      - name: "Buffer of 6 months, then invests"
+        program:
+          every_month:
+            - block: if_else
+              if: {block: compare, op: "<", left: {block: var, name: buffer_months}, right: {block: number, value: 6}}
+              then: [{block: save_to_buffer, amount: {block: var, name: cash}}]
+              else: [{block: invest, amount: {block: var, name: cash}}]
+    editorial: >-
+      The reference rule does three things in order. If there is card debt, it
+      pays it off first, because 20% a year beats any expected return. Until
+      the buffer covers 3 months of essential costs, it saves. After that, it
+      invests. A 2-month buffer passes the required tests but fails more of the
+      surprises; a 6-month buffer survives almost everything but invests less.
+      There is no single right size: it depends on how secure the income is.
