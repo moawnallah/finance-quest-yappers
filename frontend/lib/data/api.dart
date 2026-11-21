@@ -192,6 +192,13 @@ class Api {
   Future<Map<String, dynamic>> runHard(String name, String taskId, String code) async =>
       Map<String, dynamic>.from(await _authed('POST', '/tasks/$taskId/run', name, body: {'code': code}));
 
+  /// The learner's A/B variant (GET /me works for guests and accounts alike).
+  Future<String?> variant(String name) async => (await _authed('GET', '/me', name))['variant'] as String?;
+
+  /// The confidence-card A/B test: shown, mission opened, chart opened.
+  Future<void> calibrationEvent(String name, String action) async =>
+      _authed('POST', '/events/calibration', name, body: {'action': action});
+
   /// Real leagues per level, ranked by Scales.
   Future<Map<String, dynamic>> leagues(String name) async => Map<String, dynamic>.from(await _authed('GET', '/leagues', name));
 
