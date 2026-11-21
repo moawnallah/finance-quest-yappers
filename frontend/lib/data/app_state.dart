@@ -13,7 +13,7 @@ import 'sfx.dart';
 class Profile {
   String name = 'You';
   String ageGroup = '25-39';
-  String goal = 'Kids\' education';
+  String goal = 'My first investment';
   int horizonYears = 12;
   String experience = 'None';
   int confidenceBefore = 2;
@@ -242,7 +242,7 @@ class AppState extends ChangeNotifier {
     final panel = switch (p.experience) {
       'Quite a lot' => 'PORTFOLIO',
       'A little' => p.goal == 'Retirement' ? 'PORTFOLIO' : 'INSTRUMENTS',
-      _ => p.goal == 'A first habit' || p.goal == 'Not sure yet' ? 'FOUNDATIONS' : 'SAFETY',
+      _ => p.goal == 'My first investment' || p.goal == 'Something else / not sure' ? 'FOUNDATIONS' : 'SAFETY',
     };
     selectedPanel = panel;
     recommendedSkill = null;
@@ -468,13 +468,15 @@ class AppState extends ChangeNotifier {
       [for (final n in roadmapNodes) if (n['panel'] == panel && n['live'] != true) n];
 
   /// The starting survey + quick check, in the backend router's format (backend/app/insights_api.py SurveyIn).
-  Map<String, dynamic> routerSurvey(Map<String, bool?> answers) {
+  /// [sure]: "How sure are you?" (1-5) per quick-check item; the router uses it for overconfidence.
+  Map<String, dynamic> routerSurvey(Map<String, bool?> answers, [Map<String, int> sure = const {}]) {
     final p = profile;
     String band(String a) => const {'Under 18': 'under_18', '18-24': '18-24', '25-39': '25-39', '40-54': '40-54', '55+': '55+',
         '18-29': '18-24', '30-49': '25-39', '50+': '55+'}[a] ?? '25-39';
     final goal = switch (p.goal) {
-      'An emergency buffer' => 'buffer', 'A first habit' => 'first_investment', 'Retirement' => 'retirement', 'A home' => 'home', _ => 'other',
+      'An emergency buffer' => 'buffer', 'My first investment' => 'first_investment', 'Retirement' => 'retirement', 'A home' => 'home', _ => 'other',
     };
+    final experience = switch (p.experience) { 'A little' => 'a_little', 'Quite a lot' => 'quite_a_lot', _ => 'none' };
     final horizon = p.horizonYears < 3 ? 'under_3' : p.horizonYears <= 10 ? '3_10' : 'over_10';
     const rating = ['very_low', 'quite_low', 'average', 'quite_high', 'very_high'];
     return {
@@ -482,16 +484,19 @@ class AppState extends ChangeNotifier {
       'goal': goal,
       'horizon': horizon,
       'self_rating': rating[(p.confidenceBefore - 1).clamp(0, 4)],
+      'experience': experience,
+      // Empty when the quick check was skipped: the router then places the user from the survey alone.
       'knowledge': {
-        for (final e in answers.entries) e.key.replaceFirst('eb_q', 'Q').toUpperCase(): {'correct': e.value},
+        for (final e in answers.entries)
+          e.key.replaceFirst('eb_q', 'Q').toUpperCase(): {'correct': e.value, if (sure[e.key] != null) 'confidence': sure[e.key]},
       },
     };
   }
 
   /// Send the survey to the router; the Path tab then shows the recommended path.
-  Future<void> submitSurvey(Map<String, bool?> answers) async {
+  Future<void> submitSurvey(Map<String, bool?> answers, [Map<String, int> sure = const {}]) async {
     try {
-      await api.onboarding(profile.name, routerSurvey(answers));
+      await api.onboarding(profile.name, routerSurvey(answers, sure));
       surveyAt = DateTime.now();
       notifyListeners();
     } catch (_) {}
@@ -499,13 +504,13 @@ class AppState extends ChangeNotifier {
 
   DateTime? surveyAt; // when the survey was last sent (the Path tab reloads after it)
 
-  void finishPlacement(int score, List<String> missedIds, {bool retest = false, Map<String, bool?>? answers}) {
+  void finishPlacement(int score, List<String> missedIds, {bool retest = false, Map<String, bool?>? answers, Map<String, int> sure = const {}}) {
     if (retest) {
       profile.retestScore = score;
       notifyListeners();
       return;
     }
-    if (answers != null) submitSurvey(answers);
+    if (answers != null) submitSurvey(answers, sure);
     focusSlices
       ..clear()
       ..addAll(missedIds.map((id) => topicSlice[placementTopic[id]]).whereType<String>());

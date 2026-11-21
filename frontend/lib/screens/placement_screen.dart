@@ -18,7 +18,9 @@ class PlacementScreen extends StatefulWidget {
 
 class _PlacementScreenState extends State<PlacementScreen> {
   int i = 0;
-  int? picked; // -1 = I don't know
+  int? picked; // -1 = I don't know; set once the answer is revealed
+  int? chosen; // the option picked, before "How sure are you?" reveals the answer
+  final Map<String, int> sure = {}; // question id -> confidence 1-5
   int score = 0;
   bool done = false;
   final List<String> missed = [];
@@ -34,7 +36,15 @@ class _PlacementScreenState extends State<PlacementScreen> {
     final title = widget.retest ? 'Check your progress' : 'Quick check';
     return Scaffold(
       appBar: AppBar(title: Text(title), actions: [
-        if (!widget.retest) TextButton(onPressed: () => context.go('/wheel'), child: Text('Skip')),
+        // Skipping still sends the survey (with the answers so far), so the Path tab has a path.
+        if (!widget.retest)
+          TextButton(
+            onPressed: () {
+              s.submitSurvey(answers, sure);
+              context.go('/path');
+            },
+            child: Text('Skip'),
+          ),
       ]),
       body: ListView(padding: EdgeInsets.all(20), children: [
         LinearProgressIndicator(value: (i + (picked != null ? 1 : 0)) / qs.length, minHeight: 8, color: kPrimary),
@@ -49,6 +59,28 @@ class _PlacementScreenState extends State<PlacementScreen> {
             padding: EdgeInsets.only(bottom: 10),
             child: _option(q, k == q.options.length ? -1 : k, o),
           ),
+        if (chosen != null && picked == null) ...[
+          Text('How sure are you?', style: TextStyle(fontWeight: FontWeight.w700, color: kInk)),
+          SizedBox(height: 8),
+          Row(children: [
+            for (final c in [1, 2, 3, 4, 5])
+              Expanded(
+                child: Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 3),
+                  child: OutlinedButton(
+                    style: OutlinedButton.styleFrom(minimumSize: Size(0, 48), padding: EdgeInsets.zero),
+                    onPressed: () => setState(() => _reveal(q, chosen!, c)),
+                    child: Text('$c'),
+                  ),
+                ),
+              ),
+          ]),
+          SizedBox(height: 4),
+          Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+            Text('Guessing', style: TextStyle(fontSize: 12, color: kMuted)),
+            Text('Certain', style: TextStyle(fontSize: 12, color: kMuted)),
+          ]),
+        ],
         if (picked != null) ...[
           Panel(
             child: Text(
@@ -62,9 +94,10 @@ class _PlacementScreenState extends State<PlacementScreen> {
               if (i < qs.length - 1) {
                 i++;
                 picked = null;
+                chosen = null;
               } else {
                 done = true;
-                s.finishPlacement(score, missed, retest: widget.retest, answers: answers);
+                s.finishPlacement(score, missed, retest: widget.retest, answers: answers, sure: sure);
               }
             }),
             child: Text(i < qs.length - 1 ? 'Next' : 'See my result'),
@@ -74,24 +107,33 @@ class _PlacementScreenState extends State<PlacementScreen> {
     );
   }
 
+  void _reveal(q, int k, int? confidence) {
+    picked = k;
+    answers[q.id] = k == -1 ? null : k == q.answer;
+    if (confidence != null) sure[q.id] = confidence;
+    if (k == q.answer) {
+      score++;
+    } else {
+      missed.add(q.id);
+    }
+  }
+
   Widget _option(q, int k, String label) {
     final isAnswer = k == q.answer, isPicked = k == picked;
     return OutlinedButton(
       style: OutlinedButton.styleFrom(
         minimumSize: Size.fromHeight(56),
         alignment: Alignment.centerLeft,
-        backgroundColor: picked == null ? null : isAnswer ? kGreenSoft : isPicked ? kRedSoft : null,
-        side: BorderSide(color: picked == null ? kBorder : isAnswer ? kGreen : isPicked ? kRed : kBorder, width: 1.5),
+        backgroundColor: picked == null ? (k == chosen ? kPrimarySoft : null) : isAnswer ? kGreenSoft : isPicked ? kRedSoft : null,
+        side: BorderSide(color: picked == null ? (k == chosen ? kPrimary : kBorder) : isAnswer ? kGreen : isPicked ? kRed : kBorder, width: 1.5),
       ),
       onPressed: picked != null
           ? null
           : () => setState(() {
-                picked = k;
-                answers[q.id] = k == -1 ? null : k == q.answer;
-                if (k == q.answer) {
-                  score++;
+                if (k == -1) {
+                  _reveal(q, -1, null); // "I don't know" needs no confidence
                 } else {
-                  missed.add(q.id);
+                  chosen = k; // ask "How sure are you?" before showing the answer
                 }
               }),
       child: Text(label, style: TextStyle(color: k == -1 ? kMuted : kInk, fontSize: 15, fontStyle: k == -1 ? FontStyle.italic : null)),
@@ -151,7 +193,7 @@ class _PlacementScreenState extends State<PlacementScreen> {
         ],
         SizedBox(height: 24),
         FilledButton(
-          onPressed: () => context.go(widget.retest ? '/progress' : '/wheel'),
+          onPressed: () => context.go(widget.retest ? '/progress' : '/path'),
           child: Text(widget.retest ? 'Back to my progress' : 'Go to my path'),
         ),
       ]),

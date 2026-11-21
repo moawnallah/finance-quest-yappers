@@ -37,8 +37,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         onPick: (v) => setState(() => p.ageGroup = v),
       ),
       _Choice(
-        title: 'What are you investing for?',
-        options: ['An emergency buffer', 'A first habit', 'Kids\' education', 'Retirement', 'A home', 'Not sure yet'],
+        title: 'What is your main money goal?',
+        options: ['An emergency buffer', 'My first investment', 'Retirement', 'A home', 'Something else / not sure'],
         selected: p.goal,
         onPick: (v) => setState(() => p.goal = v),
       ),
@@ -137,7 +137,7 @@ class _WelcomeState extends State<_Welcome> {
           final path = await s.api.path(s.profile.name);
           if (path['survey_done'] == true) {
             s.surveyAt = DateTime.now();
-            if (mounted) GoRouter.of(context).go('/wheel');
+            if (mounted) GoRouter.of(context).go('/path');
             return;
           }
         } catch (_) {}
