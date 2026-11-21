@@ -681,14 +681,15 @@ class KyleCallout extends StatelessWidget {
   final String text;
   final String pose;
   final double size;
-  KyleCallout({super.key, required this.text, this.pose = 'point', this.size = 200});
+  final VoidCallback? onTap; // e.g. open the tutor: Kyle himself is the button
+  KyleCallout({super.key, required this.text, this.pose = 'point', this.size = 200, this.onTap});
 
   @override
   Widget build(BuildContext context) {
     if (MediaQuery.sizeOf(context).width < 600) return MascotPlaceholder(size: 44, say: text);
-    return Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.center, children: [
+    final body = Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.center, children: [
       ConstrainedBox(
-        constraints: BoxConstraints(maxWidth: size * 1.2),
+        constraints: BoxConstraints(maxWidth: size * 0.95),
         child: Container(
           padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
           decoration: BoxDecoration(color: kSurface, borderRadius: BorderRadius.circular(14), border: Border.all(color: kBorder)),
@@ -698,6 +699,15 @@ class KyleCallout extends StatelessWidget {
       SizedBox(height: 4),
       MascotPlaceholder(size: size, pose: pose),
     ]);
+    if (onTap == null) return body;
+    return Semantics(
+      button: true,
+      label: 'Ask Kyle, the tutor',
+      child: Tooltip(
+        message: 'Ask Kyle, the tutor',
+        child: MouseRegion(cursor: SystemMouseCursors.click, child: GestureDetector(onTap: onTap, child: body)),
+      ),
+    );
   }
 }
 

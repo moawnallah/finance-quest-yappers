@@ -23,7 +23,8 @@ class AppShell extends StatelessWidget {
     if (index < 0) index = 0;
     if (isWideWeb(context)) {
       // Desktop browser: the tabs sit in the top bar (StatsBar), the page fills the window.
-      return Scaffold(body: child, floatingActionButton: TutorFab());
+      // On Explore the big Kyle opens the tutor; the round button is on the other tabs.
+      return Scaffold(body: child, floatingActionButton: location.startsWith('/wheel') ? null : TutorFab());
     }
     return Scaffold(
       body: child,

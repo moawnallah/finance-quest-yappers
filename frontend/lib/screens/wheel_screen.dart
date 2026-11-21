@@ -128,7 +128,7 @@ class _WheelScreenState extends State<WheelScreen> {
                       padding: EdgeInsets.fromLTRB(16, 0, 16, 6),
                       child: MascotPlaceholder(
                         size: 44,
-                        say: s.skillsIn(panel).isEmpty ? 'These missions are coming later. Tap one to see where it fits.' : 'Tap a glowing mission to start learning.',
+                        say: s.skillsIn(panel).isEmpty ? 'These missions are coming later. Tap one to see where it fits.' : 'Tap a glowing mission to start, or tap me to ask a question.',
                       ),
                     ),
                     Container(
@@ -202,7 +202,7 @@ extension on _WheelScreenState {
           // Kyle stands in the roadmap's corner; the roadmap keeps clear of him.
           final kyle = (rc.maxHeight * 0.44).clamp(160.0, 340.0);
           final showKyle = rc.maxHeight >= 380 && rc.maxWidth >= 560;
-          final kyleW = showKyle ? kyle * 0.78 + 40 : 0.0;
+          final kyleW = showKyle ? kyle * 0.95 + 32 : 0.0;
           return Stack(children: [
           NotificationListener<ScrollNotification>(
             onNotification: _onScroll,
@@ -211,7 +211,7 @@ extension on _WheelScreenState {
               Expanded(
                 child: Stack(children: [
                   Positioned(left: 0, top: 0, bottom: 0, right: kyleW, child: s.skillsIn(panel).isEmpty
-                    ? Center(child: _Tree(key: ValueKey(panel), panel: panel))
+                    ? Center(child: SingleChildScrollView(scrollDirection: Axis.horizontal, child: _Tree(key: ValueKey(panel), panel: panel, horizontal: true)))
                     : LayoutBuilder(builder: (context, tc) => SingleChildScrollView(child: SingleChildScrollView(
                   scrollDirection: Axis.horizontal,
                   child: ConstrainedBox(
@@ -240,12 +240,11 @@ extension on _WheelScreenState {
                     Positioned(
                       right: 16,
                       bottom: 8,
-                      child: IgnorePointer(
-                        child: KyleCallout(
+                      child: KyleCallout(
                           size: kyle,
-                          text: s.skillsIn(panel).isEmpty ? 'These missions are coming later. Tap one to see where it fits.' : 'Tap a glowing mission to start learning.',
+                          onTap: () => GoRouter.of(context).push('/tutor'),
+                          text: s.skillsIn(panel).isEmpty ? 'These missions are coming later. Tap one to see where it fits.' : 'Tap a glowing mission to start, or tap me to ask a question.',
                         ),
-                      ),
                     ),
                 ]),
               ),
@@ -1000,7 +999,7 @@ class _PlannedNode extends StatelessWidget {
               Container(
                 width: 60, height: 60,
                 decoration: BoxDecoration(color: kWarnSoft, shape: BoxShape.circle, border: Border.all(color: kWarnIcon, width: 2.5)),
-                child: Icon(Icons.schedule, color: kWarnIcon),
+                child: Icon(Icons.hourglass_top_rounded, color: kWarnIcon),
               ),
               SizedBox(height: 6),
               Text('${node['title']}', textAlign: TextAlign.center, maxLines: 2, overflow: TextOverflow.ellipsis,
@@ -1024,7 +1023,7 @@ class _PlannedStrip extends StatelessWidget {
       Text('Coming later:', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: kWarnText)),
       for (final n in s.plannedIn(panel))
         ActionChip(
-          avatar: Icon(Icons.schedule, size: 16, color: kWarnIcon),
+          avatar: Icon(Icons.hourglass_top_rounded, size: 16, color: kWarnIcon),
           label: Text('${n['title']}', style: TextStyle(fontSize: 12, color: kInk)),
           backgroundColor: kWarnSoft,
           side: BorderSide(color: kWarnBorder),

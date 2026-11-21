@@ -22,7 +22,8 @@ class HardTaskScreen extends StatefulWidget {
   State<HardTaskScreen> createState() => _HardTaskScreenState();
 }
 
-class _HardTaskScreenState extends State<HardTaskScreen> {
+class _HardTaskScreenState extends State<HardTaskScreen> with SingleTickerProviderStateMixin {
+  late final TabController _tabs = TabController(length: 2, vsync: this); // Blocks | Test results
   final _code = TextEditingController();
   Map<String, dynamic>? _task;
   String? _loadError;
@@ -59,9 +60,11 @@ class _HardTaskScreenState extends State<HardTaskScreen> {
       final r = await s.api.runHard(s.profile.name, widget.taskId, _code.text);
       r['required_passed'] == true ? Sfx.correct() : Sfx.wrong();
       setState(() => _run = r);
+      _tabs.animateTo(1);
     } catch (e) {
       Sfx.wrong();
       setState(() { _error = '$e'; _run = null; });
+      _tabs.animateTo(1);
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -127,7 +130,7 @@ class _HardTaskScreenState extends State<HardTaskScreen> {
                 child: Column(children: [
                   Expanded(child: Padding(padding: EdgeInsets.fromLTRB(16, 12, 16, 8), child: _editor(expand: true))),
                   Divider(height: 1, color: kLine),
-                  SizedBox(height: 250, child: _results()),
+                  SizedBox(height: 300, child: _lower()),
                 ]),
               ),
             ])
@@ -146,7 +149,7 @@ class _HardTaskScreenState extends State<HardTaskScreen> {
               SizedBox(height: 10),
               Row(children: [Expanded(child: actions[0]), SizedBox(width: 8), Expanded(child: actions[2])]),
               SizedBox(height: 12),
-              _results(scroll: false),
+              SizedBox(height: 380, child: Panel(child: _lower())),
             ]),
     );
   }
@@ -272,6 +275,121 @@ class _HardTaskScreenState extends State<HardTaskScreen> {
           ),
         ),
       );
+
+  /// Below the code: the blocks you can use (like Scratch) and the test results, on one bar.
+  Widget _lower() => Column(children: [
+        TabBar(
+          controller: _tabs,
+          isScrollable: true,
+          tabAlignment: TabAlignment.start,
+          tabs: [Tab(icon: Icon(Icons.extension_rounded, size: 18), text: 'Blocks'), Tab(icon: Icon(Icons.fact_check_outlined, size: 18), text: 'Test results')],
+        ),
+        Expanded(child: TabBarView(controller: _tabs, children: [_blocks(), _results()])),
+      ]);
+
+  static const _cControl = Color(0xFFFFAB19), _cCond = Color(0xFF59C059), _cMath = Color(0xFF0FBD8C),
+      _cValue = Color(0xFF4C97FF), _cAction = Color(0xFF9966FF), _cMine = Color(0xFFFF8C1A);
+
+  Widget _blocks() {
+    final values = [for (final v in (_panel['values'] as List? ?? []).cast<Map>()) '${v['name']}'];
+    final meaning = {for (final v in (_panel['values'] as List? ?? []).cast<Map>()) '${v['name']}': '${v['meaning']}'};
+    final assets = [for (final a in (_panel['assets'] as List? ?? [])) '$a'];
+    final asset = assets.isEmpty ? 'fund' : assets.first;
+    final actions = <(String, String, String)>[
+      for (final a in (_panel['actions'] as List? ?? []).cast<Map>())
+        ('${a['code']}'.split('(').first, '${a['code']}'.replaceAll('amount', 'cash').replaceAll('asset', asset), '${a['meaning']}'),
+    ];
+    Widget section(String title, Color c, List<Widget> chips) => Padding(
+          padding: EdgeInsets.only(bottom: 10),
+          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Row(children: [
+              Container(width: 10, height: 10, decoration: BoxDecoration(color: c, shape: BoxShape.circle)),
+              SizedBox(width: 6),
+              Text(title, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: kMuted)),
+            ]),
+            SizedBox(height: 6),
+            Wrap(spacing: 6, runSpacing: 6, children: chips),
+          ]),
+        );
+    return ListView(padding: EdgeInsets.fromLTRB(12, 10, 12, 10), children: [
+      Text('Tap a block to add it where the cursor is.', style: TextStyle(fontSize: 12, color: kMuted)),
+      SizedBox(height: 8),
+      section('Control', _cControl, [
+        _block('if … :', _cControl, 'if cash > 0:\n    ', 'Do the lines under it only when the condition is true', line: true),
+        _block('elif … :', _cControl, 'elif cash > 0:\n    ', 'Otherwise, if another condition is true', line: true),
+        _block('else:', _cControl, 'else:\n    ', 'Otherwise', line: true),
+      ]),
+      section('Actions', _cAction, [for (final a in actions) _block(a.$1, _cAction, a.$2, a.$3, line: true)]),
+      section('Conditions', _cCond, [
+        _block('<', _cCond, ' < ', 'is less than'),
+        _block('>', _cCond, ' > ', 'is more than'),
+        _block('and', _cCond, ' and ', 'both must be true'),
+        _block('or', _cCond, ' or ', 'one is enough'),
+        _block('not', _cCond, 'not ', 'the opposite'),
+      ]),
+      section('Values', _cValue, [for (final v in values) _block(v, _cValue, v, meaning[v] ?? v)]),
+      section('Maths', _cMath, [
+        _block('+', _cMath, ' + ', 'plus'),
+        _block('-', _cMath, ' - ', 'minus'),
+        _block('*', _cMath, ' * ', 'times'),
+        _block('/', _cMath, ' / ', 'divided by'),
+        _block('min(a, b)', _cMath, 'min(cash, 1000)', 'the smaller of two'),
+        _block('max(a, b)', _cMath, 'max(cash, 0)', 'the bigger of two'),
+        _block('number', _cMath, '1000', 'a number'),
+      ]),
+      if (_panel['own_variables'] != null)
+        section('My variables', _cMine, [
+          _block('my_total = 0', _cMine, 'my_total = 0', 'make or set your own number', line: true),
+          _block('my_total += cash', _cMine, 'my_total += cash', 'add to your own number', line: true),
+        ]),
+    ]);
+  }
+
+  Widget _block(String label, Color c, String code, String tip, {bool line = false}) => Tooltip(
+        message: tip,
+        child: Material(
+          color: c,
+          borderRadius: BorderRadius.circular(8),
+          child: InkWell(
+            borderRadius: BorderRadius.circular(8),
+            onTap: () => _insert(code, line: line),
+            child: Container(
+              padding: EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+              decoration: BoxDecoration(borderRadius: BorderRadius.circular(8), border: Border.all(color: Colors.black.withValues(alpha: .15))),
+              child: Text(label, style: GoogleFonts.robotoMono(fontSize: 13, fontWeight: FontWeight.w700, color: Colors.white)),
+            ),
+          ),
+        ),
+      );
+
+  /// Insert a block's code. Statements go on a new line with the right indent; parts of an
+  /// expression go where the cursor is.
+  void _insert(String code, {bool line = false}) {
+    final t = _code.text;
+    var at = _code.selection.isValid ? _code.selection.end : t.length;
+    if (!line) {
+      _code.value = TextEditingValue(text: t.replaceRange(at, at, code), selection: TextSelection.collapsed(offset: at + code.length));
+      return;
+    }
+    final lineStart = t.lastIndexOf('\n', at > 0 ? at - 1 : 0) + 1;
+    var lineEnd = t.indexOf('\n', at);
+    if (lineEnd < 0) lineEnd = t.length;
+    final current = t.substring(lineStart, lineEnd);
+    var indent = current.length - current.trimLeft().length;
+    if (current.trimRight().endsWith(':')) indent += 4;
+    final pad = ' ' * indent;
+    final block = code.split('\n').map((l) => l.isEmpty ? l : '$pad$l').join('\n');
+    final String text;
+    final int cursor;
+    if (current.trim().isEmpty) {
+      text = t.replaceRange(lineStart, lineEnd, block);
+      cursor = lineStart + block.length;
+    } else {
+      text = t.replaceRange(lineEnd, lineEnd, '\n$block');
+      cursor = lineEnd + 1 + block.length;
+    }
+    _code.value = TextEditingValue(text: text, selection: TextSelection.collapsed(offset: cursor));
+  }
 
   Widget _results({bool scroll = true}) {
     final children = <Widget>[
