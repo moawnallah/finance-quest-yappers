@@ -10,12 +10,17 @@ Purpose: how the hard engine works, what a task file contains, what goes
 in and out, and how Blockly connects.
 
 Status: 2026-11-21.
-- Engine, Blockly side, two-dimensional score and two tasks are done: S1
-  "Ania's buffer rule" (young adult) and P4 "Rebalancing in a crash"
-  (investor).
+- Engine, Blockly side and two-dimensional score are done.
+- Two live tasks, both rebuilt as harder situations on 2026-11-21 (see
+  "Next version" below):
+  - p1.h1, "Ania's first two years": the young-adult capstone;
+  - p4.h1 v2, "Marek over ten years": the investor capstone.
+- s1.h1 and p4.h1 v1 are kept as frozen fixtures
+  (`data/tests/fixtures/hard_baseline`). The S1 tables below describe that
+  fixture.
 - The household half of the simulation runs the tasks. The market half
   ([market_sim.md](market_sim.md)) supplies the fund's returns.
-- 113 tests in `backend/data`.
+- 135 tests in `backend/data`.
 - One submission takes about 150 ms.
 
 Architecture: [architecture.md](architecture.md). Spec it implements:
@@ -114,9 +119,9 @@ tests fail.
 
 | Kind | Blocks |
 |---|---|
-| Statements | `if_else`, actions `save_to_buffer`, `invest`, `pay_debt`, `sell_investments` (each with an `amount`), `rebalance` (no input) |
+| Statements | `if_else`, `if`; actions `save_to_buffer`, `save_to_pot`, `invest`, `pay_debt`, `sell_investments` (each with an `amount`), `invest_in` and `sell` (an `amount` and an `asset`), `rebalance` (no input); own variables `set_var`, `change_var` (a `name` and a `value`) |
 | Conditions | `compare` (`<`, `>`), `and`, `or`, `not` |
-| Numbers | `number`, `var`, `math` (`*`, `+`, `-`, `min` = "but at most") |
+| Numbers | `number`, `var`, `my_var` (own variable), `math` (`*`, `+`, `-`, `/`, `min` = "but at most", `max` = "but at least") |
 
 **Values:**
 - `cash`;
@@ -129,7 +134,10 @@ tests fail.
 - `employed`;
 - `month`;
 - for multi-asset tasks: `shares_weight`, `drift`, `drawdown`,
-  `months_since_rebalance`.
+  `months_since_rebalance`;
+- for the optional mechanisms: `income`, `pot`, `next_bill`,
+  `months_to_next_bill`, `target_shares`, `years_to_goal`,
+  `tax_due_this_year`.
 
 Each has an English label in `VARS`.
 
@@ -140,8 +148,8 @@ Each has an English label in `VARS`.
 
 | Field | What the app does with it |
 |---|---|
-| `blocks` | `Blockly.common.defineBlocksWithJsonArray(blocks)`. Generated from the task's palette: block type `fq_<block>`; typed inputs (`Boolean`, `Number`) so wrong blocks do not snap; dropdowns for comparisons, operations and values (with the English labels); the root block `fq_every_month` with one statement input `DO`, not deletable |
-| `toolbox` | A category toolbox (Rules, Conditions, Numbers, Actions). Numbers has one ready-made value block per allowed value |
+| `blocks` | `Blockly.common.defineBlocksWithJsonArray(blocks)`. Generated from the task's palette: block type `fq_<block>`; typed inputs (`Boolean`, `Number`) so wrong blocks do not snap; dropdowns for comparisons, operations, values and assets (with the English labels); the root block `fq_every_month` with one statement input `DO`, not deletable |
+| `toolbox` | A category toolbox (Rules, Conditions, Numbers, My variables, Money moves). Numbers has one ready-made value block per allowed value. Every number slot carries a typed number (a shadow `fq_number`). "My variables" is Blockly's dynamic category (`"custom": "VARIABLE"`): it needs Blockly's default blocks registered (`import 'blockly'`, not only `blockly/core`) |
 | `starter` | `Blockly.serialization.workspaces.load(starter, workspace)` |
 
 **Submit:** send `Blockly.serialization.workspaces.save(workspace)` as is.
@@ -158,20 +166,23 @@ engine accepts both formats.
 
 ## A task file (`hard:` in the node file)
 
-See `backend/content/nodes/S1.yaml` (one fund) and `P4.yaml` (shares and
-bonds).
+See `backend/content/nodes/P1.yaml` (the capstone: bills, card minimum,
+three assets) and `P4.yaml` (shares and bonds, moving target, fees, tax).
+The frozen `data/tests/fixtures/hard_baseline/s1_h1.yaml` is the simplest
+example (one fund).
 
 | Field | Meaning |
 |---|---|
 | `id`, `level`, `content_version`, `author`, `reviewer`, `sources` | As for the other engines; `id` is `<node>.h<n>` |
 | `brief`, `editorial` | Text before and after |
 | `palette`, `vars`, `limits`, `starter_program` | What the user can build with |
-| `household` | `income`, `costs`, `buffer`, `invested` (a number for one fund, or `{asset: value}`), `target` (`{asset: weight}`), `trade_fee`, `card_debt`, `buffer_rate`, `card_rate` |
-| `world` | `months`; `market`: any kind from market_sim.md. With `asset`, only that asset is the fund (S1); without it, every asset on the path is held (P4) |
+| `assets` | `{asset: label}`: the assets `invest_in` and `sell` may name (keys of `household.invested`) |
+| `household` | `income`, `costs`, `buffer`, `invested` (a number for one fund, or `{asset: value}`), `target` (`{asset: weight}`), `trade_fee`, `card_debt`, `buffer_rate`, `card_rate`. Optional: `bills`, `pot`, `card_min_payment`, `sell_fee`, `broker_fee`, `glide`, `tax_on_gains` (see "Next version") |
+| `world` | `months`; `market`: any kind from market_sim.md. With `asset`, only that asset is the fund (s1.h1); without it, every asset on the path is held. Optional `income_extra: {min, max, seed}` |
 | `assumptions` | Shown on screen; every illustrative number is listed |
-| `obligatory` | `{name, override, check}`. `check` is `no_card_debt`, `contributed_at_least`, `net_worth_at_least`, `weight_between: {asset, low, high}` or `weight_at_least: {asset, value}` (weights at every month end) |
+| `obligatory` | `{name, override, check}`, optional `variants` (several overrides; all must pass). `check` is `no_card_debt`, `no_new_card_debt`, `contributed_at_least`, `net_worth_at_least`, `weight_between: {asset, low, high}`, `weight_at_least: {asset, value}` or `weight_near_target: {asset, below, above}` (weights at every month end) |
 | `optional` | `{name, probability, override}` |
-| `optional_metric` | Default: card use. `{band: {asset, low, high}}` scores whether the mix stayed in the band |
+| `optional_metric` | Default: card use (1 = never borrowed on the card; 0.5 = borrowed but ended no higher than it started; 0 = more debt). `{band: {asset, low, high}}` or `{near_target: {asset, below, above}}` scores whether the mix stayed in the band |
 | `override` | `job_loss: [[month, length]]`, `shocks: {month: amount}`, `price_rise: [month, +x]`, `returns: {asset: {month: r}}`, `trend: [{asset, from, to, r}]` |
 | `futures` | `n`, `months` (may be longer than the tests), `seed`, `job_loss_per_month`, `job_loss_months: [min, max]`, `shock_per_month`, `shock_amount: [min, max]` |
 | `reference_program`, `known_bad_programs` (with `fails`), `baseline_bots` | The golden checks, and the points for the scatter and histograms |
@@ -187,8 +198,8 @@ A task that fails them is left out.
 
 ```python
 from hard import load_records, question_view, reveal_view, score
-rec = load_records()["s1.h1"]
-question_view(rec)          # GET /tasks/s1.h1: brief, palette, values, limits, blockly {blocks, toolbox, starter},
+rec = load_records()["p1.h1"]
+question_view(rec)          # GET /tasks/p1.h1: brief, palette, values, assets, limits, blockly {blocks, toolbox, starter},
                             #   household, assumptions, obligatory test names, bots (points, growth_index)
 score(rec, workspace_or_program)
                             # POST /answers: accepted, points, score, growth_index, obligatory, optional,
@@ -204,7 +215,62 @@ The question never contains:
 
 A test checks this.
 
-## Next version: harder situations (design 2026-11-21, not built)
+## Next version: harder situations (designed and built 2026-11-21)
+
+**Built.** Measured results (resilience points / growth index):
+
+| p1.h1 program | Result |
+|---|---|
+| Reference | 95 / 100 |
+| Buffer of 3 months, no pot, card left at the minimum | 84 / 99.8 |
+| Like the reference, but everything in CrocoTech | 95 / 96.2 |
+| Like the reference, but everything in the bond | 95 / 94.1 |
+| Lazy rules: "save 1,000, invest the rest", "buffer of 2 months, no bills pot", "invest everything", "buffer only" | not accepted |
+
+"Save 1,000, invest the rest" survives a job loss starting in month 10, 15
+or 20 and fails only the month-5 timing. The unknown timing is what
+catches it.
+
+| p4.h1 v2 program | Result |
+|---|---|
+| Reference | 100 / 100 |
+| Rebalances every month | 100 / 97.4 |
+| New money always into shares, rebalance at 5 points | 100 / 98.7 |
+| Rebalances once a year | 76 / 99.1 |
+| Never rebalances; panic seller | not accepted |
+
+**Changed while building** (the design text below is kept, these replace
+it):
+- The minimum fee is `broker_fee: {rate, min}` instead of
+  `trade_fee_min`. It applies to every buy and sell leg; the old
+  `trade_fee` still applies only to rebalancing.
+- The capstone has no `weight` value: the reference rule does not need it.
+- The capstone's optional surprises are the ones that separate strategies:
+  - car repair;
+  - prices up 10%;
+  - dentist;
+  - 3-month job losses just before the holiday bill and over the car
+    insurance;
+  - a 4-month job loss;
+  - an early job loss.
+
+  Market events (CrocoTech, crashes) show on the growth axis instead.
+- The bot "keep 60/40 forever" was dropped, because a fixed 60/40 cannot be
+  written without the moving target.
+- "The build checks the every-month bot loses growth" is a test in
+  `data/tests/test_hard.py`, alongside the capstone's lessons.
+- Fictional market calibration: calm months average 1.2%, so shares come
+  out about 7% a year. The indexed bond is 0.35% a month. CrocoTech's
+  average equals the fund's once its crash events are counted.
+- The card's minimum payment is taken before the policy runs. If the month
+  cannot cover it, the shortfall goes to the buffer, then the card, and
+  that counts as borrowing.
+- The demo paths say how the app shows each hard task
+  (`router/demo_paths.yaml`, `hard:`):
+  - young adult: p1.h1 is the capstone;
+  - investor: p1.h1 is optional, p4.h1 is the capstone.
+
+  Hard tasks never block finishing a node.
 
 **Why.** Measured 2026-11-21: in S1, "save 1,000, invest the rest" (2
 blocks, no condition) is accepted with 91 points; in P4, "rebalance every

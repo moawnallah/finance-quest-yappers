@@ -1,10 +1,14 @@
 # The paths prepared for the demo (docs/demo_plan.md). The router recommends a path for everyone;
 # when that path needs content we have not built, the user picks one of these (router/demo.py).
+# hard: how the app shows each hard task on the path. capstone = the path's closing challenge; optional = offered,
+# never needed. Hard tasks never block finishing a node (app/engines.py).
 young_adult:
   title: "Start safe, then invest"
   for: "Young adult: a safety buffer first, then risk, bonds, single stocks vs an index, and mixing"
   nodes: [S1, I1, I2, I4, P1]
+  hard: {p1.h1: capstone}
 investor:
   title: "Costs, mixing and discipline"
   for: "Self-directed investor: what an index really is, fund costs, mixing, and a rule for crashes"
   nodes: [I4, I5, P1, P4]
+  hard: {p1.h1: optional, p4.h1: capstone}   # decided 2026-11-21: the young-adult capstone is optional here

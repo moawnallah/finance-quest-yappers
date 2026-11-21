@@ -112,6 +112,8 @@ def test_demo_investor_router_path_extends_to_the_investor_path():
     # The router gives I4 > I5; it is part of the investor demo path, so the user gets the whole path.
     d = match(route(INVESTOR), BUILT)
     assert d["path_id"] == "investor" and d["path"] == ["I4", "I5", "P1", "P4"] and "P2" in d["challenges"]
+    # Decided 2026-11-21: the young-adult capstone (P1) is optional for investors; their capstone is P4.
+    assert d["hard"] == {"p1.h1": "optional", "p4.h1": "capstone"}
 
 
 def test_demo_path_not_ready_offers_both_paths():

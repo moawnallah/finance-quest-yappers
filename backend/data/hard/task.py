@@ -22,7 +22,8 @@ from sim import KINDS, Household, Scenario, build_path, metrics, run
 from .blockly import ConversionError, block_definitions, program_to_workspace, toolbox, workspace_to_program
 from .dsl import BLOCKS, VARS, check, compile_program
 
-CHECKS = {"no_card_debt", "contributed_at_least", "net_worth_at_least", "weight_between", "weight_at_least"}
+CHECKS = {"no_card_debt", "no_new_card_debt", "contributed_at_least", "net_worth_at_least", "weight_between",
+          "weight_at_least", "weight_near_target"}
 OVERRIDES = {"job_loss", "shocks", "price_rise", "returns", "trend"}
 PASS_SCORE, MAX_SCORE = 51, 100
 
@@ -51,6 +52,16 @@ def _returns(world: dict, seed_offset: int = 0) -> dict[str, list[float]]:
     return path.returns
 
 
+def _extra_income(world: dict, seed_offset: int = 0) -> list[float]:
+    """world.income_extra: {min, max, seed}: irregular income on top of pay, drawn for each month and
+    rounded to 10 PLN. The tests use one fixed draw; each future draws its own."""
+    spec = world.get("income_extra")
+    if not spec:
+        return []
+    rng = random.Random(spec.get("seed", 1) + seed_offset)
+    return [round(rng.uniform(spec["min"], spec["max"]), -1) for _ in range(world["months"])]
+
+
 def _scenario(world: dict, override: dict | None, returns: dict[str, list[float]]) -> Scenario:
     """A test's scenario: the base market path with the test's overrides applied.
     returns: {asset: {month: r}} sets single months; trend: [{asset, from, to, r}] sets a range."""
@@ -65,15 +76,20 @@ def _scenario(world: dict, override: dict | None, returns: dict[str, list[float]
     return Scenario(months=world["months"], returns=returns,
                     job_loss=[tuple(x) for x in o.get("job_loss", [])],
                     shocks={int(k): float(v) for k, v in (o.get("shocks") or {}).items()},
-                    price_rise=tuple(o["price_rise"]) if o.get("price_rise") else None)
+                    price_rise=tuple(o["price_rise"]) if o.get("price_rise") else None,
+                    extra_income=_extra_income(world))
 
 
 def _weights(rows: list[dict], asset: str) -> list[float]:
     return [r["weights"].get(asset, 0.0) for r in rows]
 
 
-def _passes(check_spec: dict, m: dict, rows: list[dict]) -> bool:
+def _passes(check_spec: dict, m: dict, rows: list[dict], household: dict) -> bool:
     ok = True
+    if "weight_near_target" in check_spec:
+        ok &= _near_target(rows, household, check_spec["weight_near_target"]) == 0
+    if check_spec.get("no_new_card_debt"):
+        ok &= m["borrowed"] == 0
     if "weight_between" in check_spec:
         c = check_spec["weight_between"]
         ok &= all(c["low"] <= w <= c["high"] for w in _weights(rows, c["asset"]))
@@ -89,16 +105,29 @@ def _passes(check_spec: dict, m: dict, rows: list[dict]) -> bool:
     return bool(ok)
 
 
-def _optional_metric(m: dict, rows: list[dict], spec: dict | None) -> float:
-    """Default (card): 1 = never needed the card; 0.5 = needed it but repaid it; 0 = still in debt.
-    band: 1 = the mix stayed in the band every month; 0.5 = out of it for at most 2 months; 0 = more."""
-    if spec and "band" in spec:
-        b = spec["band"]
-        out = sum(1 for w in _weights(rows, b["asset"]) if not b["low"] <= w <= b["high"])
+def _near_target(rows: list[dict], household: dict, c: dict) -> int:
+    """Months in which the asset's weight is more than `below` under or `above` over its target
+    (the moving target if the household has a glide, else the fixed one)."""
+    fixed = (household.get("target") or {}).get(c["asset"], 0.0)
+    return sum(1 for r, w in zip(rows, _weights(rows, c["asset"]))
+               if not r.get("target", fixed) - c["below"] <= w <= r.get("target", fixed) + c["above"])
+
+
+def _optional_metric(m: dict, rows: list[dict], spec: dict | None, household: dict) -> float:
+    """Default (card): 1 = never borrowed on the card; 0.5 = borrowed, but the card ends no higher
+    than it started; 0 = more card debt than at the start.
+    band / near_target: 1 = the mix stayed in the band every month; 0.5 = out of it for at most 2
+    months; 0 = more."""
+    if spec and ("band" in spec or "near_target" in spec):
+        if "band" in spec:
+            b = spec["band"]
+            out = sum(1 for w in _weights(rows, b["asset"]) if not b["low"] <= w <= b["high"])
+        else:
+            out = _near_target(rows, household, spec["near_target"])
         return 1.0 if out == 0 else 0.5 if out <= 2 else 0.0
-    if m["card_debt_max"] == 0:
+    if m["borrowed"] == 0:
         return 1.0
-    return 0.5 if m["card_debt_end"] == 0 else 0.0
+    return 0.5 if m["card_debt_end"] <= household.get("card_debt", 0.0) else 0.0
 
 
 def _futures(meta: dict, policy) -> dict:
@@ -114,9 +143,10 @@ def _futures(meta: dict, policy) -> dict:
                 job_loss.append((month, rng.randint(*f["job_loss_months"])))
             if rng.random() < f["shock_per_month"]:
                 shocks[month] = round(rng.uniform(*f["shock_amount"]), -1)
-        sc = Scenario(world["months"], _returns(world, 1000 + i), job_loss, shocks)
+        sc = Scenario(world["months"], _returns(world, 1000 + i), job_loss, shocks,
+                      extra_income=_extra_income(world, 1000 + i))
         m = metrics(run(_household(meta), policy, sc))
-        clean += m["card_debt_max"] == 0
+        clean += m["borrowed"] == 0
         nets.append(m["net_worth_end"])
     return {"n": f["n"], "without_card_debt": clean,
             "median_net_worth": round(statistics.median(nets), 2) if nets else None}
@@ -128,18 +158,26 @@ def evaluate(meta: dict, program: dict, with_futures: bool = True) -> dict:
     base_returns = _returns(meta["world"])
     obligatory, story = [], None
     for t in meta["obligatory"]:
-        rows = run(_household(meta), policy, _scenario(meta["world"], t.get("override"), base_returns))
-        passed = _passes(t["check"], metrics(rows), rows)
+        # variants: the same test at several timings (e.g. a job loss starting in month 4, 8, 13 or
+        # 19). All must pass, so a rule cannot be fitted to one month it read in the brief.
+        passed = True
+        for v in t.get("variants") or [{}]:
+            override = {**(t.get("override") or {}), **v}
+            rows = run(_household(meta), policy, _scenario(meta["world"], override, base_returns))
+            if not _passes(t["check"], metrics(rows), rows, meta["household"]):
+                passed = False
+                if story is None:
+                    story = {"test": t["name"], "months": rows}
+                break
         obligatory.append({"name": t["name"], "passed": passed})
-        if not passed and story is None:
-            story = {"test": t["name"], "months": rows}
     accepted = all(t["passed"] for t in obligatory)
     optional, score = [], None
     if accepted:
         for t in meta["optional"]:
             rows = run(_household(meta), policy, _scenario(meta["world"], t.get("override"), base_returns))
             optional.append({"name": t["name"], "probability": t["probability"],
-                             "metric": _optional_metric(metrics(rows), rows, meta.get("optional_metric"))})
+                             "metric": _optional_metric(metrics(rows), rows, meta.get("optional_metric"),
+                                                        meta["household"])})
         weight = sum(t["probability"] for t in optional)
         share = sum(t["probability"] * t["metric"] for t in optional) / weight if weight else 1.0
         score = round(PASS_SCORE + (MAX_SCORE - PASS_SCORE) * share)
@@ -199,18 +237,25 @@ def validate(task: dict, sources: dict) -> Report:
             r.error(f"obligatory {t.get('name')!r}: check must use {sorted(CHECKS)}")
         if not set(t.get("override") or {}) <= OVERRIDES:
             r.error(f"obligatory {t.get('name')!r}: override keys must be {sorted(OVERRIDES)}")
+        for v in t.get("variants") or []:
+            if not isinstance(v, dict) or not set(v) <= OVERRIDES:
+                r.error(f"obligatory {t.get('name')!r}: each variant is an override with keys {sorted(OVERRIDES)}")
     for t in task.get("optional") or []:
         p = t.get("probability")
         if not isinstance(p, (int, float)) or not 0 < p <= 1:
             r.error(f"optional {t.get('name')!r}: probability must be in (0, 1]")
         if not set(t.get("override") or {}) <= OVERRIDES:
             r.error(f"optional {t.get('name')!r}: override keys must be {sorted(OVERRIDES)}")
+    assets = _assets(task)
+    for a in assets:
+        if a not in (task.get("household", {}).get("invested") or {}):
+            r.error(f"assets: {a!r} must be a key of household.invested")
     limits = task.get("limits") or {}
     programs = {"reference_program": task.get("reference_program"), "starter_program": task.get("starter_program")}
     programs.update({f"known_bad {b.get('name')!r}": b.get("program") for b in task.get("known_bad_programs") or []})
     programs.update({f"bot {b.get('name')!r}": b.get("program") for b in task.get("baseline_bots") or []})
     for label, prog in programs.items():
-        for e in check(prog, palette, allowed, limits.get("max_blocks", 30), limits.get("max_depth", 5)):
+        for e in check(prog, palette, allowed, limits.get("max_blocks", 30), limits.get("max_depth", 5), assets):
             r.error(f"{label}: {e}")
     if r.errors:
         return r
@@ -231,6 +276,11 @@ def validate(task: dict, sources: dict) -> Report:
         elif b.get("fails") and b["fails"] not in failed:
             r.error(f"known_bad {b['name']!r} should fail {b['fails']!r}, fails {failed}")
     return r
+
+
+def _assets(task: dict) -> list[str]:
+    """Assets that `invest_in` and `sell` may name: the keys of the task's `assets` {key: label}."""
+    return list(task.get("assets") or {})
 
 
 def _meta(task: dict) -> dict:
@@ -259,6 +309,7 @@ def compile_task(task: dict) -> dict:
             "brief": task["brief"],
             "palette": palette,
             "vars": [{"name": v, "label": VARS[v]} for v in task["vars"]],
+            "assets": [{"name": a, "label": label} for a, label in (task.get("assets") or {}).items()],
             "limits": task.get("limits") or {},
             "starter_program": task.get("starter_program") or {"every_month": []},
             "household": task["household"],
@@ -267,7 +318,7 @@ def compile_task(task: dict) -> dict:
             "obligatory": [t["name"] for t in task["obligatory"]],
             "optional_count": len(task.get("optional") or []),
             "bots": bots,
-            "blockly": {"blocks": block_definitions(task["palette"], task["vars"]),
+            "blockly": {"blocks": block_definitions(task["palette"], task["vars"], task.get("assets")),
                         "toolbox": toolbox(task["palette"], task["vars"]),
                         "starter": program_to_workspace(task.get("starter_program") or {"every_month": []})},
         },
@@ -308,7 +359,8 @@ def score(record: dict, program: dict) -> dict:
             raise AttemptError(str(e)) from e
     q = record["question"]
     errors = check(program, [b["block"] for b in q["palette"]], [v["name"] for v in q["vars"]],
-                   q["limits"].get("max_blocks", 30), q["limits"].get("max_depth", 5))
+                   q["limits"].get("max_blocks", 30), q["limits"].get("max_depth", 5),
+                   [a["name"] for a in q.get("assets") or []])
     if errors:
         raise AttemptError("; ".join(errors))
     result = evaluate(record["meta"], copy.deepcopy(program))

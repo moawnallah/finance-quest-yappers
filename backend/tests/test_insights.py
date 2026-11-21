@@ -33,22 +33,22 @@ def test_onboarding_gives_the_demo_path_and_logs_events(client, user):
 
 
 def test_hard_task_view_hides_the_solution(client, user):
-    r = client.get("/tasks/s1.h1", headers=user).json()
+    r = client.get("/tasks/p1.h1", headers=user).json()
     dumped = json.dumps(r)
     assert r["level"] == "hard" and "blockly" in r["task"]
     assert "reference_program" not in dumped and "editorial" not in dumped and '"meta"' not in dumped
 
 
 def test_hard_task_scoring_through_the_api(client, user):
-    starter = client.get("/tasks/s1.h1", headers=user).json()["task"]["blockly"]["starter"]
-    bad = client.post("/tasks/s1.h1/attempts", headers=user, json={"response": starter, "confidence": 3}).json()
+    starter = client.get("/tasks/p1.h1", headers=user).json()["task"]["blockly"]["starter"]
+    bad = client.post("/tasks/p1.h1/attempts", headers=user, json={"response": starter, "confidence": 3}).json()
     assert bad["accepted"] is False and bad["points"] is None and bad["reveal"]["result"]["story"]
-    good = client.post("/tasks/s1.h1/attempts", headers=user,
-                       json={"response": HARD["s1.h1"]["reveal"]["reference_workspace"], "confidence": 4}).json()
-    assert good["accepted"] is True and good["points"] == 97 and good["growth_index"] == 100.0
+    good = client.post("/tasks/p1.h1/attempts", headers=user,
+                       json={"response": HARD["p1.h1"]["reveal"]["reference_workspace"], "confidence": 4}).json()
+    assert good["accepted"] is True and good["points"] == 95 and good["growth_index"] == 100.0
     hard = client.get("/admin/items", headers=ADMIN).json()["hard"]
-    s1 = next(h for h in hard if h["task_id"] == "s1.h1")
-    assert s1["most_failed_test"].startswith("Job loss") and s1["duration_ms_p50"] is not None
+    cap = next(h for h in hard if h["task_id"] == "p1.h1")
+    assert cap["most_failed_test"].startswith("A 2-month job loss") and cap["duration_ms_p50"] is not None
 
 
 def test_passed_challenge_completes_the_node(client, user):
@@ -96,10 +96,10 @@ def test_admin_routes_need_the_key(client):
 
 def test_profile_summary_and_node_clicks(client, user):
     client.post("/onboarding", headers=user, json=YOUNG)
-    client.post("/tasks/s1.h1/attempts", headers=user,
-                json={"response": HARD["s1.h1"]["reveal"]["reference_workspace"], "confidence": 4})
+    client.post("/tasks/p1.h1/attempts", headers=user,
+                json={"response": HARD["p1.h1"]["reveal"]["reference_workspace"], "confidence": 4})
     s = client.get("/me/summary", headers=user).json()
-    assert s["path"][0]["node"] == "S1" and s["hard"]["s1.h1"]["best_points"] == 97
+    assert s["path"][0]["node"] == "S1" and s["hard"]["p1.h1"]["best_points"] == 95
     assert {p["panel"] for p in s["panels"]} >= {"FOUNDATIONS", "SAFETY"}
     client.post("/events/node-opened", headers=user, json={"node": "O1", "source": "self_chosen"})
     client.post("/events/node-opened", headers=user, json={"node": "S1", "source": "recommended"})

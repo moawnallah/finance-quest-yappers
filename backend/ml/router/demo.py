@@ -43,7 +43,7 @@ def _option(path_id: str, recommended: list[str]) -> dict:
     p = demo_paths()[path_id]
     rec, nodes = set(recommended), set(p["nodes"])
     overlap = round(len(rec & nodes) / len(rec | nodes), 3) if rec | nodes else 0.0
-    return {"id": path_id, "title": p["title"], "for": p["for"], "nodes": p["nodes"],
+    return {"id": path_id, "title": p["title"], "for": p["for"], "nodes": p["nodes"], "hard": p.get("hard", {}),
             "challenges": _challenges(p["nodes"]), "overlap": overlap,
             "shared_nodes": [k for k in p["nodes"] if k in rec]}
 
@@ -59,7 +59,7 @@ def match(result: dict, available: set[str]) -> dict:
         containing = [o for o in options if set(recommended) <= set(o["nodes"])]
         if containing:
             o = containing[0]
-            return {"status": "ready", "path_id": o["id"], "path": o["nodes"], "challenges": o["challenges"],
+            return {"status": "ready", "path_id": o["id"], "path": o["nodes"], "hard": o["hard"], "challenges": o["challenges"],
                     "recommended": recommended, "options": options, "message": None}
         return {"status": "ready", "path_id": "personal", "path": recommended, "challenges": _challenges(recommended),
                 "recommended": recommended, "options": options, "message": None}
