@@ -79,11 +79,7 @@ class ProgressScreen extends StatelessWidget {
               child: Tooltip(
                 message: b.rule,
                 child: Column(children: [
-                  CircleAvatar(
-                    radius: 22,
-                    backgroundColor: s.badges.contains(b.id) ? Color(0xFFFDB022) : kLine,
-                    child: Icon(Icons.emoji_events, color: s.badges.contains(b.id) ? Color(0xFF7A2E0E) : kFaint),
-                  ),
+                  BadgeMedal(id: b.id, earned: s.badges.contains(b.id)),
                   SizedBox(height: 4),
                   Text(b.title, textAlign: TextAlign.center, style: TextStyle(fontSize: 12, color: s.badges.contains(b.id) ? kInk : kMuted)),
                 ]),

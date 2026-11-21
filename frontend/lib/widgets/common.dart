@@ -434,3 +434,80 @@ class _GooglePainter extends CustomPainter {
   @override
   bool shouldRepaint(covariant CustomPainter old) => false;
 }
+
+// ---- Badges: one icon and colour per badge, and a pop-up when one is earned.
+const badgeIcons = {
+  'first_steps': Icons.flag_rounded,
+  'placement': Icons.explore_rounded,
+  'goal': Icons.track_changes_rounded,
+};
+const badgeColors = {
+  'first_steps': Color(0xFF0E8430),
+  'placement': Color(0xFF2E6FD8),
+  'goal': Color(0xFFE08A00),
+};
+
+class BadgeMedal extends StatelessWidget {
+  final String id;
+  final bool earned;
+  final double size;
+  BadgeMedal({super.key, required this.id, this.earned = true, this.size = 44});
+  @override
+  Widget build(BuildContext context) => Container(
+        width: size, height: size,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          color: earned ? badgeColors[id] : kLine,
+          border: Border.all(color: earned ? Colors.white : kBorder, width: 2),
+          boxShadow: earned ? [BoxShadow(color: (badgeColors[id] ?? kPrimary).withValues(alpha: 0.35), blurRadius: 8)] : null,
+        ),
+        child: Icon(badgeIcons[id] ?? Icons.emoji_events, size: size * 0.52, color: earned ? Colors.white : kFaint),
+      );
+}
+
+/// Shows "Badge earned" whenever AppState queues one. Lives above the router
+/// (MaterialApp builder) and uses the root navigator's context.
+class BadgeWatcher extends StatefulWidget {
+  final Widget child;
+  final GlobalKey<NavigatorState> navigatorKey;
+  BadgeWatcher({super.key, required this.child, required this.navigatorKey});
+  @override
+  State<BadgeWatcher> createState() => _BadgeWatcherState();
+}
+
+class _BadgeWatcherState extends State<BadgeWatcher> {
+  bool _showing = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final s = context.watch<AppState>();
+    final id = s.pendingBadge;
+    if (id != null && !_showing) {
+      _showing = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) async {
+        final ctx = widget.navigatorKey.currentContext;
+        s.clearPendingBadge();
+        if (ctx != null) {
+          final b = badgeDefs.firstWhere((x) => x.id == id);
+          await showDialog(
+            context: ctx,
+            builder: (d) => AlertDialog(
+              title: Text('Badge earned', textAlign: TextAlign.center),
+              content: Column(mainAxisSize: MainAxisSize.min, children: [
+                BadgeMedal(id: id, size: 84),
+                SizedBox(height: 14),
+                Text(b.title, style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: kInk)),
+                SizedBox(height: 4),
+                Text(b.rule, textAlign: TextAlign.center, style: TextStyle(color: kMuted)),
+              ]),
+              actionsAlignment: MainAxisAlignment.center,
+              actions: [FilledButton(onPressed: () => Navigator.pop(d), child: Text('Nice'))],
+            ),
+          );
+        }
+        _showing = false;
+      });
+    }
+    return widget.child;
+  }
+}
