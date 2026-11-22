@@ -11,22 +11,28 @@ import 'common.dart';
 const cControl = Color(0xFFFFAB19), cCond = Color(0xFF59C059), cMath = Color(0xFF0FBD8C),
     cValue = Color(0xFF4C97FF), cAction = Color(0xFF9966FF), cMine = Color(0xFFFF8C1A);
 
-/// One palette entry. Statements (if/elif/else/line) go into slots; tokens go into a condition gap.
+/// One palette entry. Statements (if/elif/else/action/line) go into slots; tokens go into a gap.
+/// An action has [args]: 'amount' (a gap that takes values, numbers and maths) and/or 'asset' (a chip
+/// that picks one of the task's assets), e.g. invest_in(amount, asset).
 class Piece {
-  final String label, code, tip, kind; // kind: if, elif, else, line, token
+  final String label, code, tip, kind; // kind: if, elif, else, action, line, token
   final Color color;
-  const Piece(this.label, this.code, this.tip, this.kind, this.color);
+  final List<String> args;
+  const Piece(this.label, this.code, this.tip, this.kind, this.color, {this.args = const []});
   bool get isStatement => kind != 'token';
 }
 
 class Stmt {
-  String kind; // if, elif, else, line
-  String code; // the line itself for kind == line
-  final List<String> tokens = []; // the condition of if / elif
+  String kind; // if, elif, else, action, line
+  String code; // the line itself for kind == line; the action's name for kind == action
+  final List<String> tokens = []; // the condition of if / elif, or an action's amount
   final List<Stmt> body = [];
   final Color color;
-  Stmt(this.kind, this.code, this.color);
-  bool get block => kind != 'line';
+  final List<String> args; // actions only: 'amount' and/or 'asset'
+  String? asset; // actions with an 'asset' argument
+  Stmt(this.kind, this.code, this.color, {this.args = const [], this.asset});
+  bool get block => kind == 'if' || kind == 'elif' || kind == 'else';
+  bool get hasGap => kind == 'if' || kind == 'elif' || (kind == 'action' && args.contains('amount'));
 }
 
 /// A place a statement can go: index [index] of list [list].
@@ -40,18 +46,29 @@ class Slot {
   int get hashCode => Object.hash(identityHashCode(list), index);
 }
 
+/// Tokens back to code: spaces between them, none just inside brackets.
+String joinTokens(List<String> t) => t.join(' ').replaceAll('( ', '(').replaceAll(' )', ')');
+
 class BlockProgram {
   final List<Stmt> root = [];
+
+  static String line(Stmt s) {
+    if (s.kind != 'action') return s.code;
+    final parts = [
+      for (final a in s.args) a == 'asset' ? (s.asset ?? '___') : (s.tokens.isEmpty ? '___' : joinTokens(s.tokens)),
+    ];
+    return '${s.code}(${parts.join(', ')})';
+  }
 
   String code() {
     final out = StringBuffer();
     void emit(List<Stmt> l, int d) {
       for (final s in l) {
         final pad = '    ' * d;
-        if (s.kind == 'line') {
-          out.writeln('$pad${s.code}');
+        if (!s.block) {
+          out.writeln('$pad${line(s)}');
         } else {
-          out.writeln(s.kind == 'else' ? '${pad}else:' : '$pad${s.kind} ${s.tokens.isEmpty ? '___' : s.tokens.join(' ')}:');
+          out.writeln(s.kind == 'else' ? '${pad}else:' : '$pad${s.kind} ${s.tokens.isEmpty ? '___' : joinTokens(s.tokens)}:');
           emit(s.body, d + 1);
         }
       }
@@ -60,10 +77,31 @@ class BlockProgram {
     return out.toString().trimRight();
   }
 
-  static final _tok = RegExp(r'\w+\([^)]*\)|[<>]=?|==|!=|\+=|[-+*/]|\S+');
+  static final _tok = RegExp(r'\w+\([^()]*\)|\d+\.\d+|\w+|[<>]=?|==|!=|\+=|[-+*/()]|\S');
+  static List<String> tokenize(String t) => _tok.allMatches(t).map((x) => x.group(0)!).where((x) => x != '___').toList();
+
+  /// Split an argument list at top-level commas: "(a - b) / c, fund" -> ["(a - b) / c", "fund"].
+  static List<String> splitArgs(String t) {
+    final out = <String>[];
+    var depth = 0, cur = StringBuffer();
+    for (final ch in t.split('')) {
+      if (ch == ',' && depth == 0) {
+        out.add(cur.toString().trim());
+        cur = StringBuffer();
+        continue;
+      }
+      if (ch == '(') depth++;
+      if (ch == ')') depth--;
+      cur.write(ch);
+    }
+    if (cur.toString().trim().isNotEmpty || out.isNotEmpty) out.add(cur.toString().trim());
+    return out;
+  }
 
   /// Read code back into blocks. Returns null when it is not something the blocks can show.
-  static BlockProgram? parse(String text, Color Function(String line) colorOf) {
+  /// [actions] maps an action's name to its arguments (as in [Piece.args]), so its calls become
+  /// action blocks with an amount gap and an asset chip.
+  static BlockProgram? parse(String text, Color Function(String line) colorOf, {Map<String, List<String>> actions = const {}}) {
     final p = BlockProgram();
     final stack = <(int, List<Stmt>)>[(0, p.root)];
     for (final raw in text.split('\n')) {
@@ -74,11 +112,25 @@ class BlockProgram {
       }
       if (ind != stack.last.$1) return null;
       final m = RegExp(r'^(if|elif)\s+(.*):$').firstMatch(line);
+      final call = RegExp(r'^(\w+)\((.*)\)$').firstMatch(line);
       if (m != null || line == 'else:') {
         final s = Stmt(m?.group(1) ?? 'else', '', cControl);
-        if (m != null) s.tokens.addAll(_tok.allMatches(m.group(2)!).map((x) => x.group(0)!).where((x) => x != '___'));
+        if (m != null) s.tokens.addAll(tokenize(m.group(2)!));
         stack.last.$2.add(s);
         stack.add((ind + 4, s.body));
+      } else if (call != null && actions.containsKey(call.group(1))) {
+        final args = actions[call.group(1)]!;
+        final vals = splitArgs(call.group(2)!);
+        if (vals.length != args.length) return null;
+        final s = Stmt('action', call.group(1)!, cAction, args: args);
+        for (var i = 0; i < args.length; i++) {
+          if (args[i] == 'asset') {
+            s.asset = vals[i] == '___' ? null : vals[i];
+          } else {
+            s.tokens.addAll(tokenize(vals[i]));
+          }
+        }
+        stack.last.$2.add(s);
       } else {
         stack.last.$2.add(Stmt('line', line, colorOf(line)));
       }
@@ -92,7 +144,8 @@ class BlockEditor extends StatefulWidget {
   final List<(String, Color, List<Piece>)> palette; // sections
   final ValueChanged<String> onChanged;
   final bool wide;
-  const BlockEditor({super.key, required this.program, required this.palette, required this.onChanged, required this.wide});
+  final List<String> assets; // what an action's asset chip can pick
+  const BlockEditor({super.key, required this.program, required this.palette, required this.onChanged, required this.wide, this.assets = const []});
   @override
   State<BlockEditor> createState() => BlockEditorState();
 }
@@ -148,8 +201,8 @@ class BlockEditorState extends State<BlockEditor> {
     at ??= _target ?? Slot(_root, _root.length);
     if (!p.isStatement) {
       final s = at is Stmt ? at : null;
-      if (s == null || s.kind == 'else') {
-        _hint('Values, comparisons and numbers go in the gap (___) of an if or elif. Tap the gap first, or drag the block onto it.');
+      if (s == null || !s.hasGap) {
+        _hint('Values, comparisons, numbers and maths go in a gap (___): the condition of an if or elif, or the amount of an action. Tap the gap first, or drag the block onto it.');
         return;
       }
       s.tokens.add(p.code.trim());
@@ -157,12 +210,14 @@ class BlockEditorState extends State<BlockEditor> {
       _changed();
       return;
     }
-    final stmt = Stmt(p.kind, p.code, p.color);
+    final stmt = Stmt(p.kind, p.code, p.color, args: p.args,
+        asset: p.args.contains('asset') && widget.assets.isNotEmpty ? widget.assets.first : null);
+    if (p.args.contains('amount')) stmt.tokens.add('cash'); // a start: tap it to remove, or add maths after it
     if (p.kind == 'elif' || p.kind == 'else') {
       // Goes right after the if/elif chain it belongs to: the one whose gap or body is selected,
       // or the one just before the slot.
       Stmt? anchor = at is Stmt ? at : at is Slot ? _owner(at.list) : null;
-      if (at is Slot && at.index > 0 && at.list[at.index - 1].kind != 'line' && at.list[at.index - 1].kind != 'else') anchor = at.list[at.index - 1];
+      if (at is Slot && at.index > 0 && (at.list[at.index - 1].kind == 'if' || at.list[at.index - 1].kind == 'elif')) anchor = at.list[at.index - 1];
       if (anchor == null || anchor.kind == 'else') {
         _hint('"${p.label}" belongs after an if. Add an if first, then tap ${p.label}.');
         return;
@@ -330,7 +385,7 @@ class BlockEditorState extends State<BlockEditor> {
       },
       builder: (_, __, ___) => Semantics(
         button: true,
-        label: 'Gap: put a condition here',
+        label: 'Gap: put a condition or an amount here',
         child: GestureDetector(
           onTap: () => setState(() => _target = s),
           child: MouseRegion(
@@ -352,7 +407,7 @@ class BlockEditorState extends State<BlockEditor> {
 
   Color _tokenColor(String t) => RegExp(r'^[<>]=?$|^(and|or|not|==|!=)$').hasMatch(t)
       ? cCond
-      : RegExp(r'^-?\d').hasMatch(t) || RegExp(r'^[-+*/]$|^(min|max)\(').hasMatch(t)
+      : RegExp(r'^-?\d').hasMatch(t) || RegExp(r'^[-+*/()]$|^(min|max)\(').hasMatch(t)
           ? cMath
           : cValue;
 
@@ -391,6 +446,37 @@ class BlockEditorState extends State<BlockEditor> {
     _changed();
   }
 
+  void setAsset(Stmt s, String asset) {
+    s.asset = asset;
+    _changed();
+  }
+
+  void removeToken(Stmt s, int i) {
+    s.tokens.removeAt(i);
+    _target = s;
+    _changed();
+  }
+
+  /// The asset an action uses: tap to pick another of the task's assets.
+  Widget _assetChip(Stmt s) => Semantics(
+        button: true,
+        label: 'Asset: ${s.asset ?? 'choose'}',
+        excludeSemantics: true,
+        child: PopupMenuButton<String>(
+          tooltip: 'Choose the asset',
+          onSelected: (v) => setAsset(s, v),
+          itemBuilder: (_) => [for (final a in widget.assets) PopupMenuItem(value: a, child: Text(a))],
+          child: Container(
+            padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(999), border: Border.all(color: Colors.black26)),
+            child: Row(mainAxisSize: MainAxisSize.min, children: [
+              Text(s.asset ?? 'asset', style: GoogleFonts.robotoMono(fontSize: 12, fontWeight: FontWeight.w800, color: cAction)),
+              Icon(Icons.arrow_drop_down, size: 16, color: cAction),
+            ]),
+          ),
+        ),
+      );
+
   Widget _stmt(Stmt s) {
     final head = Container(
       padding: EdgeInsets.fromLTRB(10, 6, 4, 6),
@@ -404,7 +490,15 @@ class BlockEditorState extends State<BlockEditor> {
         SizedBox(width: 4),
         Flexible(
           child: Wrap(spacing: 6, runSpacing: 4, crossAxisAlignment: WrapCrossAlignment.center, children: [
-            Text(s.kind == 'line' ? s.code : s.kind, style: GoogleFonts.robotoMono(fontSize: 13, fontWeight: FontWeight.w800, color: Colors.white)),
+            Text(s.kind == 'line' || s.kind == 'action' ? (s.kind == 'action' ? '${s.code}(' : s.code) : s.kind,
+                style: GoogleFonts.robotoMono(fontSize: 13, fontWeight: FontWeight.w800, color: Colors.white)),
+            if (s.kind == 'action') ...[
+              for (final (n, a) in s.args.indexed) ...[
+                if (n > 0) Text(',', style: GoogleFonts.robotoMono(fontSize: 13, fontWeight: FontWeight.w800, color: Colors.white)),
+                if (a == 'amount') ...[for (var i = 0; i < s.tokens.length; i++) _token(s, i), _gap(s)] else _assetChip(s),
+              ],
+              Text(')', style: GoogleFonts.robotoMono(fontSize: 13, fontWeight: FontWeight.w800, color: Colors.white)),
+            ],
             if (s.kind == 'if' || s.kind == 'elif') ...[
               for (var i = 0; i < s.tokens.length; i++) _token(s, i),
               _gap(s),

@@ -89,16 +89,25 @@ class _HardTaskScreenState extends State<HardTaskScreen> with SingleTickerProvid
 
   Color _lineColor(String line) => line.startsWith('my_') ? cMine : cAction;
 
+  /// The task's actions and their arguments, from the panel's "invest_in(amount, asset)" forms.
+  Map<String, List<String>> get _actionArgs => {
+        for (final a in (_panel['actions'] as List? ?? []).cast<Map>())
+          '${a['code']}'.split('(').first: [
+            for (final x in '${a['code']}'.split('(').last.replaceAll(')', '').split(',')) if (x.trim().isNotEmpty) x.trim(),
+          ],
+      };
+  List<String> get _assets => [for (final a in (_panel['assets'] as List? ?? [])) '$a'];
+
   /// Blocks from the starter code (only comments for most tasks, so an empty workspace).
   void _resetBlocks() {
-    _program = BlockProgram.parse(_code.text, _lineColor) ?? BlockProgram();
+    _program = BlockProgram.parse(_code.text, _lineColor, actions: _actionArgs) ?? BlockProgram();
     _rev++;
   }
 
   void _setMode(bool text) {
     if (text == _textMode) return;
     if (!text) {
-      final p = BlockProgram.parse(_code.text, _lineColor);
+      final p = BlockProgram.parse(_code.text, _lineColor, actions: _actionArgs);
       if (p == null) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('This code cannot be shown as blocks (check the indentation). Keep editing it as text.')));
         return;
@@ -115,8 +124,6 @@ class _HardTaskScreenState extends State<HardTaskScreen> with SingleTickerProvid
   List<(String, Color, List<Piece>)> _palette() {
     final values = [for (final v in (_panel['values'] as List? ?? []).cast<Map>()) '${v['name']}'];
     final meaning = {for (final v in (_panel['values'] as List? ?? []).cast<Map>()) '${v['name']}': '${v['meaning']}'};
-    final assets = [for (final a in (_panel['assets'] as List? ?? [])) '$a'];
-    final asset = assets.isEmpty ? 'fund' : assets.first;
     return [
       ('Control: decide when', cControl, [
         Piece('if … :', 'if', 'Do the blocks inside only when the condition in the gap is true.', 'if', cControl),
@@ -125,7 +132,8 @@ class _HardTaskScreenState extends State<HardTaskScreen> with SingleTickerProvid
       ]),
       ('Actions: what to do with the money', cAction, [
         for (final a in (_panel['actions'] as List? ?? []).cast<Map>())
-          Piece('${a['code']}'.split('(').first, '${a['code']}'.replaceAll('amount', 'cash').replaceAll('asset', asset), '${a['meaning']}', 'line', cAction),
+          Piece('${a['code']}'.split('(').first, '${a['code']}'.split('(').first, '${a['meaning']}', 'action', cAction,
+              args: _actionArgs['${a['code']}'.split('(').first] ?? const []),
       ]),
       ('Values: facts about the month', cValue, [for (final v in values) Piece(v, v, meaning[v] ?? v, 'token', cValue)]),
       ('Comparisons: true or false', cCond, [
@@ -141,6 +149,8 @@ class _HardTaskScreenState extends State<HardTaskScreen> with SingleTickerProvid
         Piece('-', '-', 'minus', 'token', cMath),
         Piece('*', '*', 'times', 'token', cMath),
         Piece('/', '/', 'divided by', 'token', cMath),
+        Piece('(', '(', 'open a bracket: work this part out first', 'token', cMath),
+        Piece(')', ')', 'close the bracket', 'token', cMath),
         Piece('min(a, b)', 'min(cash, 1000)', 'the smaller of two', 'token', cMath),
         Piece('max(a, b)', 'max(cash, 0)', 'the bigger of two', 'token', cMath),
       ]),
@@ -318,7 +328,7 @@ class _HardTaskScreenState extends State<HardTaskScreen> with SingleTickerProvid
       _colorRule(cValue, 'Blue: values', 'Facts about the month, like buffer_months. Put them in a gap.'),
       _colorRule(cCond, 'Green: comparisons', '< and > compare; and, or, not combine. A condition reads value, comparison, number.'),
       _colorRule(cMath, 'Teal: maths and numbers', 'A number, + - * /, min and max. Tap a number in a gap to change it.'),
-      _colorRule(cAction, 'Purple: actions', 'What to do with the money. They go inside an if, elif or else, or on their own line.'),
+      _colorRule(cAction, 'Purple: actions', 'What to do with the money. Each has a gap for the amount (cash to start: tap it to remove, then build e.g. cash * 0.7) and, for investing, a chip to pick the asset.'),
       if (_panel['own_variables'] != null) _colorRule(cMine, 'Light orange: my variables', '${_panel['own_variables']}'),
       SizedBox(height: 4),
       _codeHint('if buffer_months < 2:'),
@@ -420,7 +430,7 @@ class _HardTaskScreenState extends State<HardTaskScreen> with SingleTickerProvid
 
   Widget _main({required bool wide}) => _textMode
       ? Padding(padding: EdgeInsets.fromLTRB(16, 0, 16, 8), child: _editor(expand: true))
-      : BlockEditor(key: ValueKey(_rev), program: _program, palette: _palette(), wide: wide, onChanged: (c) => setState(() => _code.text = c));
+      : BlockEditor(key: ValueKey(_rev), program: _program, palette: _palette(), wide: wide, assets: _assets, onChanged: (c) => setState(() => _code.text = c));
 
   /// Below the workspace: the test results and the code the blocks make, on one bar.
   Widget _lower() => Column(children: [
