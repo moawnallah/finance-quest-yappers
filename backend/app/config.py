@@ -5,9 +5,7 @@ from pathlib import Path
 BACKEND_DIR = Path(__file__).resolve().parent.parent
 REPO_DIR = BACKEND_DIR.parent
 
-# On Vercel only /tmp is writable: the demo keeps SQLite there and rebuilds it on each cold start (see app.main).
-ON_VERCEL = bool(os.getenv("VERCEL"))
-_default_db = "sqlite:////tmp/finance_quest.db" if ON_VERCEL else f"sqlite:///{BACKEND_DIR / 'finance_quest.db'}"
+_default_db = f"sqlite:///{BACKEND_DIR / 'finance_quest.db'}"
 DATABASE_URL = os.getenv("DATABASE_URL", _default_db)
 # Hosted Postgres (e.g. Neon) gives postgres:// or postgresql:// URLs; use the psycopg 3 driver.
 if DATABASE_URL.startswith("postgres://"):

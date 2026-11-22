@@ -18,7 +18,7 @@ from datetime import datetime, timezone
 from app import scales
 from app import auth, badges, progress
 from app.catalog import CATALOG
-from app.config import AB_VARIANTS, DATABASE_URL, ON_VERCEL
+from app.config import AB_VARIANTS, DATABASE_URL
 from app.db import get_db
 from app.deps import ApiError, current_user, is_guest, log_event, require_admin, viewer
 from app.models import (Answer, BenchmarkAnswer, BenchmarkQuestion, BenchmarkStat, Node, NodeProgress, Profile,
@@ -37,17 +37,6 @@ app.include_router(admin_router)
 app.include_router(tutor_router)
 app.include_router(insights_router)
 app.include_router(bank_router)
-
-if ON_VERCEL and DATABASE_URL.startswith("sqlite:////tmp/"):
-    # Serverless demo: a new instance starts with an empty /tmp, so build the schema and load the content.
-    # Data is lost when the instance is recycled; the app then starts a fresh session.
-    from app.db import Base, SessionLocal, engine
-    from app.seed import seed
-
-    Base.metadata.create_all(engine)
-    with SessionLocal() as _db:
-        seed(_db)
-
 
 @app.middleware("http")
 async def request_id(request: Request, call_next):

@@ -2,7 +2,7 @@
 
 The Flutter app for Finance Quest: one Dart codebase for web, Android, iOS and desktop. Owner: Michał.
 
-Live draft: https://finance-quest-draft.vercel.app
+Live: https://crococash.xyz
 
 ## Run it locally
 
@@ -28,7 +28,7 @@ Live draft: https://finance-quest-draft.vercel.app
 **Build and deploy the web version**
 1. `flutter build web --release` (the output goes to `build/web`).
 2. Preview it: `cd build/web && python3 -m http.server 8765`, then open http://localhost:8765.
-3. The draft is hosted on Vercel from `build/web`, with a `vercel.json` that sends every path to `index.html`.
+3. Production: build with `--no-tree-shake-icons --dart-define=API_URL=https://crococash.xyz/api`, run `tool/stamp_web.sh build/web` (so Cloudflare serves the new files), then copy `build/web` to `/opt/crococash/web` on the server (Caddy behind Cloudflare Tunnel).
 
 ## How the code is organised
 

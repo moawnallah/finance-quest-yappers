@@ -427,8 +427,7 @@ Routes are in `backend/app/insights_api.py`; the numbers come from
 **The challenge rule** is in `node_status`: a passed test-out completes the
 whole node.
 
-**Migration:** `7c1e5a9d2b40` adds the tables and the attempt fields. On
-Vercel the tables are created at start-up, as before.
+**Migration:** `7c1e5a9d2b40` adds the tables and the attempt fields.
 
 **Tests:** 8 in `backend/tests/test_insights.py` and 9 in
 `backend/ml/tests/test_analytics.py`.

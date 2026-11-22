@@ -14,7 +14,7 @@ Status (2026-11-21): a plan. Nothing here has been measured yet. The
 
 | Part | Now | Cost per request |
 |---|---|---|
-| API | FastAPI on Vercel serverless, Postgres (`app/db.py`: pool 2 + overflow 3 per instance, pre-ping, recycle 300 s) | Small: reads, pure-Python scoring |
+| API | FastAPI with uvicorn (2 workers) on one Oracle VPS behind Caddy and Cloudflare Tunnel, SQLite (`app/db.py` also supports Postgres: pool 2 + overflow 3, pre-ping, recycle 300 s) | Small: reads, pure-Python scoring |
 | Content | Catalog and card passages loaded once per instance (`lru_cache`) | One load per cold start |
 | Hard tasks | `POST /tasks/{id}/attempts` runs the plan on every hidden event and 200 futures | CPU per submit; to measure |
 | Tutor | Gemma in Ollama on one GPU (`OLLAMA_API_BASE`), `keep_alive` 30 min, `think` off, temperature 0.3 | The expensive part: seconds per answer |
