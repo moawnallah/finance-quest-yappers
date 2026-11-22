@@ -62,6 +62,8 @@ def test_benchmark_before_and_progress(client, auth):
     assert len(qs) == 5 and all("choice" in o for o in qs[0]["options"])
     bench = json.loads((BACKEND / "content" / "eu_benchmark.json").read_text())["quiz"]
     answers = [{"question_id": q["id"], "choice": q["answer"]} for q in bench]
+    dup = client.post("/benchmark/answers", headers=auth, json={"stage": "before", "answers": answers + answers[:1]})
+    assert dup.status_code == 422 and dup.json()["error"]["code"] == "incomplete"
     r = client.post("/benchmark/answers", headers=auth, json={"stage": "before", "answers": answers}).json()
     assert r["score"] == 5 and r["band"] == "high" and "20% of Poles" in r["comparison"]
     again = client.post("/benchmark/answers", headers=auth, json={"stage": "before", "answers": answers})

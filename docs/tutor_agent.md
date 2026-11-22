@@ -16,7 +16,7 @@ wired").
 
 ## Assumptions
 
-1. **Stack.** The backend is FastAPI and PostgreSQL (backend README). The
+1. **Stack.** The backend is FastAPI with SQLite by default, PostgreSQL-ready (backend README). The
    tutor is a Python package inside it, `backend/ml/tutor/`, not a separate
    service.
 2. **Language.** The UI and the knowledge base are in English. Many sources

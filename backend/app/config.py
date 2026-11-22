@@ -17,9 +17,9 @@ CONTENT_DIR = Path(os.getenv("CONTENT_DIR", BACKEND_DIR / "content"))
 XP_PER_CORRECT = 10
 XP_PER_PRACTICE = 5
 AB_VARIANTS = ("A", "B")
-ADMIN_KEY = os.getenv("ADMIN_KEY", "")
+ADMIN_KEY = os.getenv("ADMIN_KEY", "")  # for /admin/* (or an admin account's token); empty = key access disabled
 # Study mode: facilitators send this in X-Study-Key to start a participant session (or use the admin key).
-STUDY_KEY = os.getenv("STUDY_KEY", "")  # required for /admin/*; empty = admin endpoints disabled
+STUDY_KEY = os.getenv("STUDY_KEY", "")
 
 # Task engines (backend/data): compiled easy.json and medium_tasks.json
 ENGINE_OUTPUT_DIR = Path(os.getenv("ENGINE_OUTPUT_DIR", BACKEND_DIR / "data" / "output"))

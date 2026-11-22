@@ -87,8 +87,8 @@ class Api {
     await prefs.remove(_guestSurveyKey);
   }
 
-  /// Create an account (POST /auth/register). Sends the current anonymous
-  /// session, so progress made before signing up is kept.
+  /// Create an account (POST /auth/register). Every account starts fresh:
+  /// guest progress is not carried over (see [_useToken]).
   Future<Map<String, dynamic>> register(String email, String password, {String? displayName}) async {
     final prefs = await SharedPreferences.getInstance();
     final r = Map<String, dynamic>.from(await _send('POST', '/auth/register',

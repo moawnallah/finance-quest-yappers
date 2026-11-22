@@ -33,39 +33,33 @@ Live: https://crococash.xyz
 ## How the code is organised
 
 - `lib/main.dart`: routes (go_router), light and dark themes, larger-text scaling.
-- `lib/data/app_state.dart`: all app state (profile, XP, streak, levels, badges, quick-check results, settings).
+- `lib/data/api.dart`: the backend client (accounts, guests, path, skills, tasks, tutor, leagues, admin). The backend URL is set at build time with `--dart-define=API_URL=...` (default `http://localhost:8001`).
+- `lib/data/app_state.dart`: app state (profile, account, Emeralds, streak, settings, tutor conversations).
 - `lib/models/content.dart`: the content model (Roadmap, Slice, Node, Question).
-- `lib/widgets/common.dart`: the colour palette (light and dark), the top stats bar, panels and the tutor bubble.
+- `lib/widgets/`: `common.dart` (palette, stats bar, panels, tutor bubble) and `block_editor.dart` (drag-and-drop blocks).
 - `lib/screens/`: one file per screen.
 
 **Screens**
-1. `onboarding_screen.dart`: welcome, then age, goal, horizon, experience and confidence.
-2. `signin_screen.dart`: sign-in with Google or an email link (demo only).
+1. `onboarding_screen.dart`: welcome, email and password account (or guest), then the starting survey.
+2. `signin_screen.dart`: the Google sign-in demo.
 3. `placement_screen.dart`: the 5-question quick check, also used for the retest.
-4. `shell.dart`: the bottom bar (Explore, Practice, Tutor, Progress, Profile).
-5. `wheel_screen.dart`: the wheel of 13 investment types, or a list view.
-6. `tree_screen.dart`: one slice's roadmap of missions.
-7. `mission_screen.dart`: lesson cards, then questions with tutor feedback.
-8. `result_screen.dart`: mission complete, confidence after, first real step.
-9. `time_machine_screen.dart`: play-money replay with a crash moment.
-10. `progress_screen.dart`, `tutor_screen.dart`, `profile_screen.dart`.
+4. `shell.dart`: the bottom bar (Explore, Path, League, Progress) and the tutor button.
+5. `wheel_screen.dart`: Explore, the wheel of skills-tree panels with each panel's roadmap.
+6. `path_screen.dart`: the personal path from the backend router, and the "coming later" screen.
+7. `skills_screen.dart`, `skill_screen.dart`: the skills-tree nodes and one node (cards and ways in).
+8. `task_screen.dart`: easy items and medium day-X tasks; `hard_task_screen.dart`: hard tasks (plan as code, public and hidden tests); `drawn_test.dart`: quick checks and prerequisite checks; `steps_screen.dart`: the drag-and-drop plan question.
+9. `league_screen.dart`, `progress_screen.dart`, `tutor_screen.dart`, `time_machine_screen.dart`, `admin_screen.dart`.
 
 ## Where the data comes from
 
-- `assets/roadmap.json`: 13 slices, 52 missions, 92 questions, each with an explanation and source links.
+- Skills, tasks, the path, leagues and the tutor come from the backend (`backend/`).
+- `assets/roadmap.json`: 13 slices, 52 product topics, 92 questions, each with an explanation and source links.
 - `assets/eu_benchmark.json`: the quick-check questions and the Poland and EU percentages, based on Eurobarometer 525 (2023).
 - Both are copies of `backend/content/`. After editing a slice there, run `python3 backend/content/validate_content.py`, then copy `roadmap.json` and `eu_benchmark.json` into `frontend/assets/`.
+- `assets/steps.json`: drafts for the drag-and-drop plan question, scored in the app.
 
 ## What is still demo or placeholder
 
-- There is no backend connection yet. Scoring, XP and unlocks run inside the app, and a page refresh resets them.
-- The tutor shows the stored explanation for each question. The live AI comes from the backend's `POST /tutor`.
+- Google sign-in is a demo; email and password accounts are real.
 - The time machine uses a sample curve, not real index data.
-- Sign-in (Google and email) is a demo and stores nothing.
-- The weekly league uses demo players, and the lesson cards have illustration and example placeholders.
-
-## Next step: connect to the backend
-
-- The backend serves its OpenAPI spec at `http://localhost:8001/openapi.json` when it runs locally.
-- Plan: put an `ApiClient` between the screens and the data, with a local version (today's bundled JSON) and an HTTP version (the backend), so screens keep working while the backend grows.
-- Dart models can be generated from the spec: `openapi-generator-cli generate -i http://localhost:8001/openapi.json -g dart-dio -o lib/api`.
+- The drag-and-drop plan question (`steps_screen.dart`) is scored in the app, not by the backend.
