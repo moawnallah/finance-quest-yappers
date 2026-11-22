@@ -28,6 +28,7 @@ class _HardTaskScreenState extends State<HardTaskScreen> with SingleTickerProvid
   final _code = TextEditingController(); // the code the backend runs (generated from the blocks in block mode)
   BlockProgram _program = BlockProgram();
   bool _textMode = false; // blocks are the main view; text is for people who prefer typing
+  double _sideW = 360, _lowerH = 260; // panel sizes: drag the bars between the panels to change them
   int _rev = 0; // rebuilds the block editor when the program is replaced
   Map<String, dynamic>? _task;
   String? _loadError;
@@ -233,14 +234,14 @@ class _HardTaskScreenState extends State<HardTaskScreen> with SingleTickerProvid
       ),
       body: wide
           ? Row(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-              SizedBox(width: 360, child: _side()),
-              VerticalDivider(width: 1, color: kLine),
+              SizedBox(width: _sideW, child: _side()),
+              ResizeHandle(axis: Axis.horizontal, onDrag: (d) => setState(() => _sideW = (_sideW + d).clamp(240.0, MediaQuery.sizeOf(context).width * 0.45))),
               Expanded(
                 child: Column(children: [
                   _modeBar(),
                   Expanded(child: _main(wide: true)),
-                  Divider(height: 1, color: kLine),
-                  SizedBox(height: 260, child: _lower()),
+                  ResizeHandle(axis: Axis.vertical, onDrag: (d) => setState(() => _lowerH = (_lowerH - d).clamp(120.0, MediaQuery.sizeOf(context).height * 0.7))),
+                  SizedBox(height: _lowerH, child: _lower()),
                 ]),
               ),
             ])

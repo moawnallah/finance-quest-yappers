@@ -139,6 +139,42 @@ class BlockProgram {
   }
 }
 
+/// A thin bar that resizes the panels on either side when dragged (resize cursor on hover).
+class ResizeHandle extends StatelessWidget {
+  final Axis axis; // Axis.horizontal: a vertical bar dragged left/right; Axis.vertical: a horizontal bar dragged up/down
+  final ValueChanged<double> onDrag;
+  const ResizeHandle({super.key, required this.axis, required this.onDrag});
+
+  @override
+  Widget build(BuildContext context) {
+    final h = axis == Axis.horizontal;
+    return Semantics(
+      label: h ? 'Drag to resize the panels left and right' : 'Drag to resize the panels up and down',
+      child: MouseRegion(
+        cursor: h ? SystemMouseCursors.resizeColumn : SystemMouseCursors.resizeRow,
+        child: GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onHorizontalDragUpdate: h ? (d) => onDrag(d.delta.dx) : null,
+          onVerticalDragUpdate: h ? null : (d) => onDrag(d.delta.dy),
+          child: SizedBox(
+            width: h ? 9 : double.infinity,
+            height: h ? double.infinity : 9,
+            child: Center(
+              child: Container(
+                width: h ? 1 : double.infinity,
+                height: h ? double.infinity : 1,
+                color: kLine,
+                alignment: Alignment.center,
+                child: Container(width: h ? 4 : 36, height: h ? 36 : 4, decoration: BoxDecoration(color: kBorder, borderRadius: BorderRadius.circular(2))),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class BlockEditor extends StatefulWidget {
   final BlockProgram program;
   final List<(String, Color, List<Piece>)> palette; // sections
@@ -160,6 +196,7 @@ Widget _draggable({required Object data, required Widget feedback, required Widg
 
 class BlockEditorState extends State<BlockEditor> {
   Object? _target; // a Slot, or a Stmt whose condition gap is selected
+  double _paletteW = 330; // drag the bar between palette and workspace to change it
   Object? _hover;
 
   List<Stmt> get _root => widget.program.root;
@@ -274,7 +311,14 @@ class BlockEditorState extends State<BlockEditor> {
     final palette = _palette();
     final work = _workspace();
     if (!widget.wide) return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [SizedBox(height: 230, child: palette), Divider(height: 1, color: kLine), Expanded(child: work)]);
-    return Row(crossAxisAlignment: CrossAxisAlignment.stretch, children: [SizedBox(width: 330, child: palette), VerticalDivider(width: 1, color: kLine), Expanded(child: work)]);
+    return LayoutBuilder(builder: (context, c) {
+      final w = _paletteW.clamp(200.0, (c.maxWidth - 300).clamp(200.0, 700.0));
+      return Row(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+        SizedBox(width: w, child: palette),
+        ResizeHandle(axis: Axis.horizontal, onDrag: (d) => setState(() => _paletteW = w + d)),
+        Expanded(child: work),
+      ]);
+    });
   }
 
   Widget _palette() => ListView(padding: EdgeInsets.all(10), children: [
