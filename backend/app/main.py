@@ -247,7 +247,7 @@ def _band(score: int) -> str:
 @app.post("/benchmark/answers", response_model=s.BenchmarkResultOut)
 def benchmark_answers(body: s.BenchmarkSubmitIn, user: User = Depends(current_user), db: Session = Depends(get_db)):
     questions = {q.id: q for q in db.scalars(select(BenchmarkQuestion))}
-    if {a.question_id for a in body.answers} != set(questions):
+    if len(body.answers) != len(questions) or {a.question_id for a in body.answers} != set(questions):
         raise ApiError(422, "incomplete", f"Answer all {len(questions)} benchmark questions once")
     if db.scalar(select(func.count()).select_from(BenchmarkAnswer).where(
             BenchmarkAnswer.user_id == user.id, BenchmarkAnswer.stage == body.stage)):

@@ -47,7 +47,7 @@ score(tasks[tid], "down", ["guidance", "capex"], confidence=4)   # POST /answers
 reveal_view(tasks[tid])                                    # return with the score
 ```
 
-The samples (D1, D3) use synthetic series, because no real series has passed the licence checklist yet.
+The live Day-X tasks use real series (I2: GUS CPI and the NBP reference rate; P4: the OECD share price index for Poland), listed in `series/catalog.yaml`. The old synthetic samples (D1, D3) are now test fixtures in `tests/fixtures/nodes/`.
 
 ## Hard engine and simulation core
 
