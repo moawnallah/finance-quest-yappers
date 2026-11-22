@@ -200,12 +200,14 @@ class Api {
     final auth = isGuest ? _guestHeaders : {'Authorization': 'Bearer $_token'};
     String? text, mermaid;
     var fallback = false;
+    Map<String, dynamic>? error; // a refused request (e.g. 429 limits) arrives as one {"error": ...} line
     await postStream(
       '$baseUrl/tutor/stream',
       {'Content-Type': 'application/json', ...auth},
       jsonEncode({'mode': mode, 'message': message, 'context': context, 'history': history}),
       (line) {
         final m = jsonDecode(line) as Map<String, dynamic>;
+        if (m['error'] is Map) error = Map<String, dynamic>.from(m['error'] as Map);
         if (m['t'] == 'delta') onDelta(m['text'] as String);
         if (m['t'] == 'done') {
           text = m['text'] as String?;
@@ -214,6 +216,10 @@ class Api {
         }
       },
     );
+    if (error != null) {
+      final code = '${error!['code']}';
+      throw ApiException(code == 'rate_limited' || code == 'daily_budget' ? 429 : 400, code, '${error!['message'] ?? ''}');
+    }
     if (text == null) throw ApiException(0, 'stream', 'The reply stopped early.');
     if (fallback) throw ApiException(503, 'tutor_unavailable', text!);
     return (text: text!, mermaid: mermaid);

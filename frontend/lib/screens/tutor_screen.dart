@@ -181,13 +181,14 @@ class _TutorScreenState extends State<TutorScreen> {
       diagram = r.mermaid;
     } catch (e) {
       try {
+        if (e is ApiException && e.status == 429) throw e; // a limit: say so, do not retry
         if (e is ApiException && e.status == 503) rethrow; // model down: go straight to the lesson-based answer
         final r = await s.api.tutor(s.profile.name, mode: mode, message: t, context: conv.context?.toJson(), history: history);
         reply = r.text;
         diagram = r.mermaid;
-      } catch (_) {
+      } catch (e2) {
         await Future.delayed(Duration(milliseconds: 450)); // a short "typing" beat
-        reply = _offline(t, s, conv.context);
+        reply = e2 is ApiException && e2.status == 429 ? e2.message : _offline(t, s, conv.context);
       }
     }
     if (!mounted) return;

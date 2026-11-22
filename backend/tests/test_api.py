@@ -339,7 +339,7 @@ def test_tutor_cache_serves_the_second_identical_question(client, monkeypatch):
     ADMIN = {"X-Admin-Key": "test-admin-key"}
     m = {x["mode"]: x for x in client.get("/admin/tutor-metrics", headers=ADMIN).json()["modes"]}
     assert m["explain_concept"]["cache_hit_rate"] > 0 and m["explain_concept"]["cold_loads"] >= 1
-    assert client.delete("/admin/tutor-cache", headers=ADMIN).json()["deleted"] == 1
+    assert client.delete("/admin/tutor-cache", headers=ADMIN).json()["deleted"] >= 1
 
 
 def test_a_wrong_answer_does_not_move_mission_progress(client):
@@ -357,3 +357,63 @@ def test_a_wrong_answer_does_not_move_mission_progress(client):
     assert st["items_answered"] == 1 and st["items_correct"] == 0 and not st["done"]
     client.post(f"/tasks/{item['id']}/attempts", headers=h, json={"response": right, "confidence": 3})
     assert status()["items_correct"] == 1
+
+
+def test_tutor_masks_personal_data_before_the_model_and_caches_first_chat_questions(client, monkeypatch):
+    from app import tutor_api
+    seen = []
+    monkeypatch.setattr(tutor_api, "TUTOR_ENABLED", True)
+    monkeypatch.setattr(tutor_api.tutor_pipeline, "handles", lambda mode: False)
+    monkeypatch.setattr(tutor_api, "call_model", lambda m: (seen.append(m), ({"text": "Fine. What next?", "mermaid": None}, 10, 1, 1))[1])
+    h = {"Authorization": f"Bearer {client.post('/auth/session', json={'display_name': 'mask'}).json()['token']}"}
+    client.post("/tutor", headers=h, json={"message": "My email is jan.kowalski@example.com, PESEL 90010112345",
+                                            "history": [{"role": "user", "text": "call me at +48 600 700 800"}]})
+    sent = " ".join(m["content"] for m in seen[0])
+    assert "jan.kowalski@example.com" not in sent and "90010112345" not in sent and "600 700 800" not in sent
+    assert "[email]" in sent and "[pesel]" in sent
+    q = {"mode": "explain_concept", "message": "What is a bond, in one line?"}  # tutor chat: no node, no history
+    client.post("/tutor", headers=h, json=q)
+    again = client.post("/tutor", headers=h, json=q).json()
+    assert again.get("cached") is True and len(seen) == 2
+
+
+def test_tutor_has_a_per_minute_limit_and_a_daily_budget(client, monkeypatch):
+    from app import tutor_api
+    monkeypatch.setattr(tutor_api, "TUTOR_ENABLED", True)
+    monkeypatch.setattr(tutor_api.tutor_pipeline, "handles", lambda mode: False)
+    monkeypatch.setattr(tutor_api, "call_model", lambda m: ({"text": "Ok. And?", "mermaid": None}, 10, 1, 1))
+    monkeypatch.setattr(tutor_api, "TUTOR_PER_MINUTE", 3)
+    h = {"Authorization": f"Bearer {client.post('/auth/session', json={'display_name': 'limit'}).json()['token']}"}
+    codes = [client.post("/tutor", headers=h, json={"mode": "explain_result", "message": f"q{i}"}).status_code for i in range(4)]
+    assert codes == [200, 200, 200, 429]
+    assert client.post("/tutor", headers=h, json={"mode": "title", "message": "x"}).status_code == 200  # titles are free
+    tutor_api._minute.clear()
+    monkeypatch.setattr(tutor_api, "DAILY_BUDGET", 3)  # 3 calls already today
+    r = client.post("/tutor", headers=h, json={"mode": "explain_result", "message": "one more"})
+    assert r.status_code == 429 and r.json()["error"]["code"] == "daily_budget"
+    g = {"X-Guest-Id": "g-limit", "CF-Connecting-IP": "203.0.113.7"}  # guests are counted per visitor IP in memory
+    tutor_api._minute.clear()
+    tutor_api._guest_day.clear()
+    assert [client.post("/tutor", headers=g, json={"mode": "explain_result", "message": f"g{i}"}).status_code for i in range(4)] == [200, 200, 200, 429]
+    other = {"X-Guest-Id": "g-other", "CF-Connecting-IP": "203.0.113.8"}  # another visitor is not affected
+    assert client.post("/tutor", headers=other, json={"mode": "explain_result", "message": "hi"}).status_code == 200
+    tutor_api._minute.clear()
+    tutor_api._guest_day.clear()
+
+
+def test_flagged_tutor_answers_can_be_labelled(client, monkeypatch):
+    from app import tutor_api
+    monkeypatch.setattr(tutor_api, "TUTOR_ENABLED", True)
+    monkeypatch.setattr(tutor_api.tutor_pipeline, "handles", lambda mode: False)
+    monkeypatch.setattr(tutor_api, "call_model", lambda m: ({"text": "Buy Nvidia now.", "mermaid": None}, 10, 1, 1))
+    h = {"Authorization": f"Bearer {client.post('/auth/session', json={'display_name': 'label'}).json()['token']}"}
+    client.post("/tutor", headers=h, json={"mode": "explain_result", "message": "Which stock should I buy?"})
+    A = {"X-Admin-Key": "test-admin-key"}
+    ev = client.get("/admin/llm-events?flagged=true&limit=1", headers=A).json()["items"][0]
+    assert ev["review_label"] is None
+    r = client.patch(f"/admin/llm-events/{ev['id']}", headers=A, json={"label": "advice"}).json()
+    assert r["review_label"] == "advice" and r["reviewed_at"]
+    assert client.get("/admin/llm-events?flagged=true&limit=1", headers=A).json()["items"][0]["review_label"] == "advice"
+    assert client.patch(f"/admin/llm-events/{ev['id']}", headers=A, json={"label": "nonsense"}).status_code == 400
+    assert client.patch(f"/admin/llm-events/{ev['id']}", json={"label": "ok"}).status_code in (401, 403)
+    assert client.patch("/admin/llm-events/999999", headers=A, json={"label": "ok"}).status_code == 404

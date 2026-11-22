@@ -52,7 +52,12 @@
     // Streams an NDJSON response: calls onLine(text) for each line as it arrives.
     window.crocoStream = async function (url, headersJson, body, onLine) {
       const r = await fetch(url, { method: 'POST', headers: JSON.parse(headersJson), body: body });
-      if (!r.ok || !r.body) throw new Error('HTTP ' + r.status);
+      if (!r.ok) { // a refused request (e.g. a 429 limit): hand its JSON error to the app as one line
+        const t = (await r.text()).replace(/\n/g, ' ').trim();
+        if (t.startsWith('{')) { onLine(t); return; }
+        throw new Error('HTTP ' + r.status);
+      }
+      if (!r.body) throw new Error('HTTP ' + r.status);
       const reader = r.body.getReader(), dec = new TextDecoder();
       let buf = '';
       for (;;) {

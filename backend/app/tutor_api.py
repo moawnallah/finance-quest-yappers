@@ -24,15 +24,16 @@ import urllib.request
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Request
 from pydantic import BaseModel, Field
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app import tutor_pipeline
 from app.admin import log_llm_event
 from app.db import get_db
-from app.deps import current_user, is_guest, viewer
-from app.models import TutorCache, User
+from app.deps import ApiError, current_user, is_guest, viewer
+from app.models import LlmEvent, TutorCache, User
 
 router = APIRouter(tags=["tutor"])
 
@@ -125,15 +126,16 @@ CACHE_TTL = timedelta(days=1)
 
 
 def cache_key(body: "TutorIn") -> str | None:
-    """Only answers that are the same for everyone: explain_concept with a node, no history, no task
-    attempt, and a message that masking leaves unchanged (no personal data). None means: do not cache."""
+    """Only answers that are the same for everyone: explain_concept with no history, no task attempt,
+    and a message that masking leaves unchanged (no personal data). A first question in the tutor chat
+    has no node; it is cached under "-". None means: do not cache."""
     ctx = body.context or {}
-    if body.mode != "explain_concept" or not ctx.get("node") or body.history or ctx.get("task_id") \
+    if body.mode != "explain_concept" or body.history or ctx.get("task_id") \
             or ctx.get("picked") is not None or mask(body.message) != body.message:
         return None
     version = os.getenv("PROMPT_VERSION", "tutor-v2") if tutor_pipeline.handles(body.mode) else MO_PROMPT_VERSION
     norm = " ".join(body.message.lower().split())
-    return hashlib.sha256(f"{version}|{TUTOR_MODEL}|{body.mode}|{ctx['node']}|{norm}".encode()).hexdigest()
+    return hashlib.sha256(f"{version}|{TUTOR_MODEL}|{body.mode}|{ctx.get('node') or '-'}|{norm}".encode()).hexdigest()
 
 
 def cache_get(db: Session, key: str | None):
@@ -182,19 +184,65 @@ def build_messages(body: TutorIn, visual: bool) -> list[dict]:
         ctx = {k: v for k, v in body.context.items() if v not in (None, "") and k in
                ("question", "picked", "correct", "explanation", "was_right", "node", "mermaid")}
         msgs.append({"role": "system", "content": "Question context: " + json.dumps(ctx, ensure_ascii=False)})
+    # Personal data is masked before it reaches the model, not only in the logs.
     for h in body.history[-8:]:
         role = "assistant" if h.get("role") == "tutor" else "user"
-        msgs.append({"role": role, "content": str(h.get("text", ""))[:1500]})
+        msgs.append({"role": role, "content": mask(str(h.get("text", "")))[:1500]})
     if body.mode == "title":
         return [{"role": "system", "content": "Write a short title (2 to 6 words, no quotes, no final period) for this tutor "
                  "conversation. Reply as JSON: {\"text\": \"<title>\", \"mermaid\": null}."},
-                {"role": "user", "content": body.message[:1500]}]
+                {"role": "user", "content": mask(body.message)[:1500]}]
     if body.mode == "repair_diagram":
-        msgs.append({"role": "user", "content": "Mermaid could not render your diagram. Error: " + body.message
+        msgs.append({"role": "user", "content": "Mermaid could not render your diagram. Error: " + mask(body.message)
                      + ". Return the same JSON with a corrected, simpler 'mermaid' value that follows the skill exactly."})
     else:
-        msgs.append({"role": "user", "content": body.message})
+        msgs.append({"role": "user", "content": mask(body.message)})
     return msgs
+
+
+# Limits on tutor calls: each one is a model call on a shared GPU.
+TUTOR_PER_MINUTE = int(os.getenv("TUTOR_PER_MINUTE", "8"))  # per user (guests: per IP), sliding minute
+DAILY_BUDGET = int(os.getenv("DAILY_BUDGET", "80"))  # tutor calls per user (guests: per IP) and UTC day; 0 = no limit
+_minute: dict[str, list[float]] = {}
+_guest_day: dict[str, tuple[str, int]] = {}  # ip -> (day, calls); accounts are counted from llm_events instead
+_limit_lock = threading.Lock()
+
+
+def client_ip(request: Request) -> str:
+    """The visitor's address. Traffic arrives through Cloudflare Tunnel and Caddy, so the socket peer is
+    always local; Cloudflare puts the real one in CF-Connecting-IP (the origin is reachable only
+    through the tunnel, so the header cannot be set from outside)."""
+    h = request.headers
+    ip = h.get("cf-connecting-ip") or (h.get("x-forwarded-for") or "").split(",")[0].strip()
+    return ip or (request.client.host if request.client else "-")
+
+
+def tutor_limit(user, request: Request, db: Session, mode: str) -> None:
+    """429 when a learner sends too many tutor messages in a minute or uses up the day's budget.
+    Chat titles are tiny and automatic, so they do not count."""
+    if mode == "title":
+        return
+    guest = is_guest(user)
+    who = f"ip:{client_ip(request)}" if guest else f"u:{user.id}"
+    now, day = time.monotonic(), datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    with _limit_lock:
+        hits = [t for t in _minute.get(who, []) if now - t < 60]
+        if len(hits) >= TUTOR_PER_MINUTE:
+            raise ApiError(429, "rate_limited", "That is a lot of questions in one minute. Take a breath and ask again in a moment.")
+        if DAILY_BUDGET and guest:
+            d, n = _guest_day.get(who, (day, 0))
+            n = n if d == day else 0
+            if n >= DAILY_BUDGET:
+                raise ApiError(429, "daily_budget", "Kyle has answered a lot of questions today. Come back tomorrow, or read the cards for this topic.")
+            _guest_day[who] = (day, n + 1)
+        hits.append(now)
+        _minute[who] = hits
+    if DAILY_BUDGET and not guest:
+        start = datetime.now(timezone.utc).replace(hour=0, minute=0, second=0, microsecond=0)
+        used = db.scalar(select(func.count(LlmEvent.id)).where(LlmEvent.user_id == user.id, LlmEvent.ts >= start,
+                                                               LlmEvent.mode != "title"))
+        if (used or 0) >= DAILY_BUDGET:
+            raise ApiError(429, "daily_budget", "Kyle has answered a lot of questions today. Come back tomorrow, or read the cards for this topic.")
 
 
 def _log(db, user, **kw):
@@ -204,7 +252,8 @@ def _log(db, user, **kw):
 
 
 @router.post("/tutor")
-def tutor(body: TutorIn, user=Depends(viewer), db: Session = Depends(get_db)):
+def tutor(body: TutorIn, request: Request, user=Depends(viewer), db: Session = Depends(get_db)):
+    tutor_limit(user, request, db, body.mode)
     visual = bool(VISUAL.search(body.message)) and body.mode != "repair_diagram"
     t0, key = time.monotonic(), cache_key(body)
     hit = cache_get(db, key)
@@ -276,13 +325,15 @@ def _stream_messages(body: TutorIn, visual: bool) -> list[dict]:
 
 
 @router.post("/tutor/stream")
-def tutor_stream(body: TutorIn, user=Depends(viewer)):
+def tutor_stream(body: TutorIn, request: Request, user=Depends(viewer), db: Session = Depends(get_db)):
     """Like POST /tutor, but streams the reply as NDJSON lines while the model writes it:
     {"t": "delta", "text": "..."} for each piece of visible text, then one
     {"t": "done", "text": <final text>, "mermaid": <checked code or null>, "fallback": bool}.
     The Mermaid block is never streamed; it is checked and sent once, in "done"."""
     from fastapi.responses import StreamingResponse
     from app.db import SessionLocal
+
+    tutor_limit(user, request, db, body.mode)
 
     visual = bool(VISUAL.search(body.message))
     intent = "advice_request" if ADVICE.search(body.message) else ("visualize" if visual else "question")
