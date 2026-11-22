@@ -7,8 +7,12 @@ Readers:
 Purpose: where the load is, which caches to add, what to show in the
 admin panel, and the load test that gives the numbers.
 
-Status (2026-11-21): a plan. Nothing here has been measured yet. The
-"Now" lines are read from the code on main.
+Status (2026-11-22): layers 1 and 2 of the tutor cache and the admin
+metrics are built (Mohamed, 2026-11-21). Layer 3 and the load test are
+not. No load test has run yet; the only measurements are Mohamed's local
+latency runs (docs/tutor_agent.md, section 3; docs/onboarding_router.md,
+"Built"). The "Now" lines are read from the code on
+main.
 
 ## Where the load is
 
@@ -18,7 +22,7 @@ Status (2026-11-21): a plan. Nothing here has been measured yet. The
 | Content | Catalog and card passages loaded once per instance (`lru_cache`) | One load per cold start |
 | Hard tasks | `POST /tasks/{id}/attempts` runs the plan on every hidden event and 200 futures | CPU per submit; to measure |
 | Tutor | Gemma in Ollama on one GPU (`OLLAMA_API_BASE`), `keep_alive` 30 min, `think` off, temperature 0.3 | The expensive part: seconds per answer |
-| Router | Pure Python; with `BASAL_URL` set, one shadow call of up to 3 s inside `POST /onboarding` | Small; the shadow call is the exception |
+| Router | Pure Python; with `BASAL_MODE=primary`, one BASAL call of up to 3 s inside `POST /onboarding`, cached per survey in the process | Small, except the BASAL call on a cache miss |
 
 So scaling means scaling the tutor first. The rest needs connection pooling
 and cold-start care.
@@ -39,12 +43,19 @@ Three layers, from free to most work.
   The Mermaid skill appended for `visual` gives a second prefix, which is
   fine. A timestamp or a user name there would break every request.
 - Measure it: Ollama's reply has `load_duration`, `prompt_eval_count`,
-  `prompt_eval_duration`, `eval_count` and `eval_duration`. Today only the
-  two counts are logged. Log the durations in `llm_events`. A falling
+  `prompt_eval_duration`, `eval_count` and `eval_duration`. Since
+  2026-11-21 `llm_events` also stores them as `load_ms`, `prompt_eval_ms`
+  and `eval_ms`. A falling
   `prompt_eval_duration` on repeated prefixes shows the cache working; a
   large `load_duration` shows a cold model load.
 
-**2. Answer cache for requests that are the same for everyone.**
+**2. Answer cache for requests that are the same for everyone.** Built
+2026-11-21 as below (`app/tutor_api.py`: `cache_key`, `cache_get`,
+`cache_put`; table `tutor_cache`, migration `d3f7a1c9e284`). The key uses
+`PROMPT_VERSION` for pipeline modes and `MO_PROMPT_VERSION` otherwise. In
+production it never hit at first, because chat questions carry no node;
+since 2026-11-22 a first chat question without history is cached too,
+under the node "-".
 - Cache only requests without anything personal or attempt-specific:
   - `explain_concept` with a node, no history, no task attempt;
   - after masking (`tutor.rules.mask`) the message is unchanged, so it
@@ -56,12 +67,14 @@ Three layers, from free to most work.
   - fallbacks: a failed answer should be tried again.
 - Key: hash of (prompt version, model, mode, node, normalized message:
   lower case, collapsed spaces).
-- Value: the checked answer and its links.
+- Value: the answer text and its Mermaid diagram.
 - TTL: a day.
-- Changing the prompt version, the model or the content changes the key,
-  so a new version never serves an old answer.
-- Store: a Postgres table (`tutor_cache`). Serverless instances share no
-  memory, so an in-process cache would miss on most requests.
+- Changing the prompt version or the model changes the key. Editing a
+  card does not: after a content fix, clear the cache
+  (`DELETE /admin/tutor-cache`).
+- Store: the `tutor_cache` table in the app database (SQLite in
+  production), shared by both worker processes. This was planned for
+  serverless instances, which share no memory; it fits the VPS too.
 - Effect on the learner: the same question gets the same answer. At
   temperature 0.3 the answers vary only a little anyway.
 - Log a hit as an `llm_events` row with `model` "cache" and its latency.
@@ -83,6 +96,12 @@ From `llm_events`, per mode and per day:
 
 Also a "clear tutor cache" button (admin key), for after a content fix.
 
+Built 2026-11-21 as `GET /admin/tutor-metrics` (per mode, over all rows:
+requests, p50 and p95, fallback rate, cache hit rate, cold loads,
+prompt-eval p50, and the number of cached answers) and `DELETE
+/admin/tutor-cache`. Not built yet: the split per day, tokens, and failed
+checks.
+
 ## Scaling the model
 
 - **One GPU.**
@@ -95,9 +114,12 @@ Also a "clear tutor cache" button (admin key), for after a content fix.
 - **More users.** A second GPU box behind a load balancer, or vLLM, which
   batches requests and caches prefixes automatically. Decide this from the
   load test, not before.
-- **The BASAL shadow call.** At scale, move it out of the request: a queue
-  or a background job. It is logged only, so its latency need not be paid
-  in onboarding.
+- **The BASAL call.** In primary mode it sits inside onboarding: up to
+  3 s on a cache miss. The cache lives in one process, so several
+  processes or instances each ask BASAL again. At scale: keep its answers
+  in a table (like `tutor_cache`), or show the router's path at once and
+  let BASAL's path replace it from a background job. In shadow mode the
+  call is logged only and can move to a queue.
 
 ## Database
 

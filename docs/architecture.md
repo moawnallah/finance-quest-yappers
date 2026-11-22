@@ -50,8 +50,9 @@ backend/
     tests/
   ml/
     tutor/                 the tutor agent (docs/tutor_agent.md)
-    router/                survey scoring, router, BASAL shadow client (docs/onboarding_router.md)
-    eval/                  model choice and red-team sets
+    router/                survey scoring, router, BASAL client (docs/onboarding_router.md)
+    eval/                  model choice and red-team sets; api_run.py runs them through the deployed /tutor
+    experiments/           basal_shadow/: BASAL against the router on the test personas
   api/                     FastAPI (Mohamed): routes, engine registry, database, admin
 frontend/                  Flutter (Michał): one renderer per task kind, tree, wheel, tutor
 ```

@@ -12,7 +12,8 @@ re-deciding the design.
 Status: draft on branch `skills-tree`, 2026-11-20. It replaces the
 architecture text that was in `backend/ml/README.md`. Wired behind `POST
 /tutor` on 2026-11-21, switched by `TUTOR_PIPELINE` (section 5, "As
-wired").
+wired"). Answer cache, Ollama timings and authentication headers added by
+Mohamed on 2026-11-21 (section 5 and docs/scaling.md).
 
 ## Assumptions
 
@@ -120,7 +121,8 @@ create index kb_chunks_tsv on kb_chunks using gin (tsv);
 create index kb_chunks_nodes on kb_chunks using gin (node_ids);
 ```
 
-**Retrieval:** `search_kb(node, query, k=3)`.
+**Retrieval (design; built so far: an in-memory search over the card
+passages, `tutor/kb.py`, used by the pipeline):** `search_kb(node, query, k=3)`.
 1. Passages tagged with the node, ranked by `ts_rank` against the query.
 2. If there are fewer than k, add passages of the node's prerequisite nodes.
 3. Never passages from unrelated panels, so that answers stay on the
@@ -204,6 +206,19 @@ prompt_version: tutor-v2
      - time to first token;
      - output-check pass rate;
      - a 1-5 rating from two people.
+   - Run it through the deployed API: `backend/ml/eval/api_run.py`
+     (Mohamed, 2026-11-21) sends the model-choice and red-team sets to
+     `/tutor` with thinking off, joins `checks_failed` from
+     `/admin/llm-events`, and writes `results.jsonl` and `summary.md` under
+     `eval/runs/` (git-ignored). The LiteLLM runner leaves Gemma's thinking
+     on, about 50 s a reply.
+   - Result (Mohamed, 2026-11-22, gemma4:12b, local API with
+     `TUTOR_PIPELINE=true`; summary reported, not stored in the repo): 84
+     prompts; all 32 template prompts (advice 22, injection 10) answered by
+     the template; no failed check; every model answer ended with a check
+     question; warm p95 5,572 ms (target 15,000 ms); fallback 10% of
+     answers, 17% of benign questions, 10% of model-choice prompts.
+     Production still runs with `TUTOR_PIPELINE` off.
    - Pick the smallest model that passes the checks on at least 18 of 20
      and answers within about 10 s.
    - Candidates to measure: Qwen3.5 4B / 9B, Gemma 4 12B. Bielik becomes
@@ -352,6 +367,9 @@ model_role, model, prompt_version, latency_ms, tokens_in, tokens_out,
 checks_failed, fallback_used, hint_level, user_rating, flagged_for_review
 ```
 
+Added 2026-11-21: `load_ms`, `prompt_eval_ms` and `eval_ms`, Ollama's
+timings, for cold loads and the prompt prefix cache (docs/scaling.md).
+
 **As wired (2026-11-21, `backend/app/tutor_pipeline.py`).** Mohamed's
 `app/tutor_api.py` keeps the HTTP contract, the Ollama call (`call_model`),
 Mermaid checking, titles and diagram repair. With `TUTOR_PIPELINE=true`, the
@@ -378,11 +396,19 @@ modes `explain_concept`, `hint`, `explain_result` and `rephrase` go through
   word-by-word streaming.
 - **Fallback:** the stored explanation is a card's text, except in
   `explain_result`, so a failed hint never shows the answer.
+- **Answer cache:** `explain_concept` with a node, no history, no task
+  and a message that masking leaves unchanged is served from `tutor_cache`
+  for a day, in both paths (docs/scaling.md, layer 2).
+- **Ollama authentication:** `OLLAMA_HEADERS` (JSON) is added to every
+  Ollama call, for a Cloudflare Access service token or a bearer-token
+  proxy. Ollama has no authentication of its own.
 - **Default off:** `TUTOR_PIPELINE` is off by default, so merging changes
   nothing until a test environment turns it on.
-- **Not verified with Gemma yet:** whether it returns `cited` and
-  `check_question` reliably. If it does not, most replies fall back. This
-  shows in `/admin/llm-events` as `checks_failed`.
+- **On Gemma:** Mohamed's local red-team run (section 3) reports that
+  every model answer ended with a check question and no check failed;
+  fallback was 10% of answers and 17% of benign questions. Still open:
+  how reliably it cites passages, and a run in a test environment before
+  production. Failures show in `/admin/llm-events` as `checks_failed`.
 
 **Kill switches** (environment, readable from the admin panel):
 - `TUTOR_ENABLED`;

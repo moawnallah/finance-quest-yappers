@@ -10,8 +10,8 @@ What this change does:
 
 ## 1. Nodes
 
-The demo paths (docs/demo_plan.md) use **11 nodes**: F1, F2, F3, S1, I1, I2, I4, I5, P1, P2, P4.
-Only these have files in `backend/content/nodes/`.
+**11 nodes have content**: F1, F2, F3, S1, I1, I2, I4, I5, P1, P2, P4. Only these have files in
+`backend/content/nodes/`. The two demo paths use 7 of them ([demo_missions.md](demo_missions.md)).
 
 | Removed | Where it went | Why |
 |---|---|---|
@@ -36,11 +36,13 @@ shows the rest of the chart and names the date. The views contain no real names 
 
 ### i2.m1: deposit or bond, 16 February 2022
 - **Persona:** Kasia, 28, has 20,000 PLN for a flat deposit in about 4 years and a separate emergency fund.
-- **Chart:** inflation (% y/y) and the central bank rate, monthly from Jan 2019. The cutoff is January 2022 (9.4% and 2.25%);
-  the reveal runs to Dec 2025, with the 18.4% peak in Feb 2023 and the rate up to 6.75%.
+- **Chart:** inflation (% y/y) and the central bank rate, monthly from Jan 2019. The cutoff is January 2022 (2.25% for the
+  rate; 9.4% for inflation, the final figure published on 15 Mar 2022, see below); the reveal runs to Dec 2025, with the
+  18.4% peak in Feb 2023 and the rate up to 6.75%.
 - **Known on day X:** five rate hikes since October (the last on 9 Feb); VAT cuts on food, fuel and energy from 1 Feb to
-  31 Jul 2022. January's CPI was published on 15 Feb (GUS publishes no January flash), which is why day X is 16 Feb and not
-  1 Feb. It is also before 24 Feb.
+  31 Jul 2022. January's preliminary CPI, 9.2%, was published on 15 Feb (GUS publishes no January flash), which is why
+  day X is 16 Feb and not 1 Feb. It is also before 24 Feb. The chart shows the final 9.4% (a known gap,
+  [content_authoring.md](content_authoring.md), "Real data").
 - **Options:**
   - a 12-month deposit renewed each year;
   - a 3-year fixed-rate bond, then a 1-year deposit (no 4-year fixed retail bond exists);
@@ -77,7 +79,7 @@ response:
     - {id: indexed, text: "..."}
 ```
 
-- **Question view:** `{"kind": "choice", "options": [{"id", "text"}]}`. **Frontend: needs a widget** (one option, then reasons).
+- **Question view:** `{"kind": "choice", "options": [{"id", "text"}]}`. The app shows one option to pick, then the reasons.
 - **Scoring:** 1/0 against the truth when one exists. For day X there is no truth: `score_estimate` is null and the score is the reasons
   score. `reveal.outcome` is null; what happened is in the reveal chart.
 - **Validation:** at least 2 options, unique lowercase ids, text on each. Option texts are checked for hindsight words and hidden names.
@@ -98,13 +100,3 @@ response:
   `oecd_share_prices_pl` in `backend/content/sources.yaml`.
 - **Licences checked** by Yurii on 2026-11-21 (docs/task_engines.md checklist), so `display: true` for all three.
   `python build.py --strict` builds both tasks; they are ⚠️ only because there is no reviewer yet, so `live` stays false.
-
-## 5. To do before the demo
-
-| What | Who |
-|---|---|
-| Review the text of i2.m1 and p4.m1, and the reason weights; set `reviewer` | Mateusz |
-| Retarget the tutor eval sets (`ml/eval/model_choice.yaml`, `red_team.yaml`) from d1.m1/d3.m1 to i2.m1/p4.m1, **before** the rebuilt `medium_tasks.json` is pushed | Mateusz (done 2026-11-21) |
-| Router: the investor path is I4 → I5 in the tests; the demo plan says I4 → I5 → P1 → P4 | Mateusz (done 2026-11-21: demo mode extends I4 → I5 to the investor path, `router/demo.py`) |
-| `choice` widget; P2 must not be locked by S4; show `attribution` under the charts | Michał, Mohamed |
-| Confirm the 5 new card sources in `sources.yaml` (read 2026-11-21, link only); f2.c2 (real return) still has no link | Yurii, Mateusz |

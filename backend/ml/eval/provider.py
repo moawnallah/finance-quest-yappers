@@ -4,7 +4,7 @@
   rejects unreviewed cards);
 - tasks: backend/data/output/medium_tasks.json (built by the medium engine);
 - attempt ids: "<task_id>:submitted" means the attempt was submitted, so reveal() returns it;
-- learners: two fixed personas from docs/demo_plan.md.
+- learners: two fixed personas from docs/archive/demo_plan.md.
 """
 from __future__ import annotations
 

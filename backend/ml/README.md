@@ -3,7 +3,7 @@
 Owner: Mateusz.
 
 The tutor explains cards and tasks, gives hints without giving answers, and
-recommends verified reading. It never gives investment advice.
+recommends verified reading. It is designed not to give investment advice (docs/responsible_ai.md).
 
 **Design, contracts and the split of work:**
 [docs/tutor_agent.md](../../docs/tutor_agent.md).
@@ -21,8 +21,10 @@ tutor/llm.py        LiteLLMClient: roles -> models from config/llm.yaml, refusal
 config/llm.yaml     roles -> models, ${ENV} values
 prompts/tutor_small/tutor-v2.md
 tests/              checks, context guard, pipeline fallbacks, ingest rules, role refusals
-eval/               20-prompt model choice set, red-team set, runner
-router/             onboarding router: tree.yaml, benchmarks.yaml (EB525 PL), router.py (docs/onboarding_router.md)
+eval/               20-prompt model choice set, red-team set, runner; api_run.py runs them through /tutor
+router/             onboarding router: tree.yaml, benchmarks.yaml (EB525 PL), router.py, shadow.py (BASAL client)
+                    (docs/onboarding_router.md)
+experiments/        basal_shadow/run.py: BASAL against the router on the test personas
 ```
 
 ```bash
@@ -31,12 +33,15 @@ pip install -r requirements.txt
 python -m pytest tests
 ```
 
-Status (2026-11-20): runs with a scripted model in tests. Not yet run against a real model:
-LiteLLMClient is untested until Ollama is up (OLLAMA_API_BASE, TUTOR_MODEL in .env).
+Status (2026-11-22): on the server the pipeline calls Ollama through `app/tutor_api.call_model`
+when `TUTOR_PIPELINE=true` (docs/tutor_agent.md, section 5). LiteLLMClient is used only by the
+offline eval runner. The red-team run on the real model through `eval/api_run.py` and its
+results are in docs/tutor_agent.md, section 3. Production runs with the pipeline off.
 
 ## Rules
 
 - Code calls roles (`router`, `tutor_small`, `tutor_cloud`), never model
   names.
 - No request with user data goes to a cloud role.
-- Every failure falls back to the stored explanation written by people.
+- Every failure falls back to the stored explanation (the card's text; prototype content was
+  drafted with AI and awaits expert review, docs/content_authoring.md).

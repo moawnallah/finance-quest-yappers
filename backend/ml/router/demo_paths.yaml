@@ -1,4 +1,4 @@
-# The paths prepared for the demo (docs/demo_plan.md). The router recommends a path for everyone;
+# The paths prepared for the demo (docs/demo_missions.md). The router recommends a path for everyone;
 # when that path needs content we have not built, the user picks one of these (router/demo.py).
 # hard: how the app shows each hard task on the path. capstone = the path's closing challenge; optional = offered,
 # never needed. Hard tasks never block finishing a node (app/engines.py).

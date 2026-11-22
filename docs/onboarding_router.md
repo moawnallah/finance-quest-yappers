@@ -9,24 +9,33 @@ Purpose: how the first survey places a user in the skills tree
 ([skills_tree.md](skills_tree.md)) with few questions.
 
 Status: implemented 2026-11-21 in `backend/ml/router` (section
-"Implementation"), with the personas as tests. The parameters are to tune
-once real first-item outcomes exist.
+"Implementation"), with the personas as tests. Since 2026-11-21 BASAL
+chooses the path in production and the router is its fallback (section
+"BASAL decides the path"). The parameters are to tune once real
+first-item outcomes exist.
 
 ## Idea in one paragraph
 
-- **The questions.** The survey reuses the Flash Eurobarometer 525 (2023)
-  questions, so every answer can be compared with Poland and the EU, and
-  with the user's age group.
+- **The questions.** The knowledge questions reuse the Flash
+  Eurobarometer 525 (2023) items, so those answers can be compared with
+  Poland and the EU, and with the user's age group.
 - **The router has no trained model.** We have no microdata. It combines:
   - a Rasch ability estimate from the 5 knowledge items, with the same
-    prior for everyone: placement depends on what you answer, not on who
-    you are;
+    prior for everyone, so placement depends only on the answers;
   - static distributions from the Polish EB525 tables;
   - explicit need rules from the behaviour answers.
 - **The first item of every node checks the router.** Elo updates take
   over from there.
 
-## The survey: 12 answers, about 3 minutes
+## The survey design: 12 answers, about 3 minutes
+
+**What the app asks (2026-11-22).** Five questions: age group, goal,
+horizon, investing experience and self-rated knowledge. Then the five
+knowledge items, optional, each with "how sure are you?"
+(`frontend/lib/screens/onboarding_screen.dart`, `app_state.dart`
+`routerSurvey`). The app does not ask who decides about money (item 2),
+the emergency buffer (item 11) or the products held (item 12); the router
+treats them as unanswered. The table below is the full design.
 
 | # | Question | Source | Used for |
 |---|---|---|---|
@@ -265,7 +274,8 @@ result = route(survey, user_pseudo_id)
 | Tree | `router/tree.yaml` | The 32 nodes with title, panel, level and prerequisites. The machine-readable copy of docs/skills_tree.md; a test checks that every node file in `backend/content/nodes` has the same `title` and `after` |
 | Benchmarks | `router/benchmarks.yaml` | EB525 vol. C Poland, weighted: items correct, knowledge bands, self-rating "high", buffer under one month; all ages and by age group |
 | Algorithm | `router/router.py` | Ability (EAP, flat prior), mastery, needs, priority, path, challenges, goal, `reco_events` rows; `next_steps` after a finished path |
-| Shadow model | `router/shadow.py` | BASAL request builder, call and comparison; shadow mode, off unless `BASAL_URL` is set |
+| BASAL client | `router/shadow.py` | BASAL request builder, call (with `BASAL_AUTH_HEADER`) and comparison; used in both modes, off unless `BASAL_URL` is set |
+| Path decider | `backend/app/path_decider.py` (Mohamed) | `BASAL_MODE=primary`: BASAL's path with guards, the router as fallback; one `path_decision` row per onboarding |
 
 **Survey input:**
 
@@ -395,7 +405,7 @@ have content. Two demo paths are defined in `router/demo_paths.yaml`:
 | Student (F4 → S2) | not ready | picks one of the two |
 | Pre-retiree (O1 → L1) | not ready | picks one of the two |
 
-## Shadow decision model: BASAL (experiment, client built 2026-11-21, not run yet)
+## Decision model: BASAL (shadow client 2026-11-21; decides paths since 2026-11-21)
 
 **Idea (yours).** Next to the rule router, ask a typed decision model
 whether each candidate node is right for this learner. Compare the two,
@@ -427,9 +437,11 @@ read 2026-11-21):
   - Throughput on one H100 with 16 clients: 32 decisions/s for 4.5B.
   - No single-request latency is given, so we measure it on Mo's GPU.
 
-**Set-up: shadow mode.** The router decides every path. BASAL's answers
-are only logged as `reco_events` rows of type `shadow_decision`. They never
-change what a user sees in the demo.
+**Set-up as planned: shadow mode.** The router decides every path.
+BASAL's answers are only logged as `reco_events` rows of type
+`shadow_decision`. They never change what a user sees in the demo. This is
+still the default (`BASAL_MODE=shadow`). Production runs the primary mode
+described in "BASAL decides the path".
 
 **One request per user** (illustrative; check the exact fields in
 `docs/API.md`):
@@ -454,8 +466,8 @@ change what a user sees in the demo.
 - `ready_<node>` predicts the same thing as the router's mastery m_k: the
   first item in the node. So the two can be compared on the same outcomes.
 - `start_<node>` is the decision itself, compared with the router's path.
-- No personal data goes in: bands and answers only, the same rule as for
-  the tutor.
+- No identity goes in: survey bands and quiz answers only, the same rule
+  as for the tutor.
 - A variant without `router_mastery` in the state tests whether BASAL adds
   anything on its own.
 
@@ -482,9 +494,13 @@ Replace the rules for a node only where BASAL is better on held-out data.
 With about 50 outcomes from the hallway test, this is a first look, not a
 result.
 
-**For the pitch:** "We tested an AI decision model against a transparent
-baseline. It runs in shadow mode until the data shows it is better
-calibrated." This is honest, and it shows AI used as a measured component.
+**For the pitch** (revised 2026-11-22, since BASAL now decides): "An AI
+decision model chooses the path within fixed guards. A transparent rule
+router takes over whenever the model is unsure or unavailable, and one
+environment variable switches back to the router. Every decision is
+logged, so an A/B test of the two on first-question outcomes is a small
+change: assign the mode per learner and log the arm." We have no outcomes
+yet, so we do not claim that BASAL chooses better.
 
 **Resolves the branch:** the persona measurement above.
 
@@ -503,13 +519,87 @@ calibrated." This is honest, and it shows AI used as a measured component.
   path, `ready_p`, `start_p`, confidence, agreement, below τ. An error or
   timeout logs `{"error": ...}`, and the user's path is unchanged; an API
   test checks both cases with a fake server.
-- Not run against a real BASAL server: no GPU here.
+- `BASAL_AUTH_HEADER` (for example `Authorization: Bearer <key>`, the
+  header `basal-serve --api-keys` checks) is sent with every call
+  (Mohamed, 2026-11-21).
+- Run against a real BASAL server by Mohamed (on a Mac, MLX). Reported
+  2026-11-22; the run outputs are not stored in the repository.
+  - **60 random survey profiles, primary mode:** BASAL decided 59 of 60
+    paths in the first run (1 fallback, `low_confidence`) and 60 of 60 in
+    the second; no `unreachable` fallback; latency p50 1,537 ms, p95
+    1,677 ms (timeout 3 s). Every path passed the checks: no duplicate
+    nodes, prerequisites in order, the goal step first, at least one
+    playable mission, at least 3 steps.
+  - **Persona measurement** (`backend/ml/experiments/basal_shadow/run.py`,
+    28 requests, 0 errors): agreement with the router 64%; correlation of
+    `ready_p` with the router's mastery 0.57; 11 decisions flipped under
+    changes that should not matter; 21% of answers below τ; latency p50
+    1,627 ms, p95 1,850 ms.
+  - Reading: BASAL is fast enough for onboarding and rarely needs the
+    fallback, and it is not stable under irrelevant changes. The guards
+    (goal step first, at least 3 steps, router fallback) limit what that
+    does to a path. Which of the two chooses better still needs outcomes.
 
-**Next steps:**
-1. Start `basal-serve` on Mo's GPU with basal-2.0 4.5B and set
-   `BASAL_URL` in the test environment.
-2. Run the persona measurement (about 30 requests), including the variant
-   without `router_mastery` (`build_request(..., with_router=False)`).
+## BASAL decides the path (`backend/app/path_decider.py`, 2026-11-21)
+
+Built by Mohamed (commits b9358e2, 7c644eb). Decided by the team for the
+demo before the outcome comparison above; that comparison remains the
+test of whether BASAL should keep deciding.
+
+**Switch.** `BASAL_MODE=primary` with `BASAL_URL` set. Any other value,
+or no `BASAL_URL`, is shadow mode. Production runs primary.
+
+**How the path is chosen.**
+1. The router runs as before: its path, its priorities and the 8
+   candidates.
+2. BASAL gets the same request as in shadow mode and answers `start_<node>`
+   for each candidate.
+3. BASAL decides only if at least half of its `start_` answers have
+   confidence at or above τ = 0.7.
+4. BASAL's path: the candidates with `start_p` ≥ 0.5, missions that exist
+   before planned ones, then by `start_p`; as many as the router's path,
+   and at least 3.
+5. Guards:
+   - the router's first step (the one that answers the goal, for example
+     S1 for a buffer goal) always stays and leads;
+   - a path shorter than 3 is topped up from the router's path, in its
+     order;
+   - the other steps follow prerequisites (depth in the tree), then
+     `start_p`.
+6. A path made only of planned missions gets the best playable one added
+   (by `start_p`, else by the router's priority). This applies to the
+   router's paths too.
+7. Reasons: the router's reason for nodes on the router's path; otherwise
+   "Suggested for you now (N% sure it fits)."
+
+**Fallbacks.** The router's path stands, and the row says why:
+
+| `fallback` | When |
+|---|---|
+| `unreachable` | an error, or no answer within 3 s |
+| `low_confidence` | fewer than half of the `start_` answers reach τ |
+| `no_node_to_study` | the final path is empty (only when the router's own path is empty) |
+
+When BASAL selects no candidate (`start_p` below 0.5 for all), the path is
+the router's first step topped up from the router's path, and the row
+still says `decided_by: basal`. Count this case separately when reading
+the share of BASAL decisions; the log should label it as a fallback.
+
+**Logged.** In primary mode, one `reco_events` row of type `path_decision`
+per onboarding: mode, `decided_by` (`basal` or `rules`), fallback, model,
+latency, τ, the per-node decisions, the router's path and the final path.
+No `shadow_decision` row is written in primary mode.
+
+**Cache.** BASAL's answers are kept per survey in the API process (the
+last 500 surveys), because guests are routed again on every path view. A
+restart, or a second process, asks BASAL again.
+
+**What would change this set-up.**
+- The `path_decision` rows show a high fallback share or latency near 3 s:
+  look at τ, the timeout or the model size.
+- First-question outcomes show BASAL's paths doing worse than the
+  router's: switch back to `BASAL_MODE=shadow`. This needs no deploy, only
+  the environment variable.
 
 ## Facts for the pitch
 
@@ -524,6 +614,7 @@ Source: EB525, volume C, Poland, weighted %. Unweighted n: 18-24 = 98
 | No emergency savings or under 1 month (Q8) | 30.3 | 41.9 | 31.4 |
 | 6 months or more of savings (Q8) | 24.8 | 13.1 | 24.6 |
 | Inflation item correct (Q3) | 68.1 | 54.2 | 75.4 |
+| Risk-and-return item correct (Q5) | 56.7 | 53.2 | 52.0 |
 | Hold an investment product (Q9) | 15.1 | 20.2 | 10.2 |
 | Hold crypto (Q9) | 5.8 | 11.5 | 2.8 |
 | High overall score, 9-10 (F3) | 14.9 | 6.5 | 17.2 |

@@ -5,7 +5,8 @@ Readers: the whole team. Purpose:
 - what each of us builds, and by when;
 - what data we still need.
 
-Status: draft, 2026-11-20.
+Status: archived 2026-11-22. The plan as of 2026-11-20; the current state is in docs/demo_missions.md and
+docs/limitations_and_next_steps.md.
 
 ## What the jury sees (3 minutes)
 

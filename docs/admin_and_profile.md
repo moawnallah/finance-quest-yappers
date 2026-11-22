@@ -10,9 +10,11 @@ Purpose: agree what the admin panel and the profile show, where each number
 comes from, and what we must log now so that a "what next" model can be
 trained later.
 
-Status: decisions taken 2026-11-21 (end of file). Built on branch
-`admin-panel` (section "API (built)"). Screens are not built yet. The
-existing pieces are named where they exist:
+Status: decisions taken 2026-11-21 (end of file). Built: the API
+(section "API (built)") and the admin and adviser screens
+(`frontend/lib/screens/admin_screen.dart`; the population overview shows
+labelled demo figures, then live tiles). The existing pieces are named
+where they exist:
 - Mo's tables: `users`, `profiles`, `attempts`, `events`,
   `benchmark_answers`, `user_badges`;
 - `/admin/ab-results`;
@@ -31,9 +33,9 @@ existing pieces are named where they exist:
 This keeps the numbers testable and lets us change a metric without
 touching the API.
 
-**Prerequisite.** A database that survives restarts: hosted Postgres
-instead of SQLite in `/tmp`. **This is not done yet** (fix 1 in the
-handover). Until then every number below resets on a cold start.
+**Prerequisite.** A database that survives restarts. Done: production
+runs SQLite in `/var/lib/crococash` on the VPS (2026-11-22); the earlier
+serverless set-up with SQLite in `/tmp` reset on every cold start.
 
 ## New tables and fields
 
@@ -252,8 +254,10 @@ the demo has only two prepared paths):
   JSON) or Gemma (the same prompt with a JSON answer) proposes x, y, z
   next to the rules.
 - The rules decide; the shadow proposal is logged in `candidates`.
-- This is the same set-up as the onboarding shadow experiment
-  (onboarding_router.md).
+- Onboarding used this set-up until 2026-11-21. Since then BASAL decides
+  the onboarding path, with the router as fallback (onboarding_router.md,
+  "BASAL decides the path"). The end-of-path suggestions (`next_steps`)
+  are still rules only.
 
 **Admin view:**
 - dataset size and the share of rows with an outcome;
@@ -494,7 +498,7 @@ bank's data platform.
 | | points | integer | Hard tasks: 51-100 when accepted |
 | | duration_ms | integer | Engine time to score |
 | | submitted_at | ISO 8601 | When the answer was sent |
-| reco_events | user, ts, event_type | text | Router and recommender events (path issued, demo_match, path_chosen, path_finished, next_steps_shown, shadow_decision) |
+| reco_events | user, ts, event_type | text | Router and recommender events (path issued, demo_match, path_chosen, path_finished, next_steps_shown, shadow_decision, path_decision) |
 | | router_version, node | text | Router version and node |
 | | predicted_m, need, priority | number | The router's mastery estimate, need and priority |
 | | path | JSON list | Node ids of a path |
