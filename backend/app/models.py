@@ -268,6 +268,8 @@ class LlmEvent(Base):
     hint_level: Mapped[int | None] = mapped_column(Integer, nullable=True)
     user_rating: Mapped[int | None] = mapped_column(Integer, nullable=True)    # +1 / -1
     flagged_for_review: Mapped[bool] = mapped_column(Boolean, default=False, index=True)
+    review_label: Mapped[str | None] = mapped_column(String(20), nullable=True)  # a reviewer's verdict (REVIEW_LABELS)
+    reviewed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     load_ms: Mapped[int | None] = mapped_column(Integer, nullable=True)         # Ollama load_duration (cold model load)
     prompt_eval_ms: Mapped[int | None] = mapped_column(Integer, nullable=True)  # Ollama prompt_eval_duration (prefix cache)
     eval_ms: Mapped[int | None] = mapped_column(Integer, nullable=True)         # Ollama eval_duration (writing the answer)

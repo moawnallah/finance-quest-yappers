@@ -195,6 +195,16 @@ class _AdminScreenState extends State<AdminScreen> {
         Text(text, textAlign: TextAlign.center, style: TextStyle(color: kMuted)),
       ]);
 
+  /// Save a reviewer's label on one tutor answer (PATCH /admin/llm-events/{id}).
+  Future<void> _label(Map<String, dynamic> r, String? label) async {
+    try {
+      await context.read<AppState>().api.adminWrite('PATCH', 'llm-events/${r['id']}', {'label': label}, _key);
+      setState(() => r['review_label'] = label);
+    } catch (e) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Could not save the label: $e')));
+    }
+  }
+
   Widget _llm(List<Map<String, dynamic>> items) => Column(children: [
         SwitchListTile(
           title: Text('Flagged only'),
@@ -233,6 +243,23 @@ class _AdminScreenState extends State<AdminScreen> {
                             SizedBox(height: 6),
                             Text('Tutor answered', style: TextStyle(fontSize: 11, color: kMuted)),
                             Text(r['answer'], style: TextStyle(color: kBody)),
+                          ],
+                          if (flagged || r['review_label'] != null) ...[
+                            SizedBox(height: 8),
+                            Row(children: [
+                              Text('Review: ', style: TextStyle(fontSize: 12, color: kMuted)),
+                              DropdownButton<String?>(
+                                value: r['review_label'] as String?,
+                                hint: Text('not reviewed', style: TextStyle(fontSize: 12)),
+                                underline: SizedBox(),
+                                items: [
+                                  DropdownMenuItem<String?>(value: null, child: Text('not reviewed')),
+                                  for (final l in ['ok', 'wrong_fact', 'advice', 'unclear', 'tone', 'off_topic', 'other'])
+                                    DropdownMenuItem<String?>(value: l, child: Text(l.replaceAll('_', ' '))),
+                                ],
+                                onChanged: (v) => _label(r, v),
+                              ),
+                            ]),
                           ],
                           SizedBox(height: 8),
                           Text(

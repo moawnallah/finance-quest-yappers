@@ -5,12 +5,12 @@ only as pseudonymous ids (a hash of the user id), never by name."""
 import hashlib
 from datetime import datetime, timedelta, timezone
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Body, Depends, Query
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.db import get_db
-from app.deps import require_admin
+from app.deps import ApiError, require_admin
 from app.models import Event, LlmEvent, RecoEvent, User
 
 router = APIRouter(prefix="/admin", tags=["admin"], dependencies=[Depends(require_admin)])
@@ -83,7 +83,26 @@ def llm_events(flagged: bool | None = None, intent: str | None = None, limit: in
         "model": r.model, "prompt_version": r.prompt_version, "latency_ms": r.latency_ms, "tokens_in": r.tokens_in,
         "tokens_out": r.tokens_out, "checks_failed": r.checks_failed or [], "fallback_used": r.fallback_used,
         "hint_level": r.hint_level, "user_rating": r.user_rating, "flagged": r.flagged_for_review,
+        "review_label": r.review_label, "reviewed_at": r.reviewed_at.isoformat() if r.reviewed_at else None,
         "prompt": r.prompt_masked, "answer": r.answer_masked} for r in rows]}
+
+
+# A reviewer's verdict on a tutor answer (usually a flagged one). "ok" clears it; the others say what was wrong.
+REVIEW_LABELS = ["ok", "wrong_fact", "advice", "unclear", "tone", "off_topic", "other"]
+
+
+@router.patch("/llm-events/{event_id}")
+def label_llm_event(event_id: int, label: str | None = Body(None, embed=True), db: Session = Depends(get_db)):
+    """Label one tutor answer after review (null removes the label)."""
+    if label is not None and label not in REVIEW_LABELS:
+        raise ApiError(400, "bad_label", f"label must be one of {', '.join(REVIEW_LABELS)}")
+    row = db.get(LlmEvent, event_id)
+    if row is None:
+        raise ApiError(404, "not_found", "No tutor call with this id")
+    row.review_label = label
+    row.reviewed_at = datetime.now(timezone.utc) if label else None
+    db.commit()
+    return {"id": row.id, "review_label": row.review_label, "reviewed_at": row.reviewed_at.isoformat() if row.reviewed_at else None}
 
 
 @router.get("/reco-events")
