@@ -18,12 +18,22 @@ const arg = (name, dflt) => { const i = process.argv.indexOf(name); return i > 0
 const URL = arg('--url', 'https://crococash.xyz');
 const VIDEO = arg('--video', 'crococash-blocks-demo.webm');
 const FAST = process.argv.includes('--fast');
+// --narrate: pace each step to its voice clip (voice/<id>.mp3, made by make_voice.py from narration.json)
+// and mix the clips into an MP4 next to the video.
+const HERE = path.dirname(new globalThis.URL(import.meta.url).pathname);
+const NARRATE = process.argv.includes('--narrate');
+const DURS = NARRATE ? JSON.parse(fs.readFileSync(path.join(HERE, 'voice/durations.json'), 'utf8')) : {};
+const CAPTION_ID = [[/^Ania/, 'intro'], [/^Make room/, 'resize'], [/^1\./, 's1'], [/^Drag "save_to_buffer"/, 's1b'], [/^2\./, 's2'],
+  [/^Tapping works/, 's2tap'], [/^Its amount/, 's2amt'], [/^3\./, 's3'], [/^4\./, 's4'], [/^5\./, 's5'], [/^The code/, 'code'],
+  [/^Run the public/, 'run'], [/^All required/, 'pass']];
+const timeline = []; let t0 = 0, tReady = 0, nextFree = 0;
 const PAUSE = FAST ? 150 : 650;
 
 const browser = await chromium.launch({ headless: false, slowMo: FAST ? 0 : 60 });
 const videoDir = fs.mkdtempSync(path.join(process.cwd(), '.video-'));
 const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 }, recordVideo: { dir: videoDir, size: { width: 1440, height: 900 } } });
 const p = await ctx.newPage();
+t0 = Date.now();
 
 // ---- helpers (Flutter draws on a canvas; its accessibility tree tells us where each block is)
 const sem = async () => { await p.evaluate(() => document.querySelector('flt-semantics-placeholder')?.click()); await p.waitForTimeout(100); };
@@ -33,7 +43,15 @@ const boxes = re => p.evaluate(src => { const r = new RegExp(src); return [...do
   .filter(b => b.w > 0 && b.h > 0); }, re.source);
 // Where the palette ends and the workspace starts: the second left/right resize handle (moves when resized).
 const split = async () => { const hs = (await boxes(/left and right/)).sort((a, b) => a.x - b.x); return hs.length > 1 ? hs[1].x : 690; };
-const caption = text => p.evaluate(t => {
+const caption = async text => {
+  if (NARRATE) { // wait for the previous line to finish, then start this one
+    const wait = nextFree - Date.now(); if (wait > 0) await p.waitForTimeout(wait);
+    const id = (CAPTION_ID.find(([re]) => re.test(text)) || [])[1];
+    if (id && DURS[id]) { timeline.push({ id, t: Date.now() - t0 }); nextFree = Date.now() + DURS[id] + 450; }
+  }
+  return showCaption(text);
+};
+const showCaption = text => p.evaluate(t => {
   let el = document.getElementById('demo-caption');
   if (!el) { el = document.createElement('div'); el.id = 'demo-caption';
     el.style.cssText = 'position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:99999;background:rgba(14,132,48,.95);color:#fff;'
@@ -80,6 +98,7 @@ const number = async v => { await palette(/a number.*\nnumber$/); await down(); 
 await p.goto(`${URL}/#/hard/p1.h1`, { waitUntil: 'load' });
 for (let i = 0; i < 120 && !(await p.$('flt-semantics-placeholder')); i++) await p.waitForTimeout(1000);
 await p.waitForTimeout(2500);
+tReady = Date.now() - t0;
 await caption('Ania\'s monthly money plan, built from blocks only'); await p.waitForTimeout(PAUSE * 3);
 await sem(); while ((await boxes(/Remove this block/)).length) await tap(/Remove this block/, 0); // a clean workspace
 
@@ -131,9 +150,20 @@ await tap(/Run tests/, 0); await p.waitForTimeout(4000); await tap(/Test results
 const ok = await p.evaluate(() => [...document.querySelectorAll('flt-semantics')].some(e => /All required public tests pass/.test(e.textContent || '')));
 await caption(ok ? 'All required tests pass. Submit to face 6 hidden events and 200 possible futures.' : 'Some tests failed: check the plan');
 await p.waitForTimeout(FAST ? 1500 : 5000);
+if (NARRATE) { const w = nextFree - Date.now(); if (w > 0) await p.waitForTimeout(w + 800); }
 console.log(ok ? 'PASS: all required public tests pass' : 'FAIL: tests did not pass');
 
 const video = await p.video().path();
 await ctx.close(); await browser.close();
 fs.renameSync(video, VIDEO); fs.rmSync(videoDir, { recursive: true, force: true });
 console.log('video:', path.resolve(VIDEO));
+if (NARRATE) { // trim the page load and lay each voice clip at the moment its caption appeared
+  const { execFileSync } = await import('child_process');
+  const start = Math.max(0, tReady - 400) / 1000, mp4 = VIDEO.replace(/\.webm$/, '') + '.mp4';
+  const ins = timeline.flatMap(x => ['-i', path.join(HERE, `voice/${x.id}.mp3`)]);
+  const delays = timeline.map((x, i) => `[${i + 1}:a]adelay=${Math.max(0, Math.round(x.t - start * 1000))}|${Math.max(0, Math.round(x.t - start * 1000))}[a${i}]`).join(';');
+  const mix = `${delays};${timeline.map((_, i) => `[a${i}]`).join('')}amix=inputs=${timeline.length}:normalize=0[aout]`;
+  execFileSync('ffmpeg', ['-v', 'error', '-y', '-ss', String(start), '-i', VIDEO, ...ins, '-filter_complex', mix, '-map', '0:v', '-map', '[aout]',
+    '-c:v', 'libx264', '-preset', 'medium', '-crf', '20', '-pix_fmt', 'yuv420p', '-c:a', 'aac', '-b:a', '160k', '-shortest', mp4]);
+  console.log('narrated video:', path.resolve(mp4));
+}

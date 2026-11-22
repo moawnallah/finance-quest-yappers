@@ -1,0 +1,15 @@
+[
+  {"id": "intro",  "text": "Meet Ania. She's twenty-seven, earns fifty-eight hundred zloty a month, and she wants a plan that survives surprises. Let's build her monthly money rule. No typing, just blocks."},
+  {"id": "resize", "text": "First, a bit more room. These handles resize the panels, so I'll shrink the task description and the test results, and the workspace gets bigger."},
+  {"id": "s1",     "text": "Step one is safety. I drag an if block in, then build its condition: buffer months, less than, two."},
+  {"id": "s1b",    "text": "Inside it goes save to buffer. So if her emergency fund covers less than two months, every spare zloty goes there first."},
+  {"id": "s2",     "text": "Otherwise, I drag in an else."},
+  {"id": "s2tap",  "text": "Dragging isn't the only way. The else is already selected, so I just tap save to pot."},
+  {"id": "s2amt",  "text": "This is her bills pot. The amount is the next bill, minus what's already in the pot, divided by the months left. That way the car insurance never comes as a shock."},
+  {"id": "s3",     "text": "Next, debt. If there's anything on her card, she pays it off. A card at twenty percent costs more than almost any investment earns."},
+  {"id": "s4",     "text": "If the card is clear but the buffer is still under three months, she keeps building it."},
+  {"id": "s5",     "text": "And only then does she invest. Seventy percent of the spare cash goes into a broad fund. I pick the asset from this little menu, and the rest goes into an inflation-linked bond. Spread out, not all on one company."},
+  {"id": "code",   "text": "Here's the code those blocks just wrote. Same plan, as text."},
+  {"id": "run",    "text": "Now the real question. Does it hold up? Run tests: a two-month job loss, a normal two years, and a car repair."},
+  {"id": "pass",   "text": "All green. She never borrows on the card, and she still invests over twelve thousand zloty. Submit it, and it faces six hidden events and two hundred possible futures."}
+]
