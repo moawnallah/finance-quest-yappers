@@ -42,7 +42,7 @@ TUTOR_MODEL = os.getenv("TUTOR_MODEL", "gemma4:12b")
 TUTOR_ENABLED = os.getenv("TUTOR_ENABLED", "true").lower() != "false"
 # Label of this file's own tutor prompt in llm_events. PROMPT_VERSION (tutor-v2) is read by the tutor pipeline.
 MO_PROMPT_VERSION = os.getenv("MO_PROMPT_VERSION", "mo-v1")
-TUTOR_TIMEOUT = float(os.getenv("TUTOR_TIMEOUT", "90"))  # seconds; the first call also loads the model
+TUTOR_TIMEOUT = float(os.getenv("TUTOR_TIMEOUT") or "90")  # seconds; the first call also loads the model
 SKILL_DIR = Path(__file__).resolve().parent.parent / "ml" / "prompts" / "skills"
 
 VISUAL = re.compile(r"\b(chart|graph|plot|diagram|figure|visuali[sz]e|draw|flow ?chart|pie|timeline|bar|line chart|picture)\b", re.I)
@@ -201,8 +201,8 @@ def build_messages(body: TutorIn, visual: bool) -> list[dict]:
 
 
 # Limits on tutor calls: each one is a model call on a shared GPU.
-TUTOR_PER_MINUTE = int(os.getenv("TUTOR_PER_MINUTE", "8"))  # per user (guests: per IP), sliding minute
-DAILY_BUDGET = int(os.getenv("DAILY_BUDGET", "80"))  # tutor calls per user (guests: per IP) and UTC day; 0 = no limit
+TUTOR_PER_MINUTE = int(os.getenv("TUTOR_PER_MINUTE") or "8")  # an empty value (as in a copied .env) means the default  # per user (guests: per IP), sliding minute
+DAILY_BUDGET = int(os.getenv("DAILY_BUDGET") or "80")  # tutor calls per user (guests: per IP) and UTC day; 0 = no limit
 _minute: dict[str, list[float]] = {}
 _guest_day: dict[str, tuple[str, int]] = {}  # ip -> (day, calls); accounts are counted from llm_events instead
 _limit_lock = threading.Lock()
@@ -219,8 +219,8 @@ def client_ip(request: Request) -> str:
 
 def tutor_limit(user, request: Request, db: Session, mode: str) -> None:
     """429 when a learner sends too many tutor messages in a minute or uses up the day's budget.
-    Chat titles are tiny and automatic, so they do not count."""
-    if mode == "title":
+    Chat titles and diagram repairs are automatic follow-ups, not questions, so they do not count."""
+    if mode in ("title", "repair_diagram"):
         return
     guest = is_guest(user)
     who = f"ip:{client_ip(request)}" if guest else f"u:{user.id}"

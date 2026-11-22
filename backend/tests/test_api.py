@@ -389,6 +389,7 @@ def test_tutor_has_a_per_minute_limit_and_a_daily_budget(client, monkeypatch):
     codes = [client.post("/tutor", headers=h, json={"mode": "explain_result", "message": f"q{i}"}).status_code for i in range(4)]
     assert codes == [200, 200, 200, 429]
     assert client.post("/tutor", headers=h, json={"mode": "title", "message": "x"}).status_code == 200  # titles are free
+    assert client.post("/tutor", headers=h, json={"mode": "repair_diagram", "message": "Parse error"}).status_code == 200  # repairs too
     tutor_api._minute.clear()
     monkeypatch.setattr(tutor_api, "DAILY_BUDGET", 3)  # 3 calls already today
     r = client.post("/tutor", headers=h, json={"mode": "explain_result", "message": "one more"})
