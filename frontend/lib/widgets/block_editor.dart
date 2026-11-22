@@ -139,35 +139,48 @@ class BlockProgram {
   }
 }
 
-/// A thin bar that resizes the panels on either side when dragged (resize cursor on hover).
-class ResizeHandle extends StatelessWidget {
+/// A bar that resizes the panels on either side when dragged: a visible grip, a resize cursor, and
+/// green while hovered or dragged.
+class ResizeHandle extends StatefulWidget {
   final Axis axis; // Axis.horizontal: a vertical bar dragged left/right; Axis.vertical: a horizontal bar dragged up/down
   final ValueChanged<double> onDrag;
   const ResizeHandle({super.key, required this.axis, required this.onDrag});
+  @override
+  State<ResizeHandle> createState() => _ResizeHandleState();
+}
+
+class _ResizeHandleState extends State<ResizeHandle> {
+  bool _active = false;
 
   @override
   Widget build(BuildContext context) {
-    final h = axis == Axis.horizontal;
+    final h = widget.axis == Axis.horizontal;
+    final c = _active ? kPrimary : kBorder;
     return Semantics(
+      container: true, // its own node: screen readers (and tests) find it
       label: h ? 'Drag to resize the panels left and right' : 'Drag to resize the panels up and down',
       child: MouseRegion(
         cursor: h ? SystemMouseCursors.resizeColumn : SystemMouseCursors.resizeRow,
+        onEnter: (_) => setState(() => _active = true),
+        onExit: (_) => setState(() => _active = false),
         child: GestureDetector(
           behavior: HitTestBehavior.opaque,
-          onHorizontalDragUpdate: h ? (d) => onDrag(d.delta.dx) : null,
-          onVerticalDragUpdate: h ? null : (d) => onDrag(d.delta.dy),
+          onHorizontalDragStart: h ? (_) => setState(() => _active = true) : null,
+          onHorizontalDragUpdate: h ? (d) => widget.onDrag(d.delta.dx) : null,
+          onVerticalDragStart: h ? null : (_) => setState(() => _active = true),
+          onVerticalDragUpdate: h ? null : (d) => widget.onDrag(d.delta.dy),
           child: SizedBox(
-            width: h ? 9 : double.infinity,
-            height: h ? double.infinity : 9,
-            child: Center(
-              child: Container(
-                width: h ? 1 : double.infinity,
-                height: h ? double.infinity : 1,
-                color: kLine,
-                alignment: Alignment.center,
-                child: Container(width: h ? 4 : 36, height: h ? 36 : 4, decoration: BoxDecoration(color: kBorder, borderRadius: BorderRadius.circular(2))),
+            width: h ? 12 : double.infinity,
+            height: h ? double.infinity : 12,
+            child: Stack(alignment: Alignment.center, children: [
+              Container(width: h ? (_active ? 2 : 1) : double.infinity, height: h ? double.infinity : (_active ? 2 : 1), color: _active ? kPrimary : kLine),
+              Container(
+                width: h ? 8 : 48,
+                height: h ? 48 : 8,
+                decoration: BoxDecoration(color: kSurface, borderRadius: BorderRadius.circular(4), border: Border.all(color: c, width: 1.5)),
+                child: Icon(h ? Icons.more_vert : Icons.more_horiz, size: 8, color: c),
               ),
-            ),
+            ]),
           ),
         ),
       ),

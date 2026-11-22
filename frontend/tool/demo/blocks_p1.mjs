@@ -28,9 +28,11 @@ const p = await ctx.newPage();
 // ---- helpers (Flutter draws on a canvas; its accessibility tree tells us where each block is)
 const sem = async () => { await p.evaluate(() => document.querySelector('flt-semantics-placeholder')?.click()); await p.waitForTimeout(100); };
 const boxes = re => p.evaluate(src => { const r = new RegExp(src); return [...document.querySelectorAll('flt-semantics')]
-  .filter(e => r.test((e.getAttribute('aria-label') || '') + '\n' + (e.childElementCount ? '' : e.textContent || '')))
+  .filter(e => r.test((e.getAttribute('aria-label') || '') + '\n' + (e.childElementCount ? (e.querySelector(':scope > span')?.textContent || '') : e.textContent || '')))
   .map(e => { const b = e.getBoundingClientRect(); return { x: b.x + b.width / 2, y: b.y + b.height / 2, w: b.width, h: b.height }; })
   .filter(b => b.w > 0 && b.h > 0); }, re.source);
+// Where the palette ends and the workspace starts: the second left/right resize handle (moves when resized).
+const split = async () => { const hs = (await boxes(/left and right/)).sort((a, b) => a.x - b.x); return hs.length > 1 ? hs[1].x : 690; };
 const caption = text => p.evaluate(t => {
   let el = document.getElementById('demo-caption');
   if (!el) { el = document.createElement('div'); el.id = 'demo-caption';
@@ -39,15 +41,37 @@ const caption = text => p.evaluate(t => {
     document.body.appendChild(el); }
   el.textContent = t; }, text);
 const palette = async re => { // tap a block in the palette, scrolling the palette until it is visible
-  for (let k = 0; k < 25; k++) { await sem(); const r = (await boxes(re)).filter(x => x.x < 690)[0];
+  for (let k = 0; k < 25; k++) { await sem(); const sx = await split(); const r = (await boxes(re)).filter(x => x.x < sx)[0];
     if (r && r.y > 105 && r.y < 630) { await p.mouse.click(r.x, r.y); await p.waitForTimeout(PAUSE); return; }
-    await p.mouse.move(520, 400); await p.mouse.wheel(0, r && r.y <= 105 ? -160 : 160); await p.waitForTimeout(150); }
+    await p.mouse.move(sx - 120, 400); await p.mouse.wheel(0, r && r.y <= 105 ? -160 : 160); await p.waitForTimeout(150); }
   throw new Error('palette block not reachable ' + re); };
 const tap = async (re, pick = 0) => { // tap something in the workspace (pick -1 = the last match)
   for (let k = 0; k < 20; k++) { await sem(); const xs = await boxes(re); const r = xs[pick < 0 ? xs.length + pick : pick];
     if (r) { await p.mouse.click(r.x, r.y); await p.waitForTimeout(PAUSE); return; } await p.waitForTimeout(250); }
   throw new Error('not found ' + re); };
 const down = async () => { await p.mouse.move(1000, 400); for (let i = 0; i < 6; i++) { await p.mouse.wheel(0, 400); await p.waitForTimeout(60); } await p.waitForTimeout(250); };
+// Drag a palette block onto a slot or gap in the workspace (pick: which match, -1 = last).
+const dragTo = async (re, targetRe, pick = 0) => {
+  let a;
+  let sx = 690;
+  for (let k = 0; k < 25; k++) { await sem(); sx = await split(); a = (await boxes(re)).filter(x => x.x < sx)[0];
+    if (a && a.y > 105 && a.y < 630) break; await p.mouse.move(sx - 120, 400); await p.mouse.wheel(0, a && a.y <= 105 ? -160 : 160); await p.waitForTimeout(150); a = null; }
+  if (!a) throw new Error('palette block not reachable ' + re);
+  const ts = (await boxes(targetRe)).filter(x => x.x > sx); const t = ts[pick < 0 ? ts.length + pick : pick];
+  if (!t) throw new Error('drop target not found ' + targetRe);
+  const tx = Math.min(t.x, t.x - t.w / 2 + 60);
+  await p.mouse.move(a.x, a.y); await p.mouse.down();
+  for (let k = 1; k <= 24; k++) { await p.mouse.move(a.x + (tx - a.x) * k / 24, a.y + (t.y - a.y) * k / 24); await p.waitForTimeout(FAST ? 8 : 22); }
+  await p.waitForTimeout(FAST ? 50 : 250); await p.mouse.up(); await p.waitForTimeout(PAUSE);
+};
+const handle = async (re, pick, dx, dy) => { // drag a resize handle
+  let h;
+  for (let i = 0; i < 20 && !h; i++) { await sem(); const hs = await boxes(re); h = hs[pick < 0 ? hs.length + pick : pick]; if (!h) await p.waitForTimeout(300); }
+  if (!h) throw new Error('no handle ' + re);
+  await p.mouse.move(h.x, h.y); await p.mouse.down();
+  for (let k = 1; k <= 20; k++) { await p.mouse.move(h.x + dx * k / 20, h.y + dy * k / 20); await p.waitForTimeout(FAST ? 8 : 30); }
+  await p.mouse.up(); await p.waitForTimeout(PAUSE);
+};
 const blocks = async list => { for (const re of list) await palette(re); };
 const number = async v => { await palette(/a number.*\nnumber$/); await down(); await tap(/\n1000$/, -1);
   await p.keyboard.press('ControlOrMeta+A'); await p.keyboard.type(v, { delay: FAST ? 0 : 90 }); await p.keyboard.press('Enter'); await p.waitForTimeout(PAUSE); };
@@ -59,13 +83,24 @@ await p.waitForTimeout(2500);
 await caption('Ania\'s monthly money plan, built from blocks only'); await p.waitForTimeout(PAUSE * 3);
 await sem(); while ((await boxes(/Remove this block/)).length) await tap(/Remove this block/, 0); // a clean workspace
 
-await caption('1. Safety first: if the buffer covers less than 2 months, save to the buffer');
-await palette(/if … :$/); await blocks([/\nbuffer_months$/, /is less than\n<$/]); await number('2');
-await palette(/save_to_buffer$/);
+await caption('Make room: drag the handles to resize the panels');
+await handle(/left and right/, 0, -110, 0);      // narrower task description
+await handle(/up and down/, -1, 0, 170);          // shorter test results, taller workspace
 
-await caption('2. Otherwise: set money aside for the next known bill, spread over the months left');
-await palette(/else:$/);
+await caption('1. Safety first: drag an "if" in, then build its condition: buffer_months < 2');
+await dragTo(/if … :$/, /Slot: put a line here/, -1);
+await dragTo(/\nbuffer_months$/, /Gap: put a condition/, 0);
+await dragTo(/is less than\n<$/, /Gap: put a condition/, 0);
+await dragTo(/a number.*\nnumber$/, /Gap: put a condition/, 0);
+await tap(/\n1000$/, -1); await p.keyboard.press('ControlOrMeta+A'); await p.keyboard.type('2', { delay: FAST ? 0 : 90 }); await p.keyboard.press('Enter'); await p.waitForTimeout(PAUSE);
+await caption('Drag "save_to_buffer" inside the if');
+await dragTo(/save_to_buffer$/, /Slot: put a line here/, 1);
+
+await caption('2. Otherwise: drag in an "else", and set money aside for the next known bill');
+await dragTo(/else:$/, /Slot: put a line here/, -1);
+await caption('Tapping works too: the else is selected, so just tap "save_to_pot"');
 await palette(/save_to_pot$/);
+await caption('Its amount: (next_bill - pot) / months_to_next_bill, so the bill never empties the buffer');
 await tap(/Tap to change or remove\ncash$/, -1); await tap(/^Remove\n?$|\nRemove$/, -1);
 await blocks([/\($/, /\nnext_bill$/, /minus\n-$/, /\npot$/, /\)$/, /divided by\n\/$/, /\nmonths_to_next_bill$/]);
 
@@ -87,6 +122,8 @@ await down(); await tap(/Slot: put a line here/, -3);
 await palette(/invest_in$/);
 await down(); await tap(/Asset: fund/, -1); await tap(/^bond\n?$/, -1);
 
+if (process.argv.includes('--print-code')) { const sx = await split(); await p.mouse.move(sx + 300, 400); for (let k = 0; k < 8; k++) await p.mouse.wheel(0, -500);
+  await p.waitForTimeout(500); await p.screenshot({ path: process.env.SHOT || 'top.png' }); }
 await caption('The code the blocks make');
 await tap(/Code/, -1); await p.waitForTimeout(PAUSE * 4);
 await caption('Run the public tests: a 2-month job loss, a normal 24 months, a car repair');
