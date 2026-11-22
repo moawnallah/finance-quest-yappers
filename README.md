@@ -163,10 +163,10 @@ docs/              specs; start at docs/README.md
   workspace.
 - **Mateusz Gonera:** machine learning: the onboarding router, the BASAL client, the tutor pipeline and its checks;
   research and documentation.
-- **Yurii Zaika:** data series and licences, the task engines and the content build.
-- **Michał Bielicki:** the Flutter app.
-- **Paulina:** design.
-- **Artur Melnychenko:** supervision, and an audit of the code against the docs.
+- **Yurii Zaika:** data series and licences; the task engines and the content build.
+- **Michał Bielicki:** frontend; ensuring compatibility across different types of devices; debugging and QA.
+- **Paulina:** mascot and initial UI/UX design preparation; advisor on the visuals of the project.
+- **Artur Melnychenko:** project management; supervision; team leadership; audit; pitching.
 
 **Use of AI.** We used Claude (Anthropic) as a coding assistant for code and documentation, and to draft the
 learning content; each content file says so.
